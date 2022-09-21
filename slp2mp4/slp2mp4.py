@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-import os, sys, json, subprocess, time, shutil, uuid, multiprocessing, glob
+import os, sys, json, subprocess, time, shutil, uuid, multiprocessing, glob, re
 import argparse
 import tempfile
 from pathlib import Path
 from collections import namedtuple
+from pprint import pprint
 
 from slippi import Game
 import psutil
@@ -85,11 +86,30 @@ def is_slp(slp):
 def get_mp4_name(slp):
     return '.'.join(os.path.splitext(slp)[:-1]) + '.mp4'
 
+# If config.read_file option is set, read the filenames into a list, to be used with record_folder_slp.
+def import_read_files(conf):
+    read_files = []
+    with open(conf.read_slp, newline='') as fd:
+        slp_file = fd.readline()
+    slp_file = re.sub("[^a-zA-Z0-9_,\.]","",slp_file)
+    slp_file = slp_file.split(",")
+    
+    for file in slp_file:
+        file = file.strip()
+        read_files.append(file)
+        
+    print("Convert Games: ")
+    pprint(read_files)
+    return read_files
+
 def record_files(infiles, outdir, conf):
     file_mappings = [] # [SlpMp4Obj, ...]
     to_combine = []    # [ToCombineObj, ...]
     individual_mp4s = []
     created_dirs = []
+    read_files = []
+    if(conf.read_slp):
+        read_files = import_read_files(conf)
 
     # Determines groupings and output names
     for infile in infiles:
@@ -112,7 +132,7 @@ def record_files(infiles, outdir, conf):
                 )
                 cur_combine = []
                 for f in fs:
-                    if not is_slp(f):
+                    if not is_slp(f) or (read_files and f not in read_files):
                         continue
                     mp4_name = os.path.join(cur_outdir, get_mp4_name(f))
                     file_mappings.append(SlpMp4Obj(os.path.join(subdir, f), mp4_name, conf))
