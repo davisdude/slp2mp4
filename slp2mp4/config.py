@@ -8,6 +8,7 @@ class Config:
         with open(self.paths.config_json, 'r') as f:
             j = json.loads(f.read())
             self.melee_iso = os.path.expanduser(j['melee_iso'])
+            self.read_slp = os.path.expanduser(j['read_slp'])
             self.dolphin_dir = os.path.expanduser(j['dolphin_dir'])
             self.paths.dolphin_dir = self.dolphin_dir
             try:
@@ -28,6 +29,7 @@ class Config:
         # TODO: add more checking here
         if check_paths:
             self.check_path(self.melee_iso, 'Melee ISO')
+            self.check_path(self.read_slp, 'Read slp files')
             self.check_path(self.dolphin_dir, 'Dolphin directory')
             self.check_path(self.ffmpeg, 'ffmpeg')
             self.check_path(self.dolphin_bin, 'Dolphin binary')
