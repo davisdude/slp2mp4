@@ -1,0 +1,13 @@
+{
+    "melee_iso": "Super Smash Bros. Melee (USA) (En,Ja) (Rev 2).iso",
+    "dolphin_dir": "~/AppData/Roaming/Slippi Launcher/playback",
+    "ffmpeg": "ffmpeg",
+    "resolution": "1080p",
+    "video_backend": "OGL",
+    "widescreen": false,
+    "bitrateKbps": 16000,
+    "parallel_games": "recommended",
+    "remove_short": false,
+    "combine": true,
+    "remove_slps": false
+}
