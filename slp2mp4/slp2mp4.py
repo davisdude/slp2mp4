@@ -9,6 +9,8 @@ from slippi import Game
 import psutil
 import natsort
 
+from natsort import natsorted
+
 from config import Config
 from dolphinrunner import DolphinRunner
 from ffmpegrunner import FfmpegRunner
