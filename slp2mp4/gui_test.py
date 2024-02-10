@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import filedialog
 import subprocess
 import os
+from config import Config
 import json
 
 #some notes: slippi folder is the folder containing slippi replays
@@ -98,7 +99,7 @@ def save_config():
     # Add other config parameters here if needed
 
     os.makedirs(data_folder, exist_ok=True)  # Ensure the "data" folder exists
-    config_file_path = os.path.abspath(os.path.join(data_folder, "config.json"))
+    config_file_path = Config(False).paths.config_json
 
     with open(config_file_path, "w", encoding="utf-8") as config_file:
         json.dump(config_data, config_file, indent=4)
@@ -108,15 +109,21 @@ def save_config():
 def run_slp2mp4():
     try:
         script_directory = os.path.dirname(os.path.realpath(__file__))
-        slp2mp4_script = os.path.abspath(os.path.join(script_directory, "slp2mp4"))
+        slp2mp4_script = os.path.abspath(os.path.join(script_directory, "slp2mp4.py"))
         slippi_folder_var.get() #maybe not necessary in python
-        subprocess.run([slp2mp4_script, "run", video_output_var.get(), slippi_folder_var.get() ], check=True, shell=True)
+        print([slp2mp4_script, "run", video_output_var.get(), slippi_folder_var.get() ])
+        subprocess.run(["python", slp2mp4_script, "run", video_output_var.get(), slippi_folder_var.get() ], check=True, shell=True)
     except subprocess.CalledProcessError as e:
         print(f"Error running slp2mp4: {e}")
 
 def render():
+    print("About to save config")
     save_config()  # Save the configuration before rendering
+
+    print("saved config")
     run_slp2mp4()
+
+    print("ran slp2mp4")
     pass
 
 # Melee ISO button
