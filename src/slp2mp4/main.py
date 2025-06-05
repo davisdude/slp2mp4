@@ -27,6 +27,12 @@ def main():
         action="store_true",
         help="don't prepend folder names to output filenames"
     )
+    parser.add_argument(
+        "--youtube-mode",
+        action="store_true",
+        help="Replace dashes with emdashes and parentheses with mathematical flattened parentheses to get around YouTube stripping those characters"
+    )
+    
     subparser = parser.add_subparsers(help="run mode", required=True)
     for submodule in submodules_dict.values():
         submodule.register(subparser)

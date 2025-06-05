@@ -252,6 +252,9 @@ class Slp2Mp4GUI:
         self.no_prepend_folder_var = tk.BooleanVar()
         ttk.Checkbutton(options_frame, text="Don't prepend folder names to output filenames", variable=self.no_prepend_folder_var).pack(anchor='w')
 
+        self.youtube_mode = tk.BooleanVar()
+        ttk.Checkbutton(options_frame, text="YouTube Mode", variable=self.youtube_mode).pack(anchor='w')
+
         # Control buttons frame
         control_frame = ttk.Frame(self.root)
         control_frame.pack(fill='x', padx=10, pady=10)
@@ -432,6 +435,7 @@ class Slp2Mp4GUI:
             args.output_directory = pathlib.Path(self.output_var.get())
             args.dry_run = self.dry_run_var.get()
             args.no_prepend_folder = self.no_prepend_folder_var.get()
+            args.youtube_mode = self.youtube_mode.get()
 
             mode = self.mode_var.get()
 
