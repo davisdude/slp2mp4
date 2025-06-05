@@ -250,9 +250,11 @@ class Slp2Mp4GUI:
         ttk.Checkbutton(options_frame, text="Dry Run (preview only)", variable=self.dry_run_var).pack(anchor='w')
         
         self.no_prepend_folder_var = tk.BooleanVar()
+        self.no_prepend_folder_var.set(True)
         ttk.Checkbutton(options_frame, text="Don't prepend folder names to output filenames", variable=self.no_prepend_folder_var).pack(anchor='w')
 
         self.youtube_mode = tk.BooleanVar()
+        self.youtube_mode.set(True)
         ttk.Checkbutton(options_frame, text="YouTube Mode", variable=self.youtube_mode).pack(anchor='w')
 
         # Control buttons frame
