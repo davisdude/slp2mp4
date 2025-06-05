@@ -52,7 +52,7 @@ def run(conf, args):
         for file in files:
             _recursively_unzip(file, tmpdir_main / file.stem)
 
-        return get_inputs_and_outputs(tmpdir_main, tmpdir_main, args.output_directory)
+        return get_inputs_and_outputs(tmpdir_main, tmpdir_main, args.output_directory, args.no_prepend_folder)
     except Exception:
         # Clean up on error
         shutil.rmtree(tmpdir)

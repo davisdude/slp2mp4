@@ -22,6 +22,11 @@ def main():
         help="output videos to this directory",
     )
     parser.add_argument("-n", "--dry-run", action="store_true")
+    parser.add_argument(
+        "--no-prepend-folder",
+        action="store_true",
+        help="don't prepend folder names to output filenames"
+    )
     subparser = parser.add_subparsers(help="run mode", required=True)
     for submodule in submodules_dict.values():
         submodule.register(subparser)

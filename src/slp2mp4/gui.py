@@ -248,6 +248,9 @@ class Slp2Mp4GUI:
 
         self.dry_run_var = tk.BooleanVar()
         ttk.Checkbutton(options_frame, text="Dry Run (preview only)", variable=self.dry_run_var).pack(anchor='w')
+        
+        self.no_prepend_folder_var = tk.BooleanVar()
+        ttk.Checkbutton(options_frame, text="Don't prepend folder names to output filenames", variable=self.no_prepend_folder_var).pack(anchor='w')
 
         # Control buttons frame
         control_frame = ttk.Frame(self.root)
@@ -428,6 +431,7 @@ class Slp2Mp4GUI:
             args.path = pathlib.Path(self.input_var.get())
             args.output_directory = pathlib.Path(self.output_var.get())
             args.dry_run = self.dry_run_var.get()
+            args.no_prepend_folder = self.no_prepend_folder_var.get()
 
             mode = self.mode_var.get()
 
