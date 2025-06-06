@@ -38,6 +38,7 @@ class DolphinRunner:
                 comm.make_temp_file(replay) as comm_file,
                 ini.make_dolphin_file(userdir) as dolphin_file,
                 ini.make_gfx_file(userdir, self.user_gfx) as gfx_file,
+                ini.make_hotkeys_file(userdir) as hotkeys_file,
                 ini.make_gecko_file(userdir) as gecko_file,
             ):
                 args = (
