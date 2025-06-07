@@ -8,7 +8,7 @@ jobs:
   build:
     strategy:
       matrix:
-        platform: [windows-latest, ubuntu-latest, macos-latest]
+        platform: [windows-latest, ubuntu-latest]
         script: [src/slp2mp4/gui.py]
         include:
           - script: src/slp2mp4/gui.py
