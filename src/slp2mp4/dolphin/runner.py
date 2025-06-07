@@ -89,8 +89,6 @@ class DolphinRunner:
                         elif strip_line.startswith("[CURRENT_FRAME] "):
                             current_frame = int(strip_line.removeprefix("[CURRENT_FRAME] "))
 
-                        print(game_end_frame, current_frame)
-
                         if current_frame >= game_end_frame:
                             break
 
