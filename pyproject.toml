@@ -44,4 +44,6 @@ Issues = "https://github.com/davisdude/slp2mp4/issues"
 
 [project.scripts]
 slp2mp4 = "slp2mp4.main:main"
+
+[project.gui-scripts]
 slp2mp4_gui = "slp2mp4.gui:main"

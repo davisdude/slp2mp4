@@ -9,6 +9,11 @@ jobs:
     strategy:
       matrix:
         platform: [windows-latest, ubuntu-latest, macos-latest]
+        script: [src/slp2mp4/gui.py]
+        include:
+          - script: src/slp2mp4/gui.py
+            name: slp2mp4_gui
+            pip_install_suffix: "[gui]"
     runs-on: ${{ matrix.platform }}
     steps:
       - name: Checkout repository
@@ -22,15 +27,15 @@ jobs:
       - name: Install dependencies
         run: |
           pip install pyinstaller
-          pip install ".[gui]"
+          pip install ".${{ matrix.pip_install_suffix }}"
 
       - name: Run pyinstaller
         run: |
-          pyinstaller --name slp2mp4 --onefile src/slp2mp4/main.py
+          pyinstaller --name ${{ matrix.name }} --onefile ${{ matrix.script }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ runner.os }}.zip
+          name: ${{ runner.os }}
           path: |
             dist/*

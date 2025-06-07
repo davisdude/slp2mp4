@@ -2,3 +2,6 @@ __pycache__
 *.swp
 *.egg-info
 *.mp4
+*.spec
+build/
+dist/
