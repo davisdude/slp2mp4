@@ -65,7 +65,6 @@ def make_gfx_file(userdir: pathlib.Path, user_settings):
     # Could use Settings.DumpFramesAsImages, then detect all-black images
     settings = {
         "Settings": {
-            "LogRenderTimeToFile": "True",  # Used to monitor render progress
             "AspectRatio": "0",
             "InternalResolutionFrameDumps": "True",
         },

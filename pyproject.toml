@@ -19,9 +19,7 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
-dependencies = [
-    "py-slippi @ git+https://github.com/davisdude/py-slippi@dev", # TODO: Replace with peppi-py when user experience improves
-]
+dependencies = []
 
 # TODO: Checks for tkinter / tcl
 [project.optional-dependencies]
