@@ -29,7 +29,7 @@ def make_ini_file(filename: pathlib.Path, contents: dict):
 
 
 @contextlib.contextmanager
-def make_dolphin_file(userdir: pathlib.Path):
+def make_dolphin_file(userdir: pathlib.Path, user_settings):
     # TODO: Try full screen / forced window size for Windows
     settings = {
         # Disables rumble, since it's annoying when rendering replays
@@ -48,13 +48,14 @@ def make_dolphin_file(userdir: pathlib.Path):
         "DSP": {
             "DumpAudio": "True",
             "DumpAudioSilent": "True",
-            "Backend": "ALSA",
+            "Backend": "OpenAL",
         },
         "Display": {
             "RenderToMain": "True",
             "RenderWindowAutoSize": "True",
         },
     }
+    util.update_dict(settings, user_settings)
     filename = userdir.joinpath("Config", "Dolphin.ini")
     with make_ini_file(filename, settings) as (name, handle):
         yield name

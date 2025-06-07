@@ -36,6 +36,7 @@ CONSTRUCTORS = {
     "dolphin": {
         "resolution": _parse_resolution,
         "bitrate": str,
+        "volume": str,
     },
     "runtime": {
         "parallel": _parse_parallel,

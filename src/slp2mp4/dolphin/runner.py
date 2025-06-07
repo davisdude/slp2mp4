@@ -24,6 +24,11 @@ class DolphinRunner:
         self.slippi_playback = config["paths"]["slippi_playback"]
         self.ssbm_ini = config["paths"]["ssbm_ini"]
         self.video_backend = config["dolphin"]["backend"]
+        self.user_dolphin = {
+            "DSP": {
+                "Volume": config["dolphin"]["volume"],
+            },
+        }
         self.user_gfx = {
             "Settings": {
                 "EFBScale": config["dolphin"]["resolution"],
@@ -36,7 +41,7 @@ class DolphinRunner:
             userdir = pathlib.Path(userdir_str)
             with (
                 comm.make_temp_file(replay) as comm_file,
-                ini.make_dolphin_file(userdir) as dolphin_file,
+                ini.make_dolphin_file(userdir, self.user_dolphin) as dolphin_file,
                 ini.make_gfx_file(userdir, self.user_gfx) as gfx_file,
                 ini.make_hotkeys_file(userdir) as hotkeys_file,
                 ini.make_gecko_file(userdir) as gecko_file,
