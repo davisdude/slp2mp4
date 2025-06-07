@@ -29,10 +29,6 @@ gui = [
     "tomli-w",
 ]
 
-windows-build = [
-    "pyinstaller",
-]
-
 [tool.hatch.metadata]
 allow-direct-references = true
 

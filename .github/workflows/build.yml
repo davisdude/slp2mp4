@@ -1,0 +1,36 @@
+name: Package Application with PyInstaller
+on:
+  push:
+    branches:
+      - cleanup
+      - master
+jobs:
+  build:
+    strategy:
+      matrix:
+        platform: [windows-latest, ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install pyinstaller
+          pip install ".[gui]"
+
+      - name: Run pyinstaller
+        run: |
+          pyinstaller --name slp2mp4 --onefile src/slp2mp4/main.py
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ runner.os }}.zip
+          path: |
+            dist/*
