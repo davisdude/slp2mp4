@@ -96,6 +96,12 @@ class ConfigDialog(tk.Toplevel):
         bitrate_spin = ttk.Spinbox(dolphin_frame, from_=1000, to=50000, textvariable=self.bitrate_var, increment=1000)
         bitrate_spin.grid(row=2, column=1, padx=5, pady=5)
 
+        # Volume
+        ttk.Label(dolphin_frame, text="Volume (%)").grid(row=3, column=0, sticky='w', padx=5, pady=5)
+        self.volume_var = tk.IntVar()
+        volume_spin = ttk.Spinbox(dolphin_frame, from_=0, to=100, textvariable=self.volume_var, increment=1)
+        volume_spin.grid(row=3, column=1, padx=5, pady=5)
+
         # Runtime settings tab
         runtime_frame = ttk.Frame(notebook)
         notebook.add(runtime_frame, text="Runtime")
@@ -139,6 +145,7 @@ class ConfigDialog(tk.Toplevel):
             self.resolution_var.set("1080p")  # Default
 
         self.bitrate_var.set(int(self.config.get('dolphin', {}).get('bitrate', 16000)))
+        self.volume_var.set(int(self.config.get('dolphin', {}).get('volume', 25)))
         self.parallel_var.set(self.config.get('runtime', {}).get('parallel', 0))
 
     def save_config(self):
@@ -154,18 +161,19 @@ class ConfigDialog(tk.Toplevel):
             'paths': {
                 'ffmpeg': pathlib.Path(self.ffmpeg_var.get()).expanduser(),
                 'slippi_playback': pathlib.Path(self.slippi_var.get()).expanduser(),
-                'ssbm_ini': pathlib.Path(self.iso_var.get()).expanduser()
+                'ssbm_ini': pathlib.Path(self.iso_var.get()).expanduser(),
             },
             'dolphin': {
                 'backend': self.backend_var.get(),
                 'resolution': resolution_map.get(resolution, "5"),  # Default to 1080p
-                'bitrate': str(self.bitrate_var.get())  # Convert to string
+                'bitrate': str(self.bitrate_var.get()),  # Convert to string
+                'volume': str(self.volume_var.get()),  # Convert to string
             },
             'runtime': {
-                'parallel': self.parallel_var.get() if self.parallel_var.get() != 0 else os.cpu_count()
+                'parallel': self.parallel_var.get() if self.parallel_var.get() != 0 else os.cpu_count(),
             },
             'ffmpeg': {
-                'audio_args': '-ar 48000 -c:a libopus -f opus -ac 2 -b:a 128k'
+                'audio_args': '-ar 48000 -c:a libopus -f opus -ac 2 -b:a 128k',
             }
         }
         self.destroy()
@@ -353,19 +361,20 @@ class Slp2Mp4GUI:
                 'paths': {
                     'ffmpeg': str(self.config['paths']['ffmpeg']),
                     'slippi_playback': str(self.config['paths']['slippi_playback']),
-                    'ssbm_ini': str(self.config['paths']['ssbm_ini'])
+                    'ssbm_ini': str(self.config['paths']['ssbm_ini']),
                 },
                 'dolphin': {
                     'backend': self.config['dolphin']['backend'],
                     'resolution': '1080p' if self.config['dolphin']['resolution'] == '5' else '720p',  # Convert back to friendly format
-                    'bitrate': int(self.config['dolphin']['bitrate'])  # Save as int in TOML
+                    'bitrate': int(self.config['dolphin']['bitrate']),  # Save as int in TOML
+                    'volume': int(self.config['dolphin']['volume']),  # Save as int in TOML
                 },
                 'runtime': {
-                    'parallel': 0 if self.config['runtime']['parallel'] == os.cpu_count() else self.config['runtime']['parallel']
+                    'parallel': 0 if self.config['runtime']['parallel'] == os.cpu_count() else self.config['runtime']['parallel'],
                 },
                 'ffmpeg': {
-                    'audio_args': self.config['ffmpeg']['audio_args']
-                }
+                    'audio_args': self.config['ffmpeg']['audio_args'],
+                },
             }
             with open(config_path, 'wb') as f:
                 tomli_w.dump(toml_config, f)
