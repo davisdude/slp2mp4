@@ -1,6 +1,6 @@
 # slp2mp4
 
-Convert Slippi replay files (.slp) to video files (.mp4) with ease. This tool automates the process of rendering Super Smash Bros. Melee replays using Slippi Dolphin and encoding them to MP4 format.
+Convert Slippi replay files (`.slp`) to video files (`.mp4`) with ease. This tool automates the process of rendering Super Smash Bros. Melee replays using Slippi Dolphin and encoding them to MP4 format.
 
 ## Features
 
@@ -22,42 +22,48 @@ Convert Slippi replay files (.slp) to video files (.mp4) with ease. This tool au
 
 ## Installation
 
+### From a Build
+
+Currently, go to the "Actions" tab, select the latest workflow, and select the artifact for your platform.
+
+Eventually, we will make releases which will have artifacts attached.
+
 ### From Source
 
 ```bash
-git clone https://github.com/davisdude/slp2mp4.git
-cd slp2mp4
-pip install -e .
+pip install "slp2mp4[gui] @ git+https://github.com/davisdude/slp2mp4.git@cleanup"
 ```
 
-### For GUI Support
-
-```bash
-pip install -e ".[gui]"
-```
+Requires having `git` and `pip` installed
 
 ## Usage
 
 ### Command Line Interface
 
 #### Single File Conversion
+
 ```bash
 slp2mp4 -o output_directory/ single path/to/replay.slp
 ```
 
 #### Directory Conversion
+
 Convert all .slp files in a directory (recursively):
+
 ```bash
 slp2mp4 -o output_directory/ directory path/to/replays/
 ```
 
 #### Replay Manager Conversion
+
 Convert replay manager exports (zip files or directories):
+
 ```bash
 slp2mp4 -o output_directory/ replay_manager path/to/replays/
 ```
 
 #### Options
+
 - `-o, --output-directory`: Specify output directory (default: current directory)
 - `-n, --dry-run`: Preview what files will be processed without converting
 
@@ -74,16 +80,20 @@ slp2mp4 uses a configuration file system with sensible defaults. User configurat
 ### Configuration Options
 
 #### Paths
+
 - `ffmpeg`: Path to FFmpeg executable
 - `slippi_playback`: Path to playback Slippi Dolphin executable
 - `ssbm_ini`: Path to your Melee ISO file
 
 #### Dolphin Settings
+
 - `backend`: Video backend (`OGL`, `D3D`, `D3D12`, `Vulkan`, `Software`)
 - `resolution`: Output resolution (`480p`, `720p`, `1080p`, `1440p`, `2160p`)
 - `bitrate`: Video bitrate in kbps (default: 16000)
+- `volume`: Volume of dolphin (0-100; default: 25)
 
 #### Runtime Settings
+
 - `parallel`: Number of parallel processes (0 = auto-detect CPU cores)
 
 ### Example Configuration
@@ -98,6 +108,7 @@ ssbm_ini = "~/Games/Melee.iso"
 backend = "OGL"
 resolution = "1080p"
 bitrate = 16000
+volume = 25
 
 [runtime]
 parallel = 0
@@ -107,30 +118,19 @@ or on Windows:
 
 ```toml
 [paths]
-ffmpeg = "C:\Users\user\Downloads\ffmpeg-2025-01-27-git-959b799c8d-essentials_build\bin\ffmpeg.exe"
-slippi_playback = "C:\Users\user\AppData\Roaming\Slippi Launcher\playback\Slippi Dolphin.exe"
-ssbm_ini = "C:\Users\user\Documents\iso\ssbm.iso"
+ffmpeg = "C:/Users/user/Downloads/ffmpeg-2025-01-27-git-959b799c8d-essentials_build/bin/ffmpeg.exe"
+slippi_playback = "C:/Users/user/AppData/Roaming/Slippi Launcher/playback/Slippi Dolphin.exe"
+ssbm_ini = "C:/Users/user/Documents/iso/ssbm.iso"
 
 [dolphin]
 backend = "D3D"
 resolution = "1080p"
+volume = 25
 bitrate = 16000
 
 [runtime]
 parallel = 0
 ```
-
-## Building Standalone Executable (Windows)
-
-To create a standalone GUI executable:
-
-```bash
-pip install pyinstaller
-pip install .
-pyinstaller slp2mp4-gui.spec
-```
-
-The executable will be created in the `dist/` directory.
 
 ## Notes
 
@@ -156,12 +156,12 @@ The executable will be created in the `dist/` directory.
       count starts *once players are actionable* (after ready/go), while
       py-slippi's frame count includes these frames.
 
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
 
 [dolphin-video-backends-src]: https://github.com/dolphin-emu/dolphin/tree/master/Source/Core/VideoBackends
 [dolphin-video-backends]: https://wiki.dolphin-emu.org/index.php?title=Configuration_Guide#Video_Backend
 [peppi-py]: https://github.com/hohav/peppi-py
 [py-slippi]: https://github.com/hohav/py-slippi
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
