@@ -161,16 +161,23 @@ class ConfigDialog(tk.Toplevel):
         ttk.Label(parallel_frame, text="Parallel Processes:").pack(side="left", padx=5)
         self.parallel_var = tk.IntVar()
         parallel_spin = ttk.Spinbox(
-            parallel_frame,
-            from_=0,
-            to=32,
-            textvariable=self.parallel_var
+            parallel_frame, from_=0, to=32, textvariable=self.parallel_var
         )
         parallel_spin.pack(side="left", padx=5)
 
         parallel_info_frame = ttk.Frame(runtime_frame)
         parallel_info_frame.pack(side="top", pady=5)
-        ttk.Label(parallel_info_frame, text="(0 = auto-detect CPU cores)").pack(side="left", padx=5)
+        ttk.Label(parallel_info_frame, text="(0 = auto-detect CPU cores)").pack(
+            side="left", padx=5
+        )
+
+        # Prepend directory
+        prepend_frame = ttk.Frame(runtime_frame)
+        prepend_frame.pack(side="top", pady=5)
+        ttk.Label(prepend_frame, text="Prepend directory?").pack(side="left", padx=5)
+        self.prepend_var = tk.BooleanVar()
+        prepend_box = ttk.Checkbutton(prepend_frame, variable=self.prepend_var)
+        prepend_box.pack(side="left", padx=5)
 
         # Buttons
         button_frame = ttk.Frame(self)
@@ -201,10 +208,12 @@ class ConfigDialog(tk.Toplevel):
         self.bitrate_var.set(int(self.config["dolphin"]["bitrate"]))
         self.volume_var.set(int(self.config["dolphin"]["volume"]))
         self.parallel_var.set(int(self.config["runtime"]["parallel"]))
+        self.prepend_var.set(bool(self.config["runtime"]["prepend_directory"]))
 
     def save_config(self):
         """Save configuration and close dialog"""
         # Get the resolution value and convert it to the internal format
+        # TODO: Commonize this and save_configuration
 
         self.result = {
             "paths": {
@@ -220,6 +229,7 @@ class ConfigDialog(tk.Toplevel):
             },
             "runtime": {
                 "parallel": str(self.parallel_var.get()),
+                "prepend_directory": bool(self.prepend_var.get()),
             },
             "ffmpeg": {
                 "audio_args": "-ar 48000 -c:a libopus -f opus -ac 2 -b:a 128k",
@@ -276,7 +286,9 @@ class AboutDialog(tk.Toplevel):
         ttk.Button(button_frame, text="Copy Version", command=self.copy_version).pack(
             side="left", padx=5
         )
-        ttk.Button(button_frame, text="Quit", command=self.destroy).pack(side="left", padx=5)
+        ttk.Button(button_frame, text="Quit", command=self.destroy).pack(
+            side="left", padx=5
+        )
 
     def _get_version(self):
         return version.version
@@ -481,6 +493,7 @@ class Slp2Mp4GUI:
                 },
                 "runtime": {
                     "parallel": int(self.config["runtime"]["parallel"]),
+                    "prepend_directory": bool(self.config["runtime"]["prepend_directory"]),
                 },
                 "ffmpeg": {
                     "audio_args": self.config["ffmpeg"]["audio_args"],

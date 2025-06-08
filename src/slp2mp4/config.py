@@ -47,6 +47,7 @@ CONSTRUCTORS = {
     },
     "runtime": {
         "parallel": _parse_parallel,
+        "prepend_directory": bool,
     },
 }
 
@@ -127,4 +128,10 @@ def validate_config(conf):
     except ValueError:
         raise RuntimeError(
             f"Invalid runtime.parallel '{conf['runtime']['parallel']}'; must be an integer [0-{max_cpus}]"
+        )
+    try:
+        bool(conf["runtime"]["prepend_directory"])
+    except ValueError:
+        raise RuntimeError(
+            f"Invalid runtime.prepend_directory '{conf['runtime']['prepend_directory']}'; must be true/false"
         )
