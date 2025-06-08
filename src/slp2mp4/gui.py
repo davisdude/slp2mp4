@@ -38,59 +38,113 @@ class ConfigDialog(tk.Toplevel):
     def create_widgets(self):
         # Create notebook for tabs
         notebook = ttk.Notebook(self)
-        notebook.pack(fill='both', expand=True, padx=10, pady=10)
+        notebook.pack(fill="both", expand=True, padx=10, pady=10)
 
         # Paths tab
         paths_frame = ttk.Frame(notebook)
         notebook.add(paths_frame, text="Paths")
 
         # FFmpeg path
-        ttk.Label(paths_frame, text="FFmpeg Path:").grid(row=0, column=0, sticky='w', padx=5, pady=5)
+        ttk.Label(paths_frame, text="FFmpeg Path:").grid(
+            row=0, column=0, sticky="w", padx=5, pady=5
+        )
         self.ffmpeg_var = tk.StringVar()
         ffmpeg_entry = ttk.Entry(paths_frame, textvariable=self.ffmpeg_var, width=40)
         ffmpeg_entry.grid(row=0, column=1, padx=5, pady=5)
-        ttk.Button(paths_frame, text="Browse", command=lambda: self.browse_file(self.ffmpeg_var, "FFmpeg", [("Executable", "*.exe"), ("All files", "*.*")])).grid(row=0, column=2, padx=5, pady=5)
+        ttk.Button(
+            paths_frame,
+            text="Browse",
+            command=lambda: self.browse_file(
+                self.ffmpeg_var,
+                "FFmpeg",
+                [("Executable", "*.exe"), ("All files", "*.*")],
+            ),
+        ).grid(row=0, column=2, padx=5, pady=5)
 
         # Slippi Playback path
-        ttk.Label(paths_frame, text="Slippi Playback Path:").grid(row=1, column=0, sticky='w', padx=5, pady=5)
+        ttk.Label(paths_frame, text="Slippi Playback Path:").grid(
+            row=1, column=0, sticky="w", padx=5, pady=5
+        )
         self.slippi_var = tk.StringVar()
         slippi_entry = ttk.Entry(paths_frame, textvariable=self.slippi_var, width=40)
         slippi_entry.grid(row=1, column=1, padx=5, pady=5)
-        ttk.Button(paths_frame, text="Browse", command=lambda: self.browse_file(self.slippi_var, "Slippi Dolphin", [("Executable", "*.exe"), ("All files", "*.*")])).grid(row=1, column=2, padx=5, pady=5)
+        ttk.Button(
+            paths_frame,
+            text="Browse",
+            command=lambda: self.browse_file(
+                self.slippi_var,
+                "Slippi Dolphin",
+                [("Executable", "*.exe"), ("All files", "*.*")],
+            ),
+        ).grid(row=1, column=2, padx=5, pady=5)
 
         # SSBM ISO path
-        ttk.Label(paths_frame, text="SSBM ISO Path:").grid(row=2, column=0, sticky='w', padx=5, pady=5)
+        ttk.Label(paths_frame, text="SSBM ISO Path:").grid(
+            row=2, column=0, sticky="w", padx=5, pady=5
+        )
         self.iso_var = tk.StringVar()
         iso_entry = ttk.Entry(paths_frame, textvariable=self.iso_var, width=40)
         iso_entry.grid(row=2, column=1, padx=5, pady=5)
-        ttk.Button(paths_frame, text="Browse", command=lambda: self.browse_file(self.iso_var, "SSBM ISO", [("ISO files", "*.iso"), ("All files", "*.*")])).grid(row=2, column=2, padx=5, pady=5)
+        ttk.Button(
+            paths_frame,
+            text="Browse",
+            command=lambda: self.browse_file(
+                self.iso_var, "SSBM ISO", [("ISO files", "*.iso"), ("All files", "*.*")]
+            ),
+        ).grid(row=2, column=2, padx=5, pady=5)
 
         # Dolphin settings tab
         dolphin_frame = ttk.Frame(notebook)
         notebook.add(dolphin_frame, text="Dolphin")
 
         # Video backend
-        ttk.Label(dolphin_frame, text="Video Backend:").grid(row=0, column=0, sticky='w', padx=5, pady=5)
+        ttk.Label(dolphin_frame, text="Video Backend:").grid(
+            row=0, column=0, sticky="w", padx=5, pady=5
+        )
         self.backend_var = tk.StringVar()
-        backend_combo = ttk.Combobox(dolphin_frame, textvariable=self.backend_var, values=config.DOLPHIN_BACKENDS, state='readonly')
+        backend_combo = ttk.Combobox(
+            dolphin_frame,
+            textvariable=self.backend_var,
+            values=config.DOLPHIN_BACKENDS,
+            state="readonly",
+        )
         backend_combo.grid(row=0, column=1, padx=5, pady=5)
 
         # Resolution
-        ttk.Label(dolphin_frame, text="Resolution:").grid(row=1, column=0, sticky='w', padx=5, pady=5)
+        ttk.Label(dolphin_frame, text="Resolution:").grid(
+            row=1, column=0, sticky="w", padx=5, pady=5
+        )
         self.resolution_var = tk.StringVar()
-        resolution_combo = ttk.Combobox(dolphin_frame, textvariable=self.resolution_var, values=config.RESOLUTIONS.keys(), state='readonly')
+        resolution_combo = ttk.Combobox(
+            dolphin_frame,
+            textvariable=self.resolution_var,
+            values=config.RESOLUTIONS.keys(),
+            state="readonly",
+        )
         resolution_combo.grid(row=1, column=1, padx=5, pady=5)
 
         # Bitrate
-        ttk.Label(dolphin_frame, text="Bitrate (kbps):").grid(row=2, column=0, sticky='w', padx=5, pady=5)
+        ttk.Label(dolphin_frame, text="Bitrate (kbps):").grid(
+            row=2, column=0, sticky="w", padx=5, pady=5
+        )
         self.bitrate_var = tk.IntVar()
-        bitrate_spin = ttk.Spinbox(dolphin_frame, from_=1000, to=50000, textvariable=self.bitrate_var, increment=1000)
+        bitrate_spin = ttk.Spinbox(
+            dolphin_frame,
+            from_=1000,
+            to=50000,
+            textvariable=self.bitrate_var,
+            increment=1000,
+        )
         bitrate_spin.grid(row=2, column=1, padx=5, pady=5)
 
         # Volume
-        ttk.Label(dolphin_frame, text="Volume (%)").grid(row=3, column=0, sticky='w', padx=5, pady=5)
+        ttk.Label(dolphin_frame, text="Volume (%)").grid(
+            row=3, column=0, sticky="w", padx=5, pady=5
+        )
         self.volume_var = tk.IntVar()
-        volume_spin = ttk.Spinbox(dolphin_frame, from_=0, to=100, textvariable=self.volume_var, increment=1)
+        volume_spin = ttk.Spinbox(
+            dolphin_frame, from_=0, to=100, textvariable=self.volume_var, increment=1
+        )
         volume_spin.grid(row=3, column=1, padx=5, pady=5)
 
         # TODO: ffmpeg audio args
@@ -100,21 +154,33 @@ class ConfigDialog(tk.Toplevel):
         notebook.add(runtime_frame, text="Runtime")
 
         # Parallel processes
-        ttk.Label(runtime_frame, text="Parallel Processes:").grid(row=0, column=0, sticky='w', padx=5, pady=5)
+        ttk.Label(runtime_frame, text="Parallel Processes:").grid(
+            row=0, column=0, sticky="w", padx=5, pady=5
+        )
         self.parallel_var = tk.IntVar()
-        ttk.Label(runtime_frame, text="(0 = auto-detect CPU cores)").grid(row=0, column=2, sticky='w', padx=5, pady=5)
-        parallel_spin = ttk.Spinbox(runtime_frame, from_=0, to=32, textvariable=self.parallel_var)
+        ttk.Label(runtime_frame, text="(0 = auto-detect CPU cores)").grid(
+            row=0, column=2, sticky="w", padx=5, pady=5
+        )
+        parallel_spin = ttk.Spinbox(
+            runtime_frame, from_=0, to=32, textvariable=self.parallel_var
+        )
         parallel_spin.grid(row=0, column=1, padx=5, pady=5)
 
         # Buttons
         button_frame = ttk.Frame(self)
-        button_frame.pack(side='bottom', pady=10)
+        button_frame.pack(side="bottom", pady=10)
 
-        ttk.Button(button_frame, text="Save", command=self.save_config).pack(side='left', padx=5)
-        ttk.Button(button_frame, text="Cancel", command=self.destroy).pack(side='left', padx=5)
+        ttk.Button(button_frame, text="Save", command=self.save_config).pack(
+            side="left", padx=5
+        )
+        ttk.Button(button_frame, text="Cancel", command=self.destroy).pack(
+            side="left", padx=5
+        )
 
     def browse_file(self, var, title, filetypes):
-        filename = filedialog.askopenfilename(title=f"Select {title}", filetypes=filetypes)
+        filename = filedialog.askopenfilename(
+            title=f"Select {title}", filetypes=filetypes
+        )
         if filename:
             var.set(filename)
 
@@ -135,23 +201,23 @@ class ConfigDialog(tk.Toplevel):
         # Get the resolution value and convert it to the internal format
 
         self.result = {
-            'paths': {
-                'ffmpeg': pathlib.Path(self.ffmpeg_var.get()).expanduser(),
-                'slippi_playback': pathlib.Path(self.slippi_var.get()).expanduser(),
-                'ssbm_iso': pathlib.Path(self.iso_var.get()).expanduser(),
+            "paths": {
+                "ffmpeg": pathlib.Path(self.ffmpeg_var.get()).expanduser(),
+                "slippi_playback": pathlib.Path(self.slippi_var.get()).expanduser(),
+                "ssbm_iso": pathlib.Path(self.iso_var.get()).expanduser(),
             },
-            'dolphin': {
-                'backend': self.backend_var.get(),
-                'resolution': self.resolution_var.get(),
-                'bitrate': str(self.bitrate_var.get()),  # Convert to string
-                'volume': str(self.volume_var.get()),  # Convert to string
+            "dolphin": {
+                "backend": self.backend_var.get(),
+                "resolution": self.resolution_var.get(),
+                "bitrate": str(self.bitrate_var.get()),  # Convert to string
+                "volume": str(self.volume_var.get()),  # Convert to string
             },
-            'runtime': {
-                'parallel': str(self.parallel_var.get()),
+            "runtime": {
+                "parallel": str(self.parallel_var.get()),
             },
-            'ffmpeg': {
-                'audio_args': '-ar 48000 -c:a libopus -f opus -ac 2 -b:a 128k',
-            }
+            "ffmpeg": {
+                "audio_args": "-ar 48000 -c:a libopus -f opus -ac 2 -b:a 128k",
+            },
         }
         self.destroy()
 
@@ -199,64 +265,89 @@ class Slp2Mp4GUI:
     def create_widgets(self):
         # Mode selection frame
         mode_frame = ttk.LabelFrame(self.root, text="Conversion Mode", padding=10)
-        mode_frame.pack(fill='x', padx=10, pady=5)
+        mode_frame.pack(fill="x", padx=10, pady=5)
 
         self.mode_var = tk.StringVar(value="single")
         for mode in modes.MODES:
-            ttk.Radiobutton(mode_frame, text=mode, variable=self.mode_var, value=mode, command=self.update_input_section).pack(side='left', padx=5)
+            ttk.Radiobutton(
+                mode_frame,
+                text=mode,
+                variable=self.mode_var,
+                value=mode,
+                command=self.update_input_section,
+            ).pack(side="left", padx=5)
 
         # Input selection frame
         self.input_frame = ttk.LabelFrame(self.root, text="Input", padding=10)
-        self.input_frame.pack(fill='x', padx=10, pady=5)
+        self.input_frame.pack(fill="x", padx=10, pady=5)
 
         self.input_var = tk.StringVar()
-        self.input_entry = ttk.Entry(self.input_frame, textvariable=self.input_var, width=60)
-        self.input_entry.pack(side='left', padx=5, fill='x', expand=True)
+        self.input_entry = ttk.Entry(
+            self.input_frame, textvariable=self.input_var, width=60
+        )
+        self.input_entry.pack(side="left", padx=5, fill="x", expand=True)
 
-        self.browse_button = ttk.Button(self.input_frame, text="Browse", command=self.browse_input)
-        self.browse_button.pack(side='left', padx=5)
+        self.browse_button = ttk.Button(
+            self.input_frame, text="Browse", command=self.browse_input
+        )
+        self.browse_button.pack(side="left", padx=5)
 
         # Output selection frame
         output_frame = ttk.LabelFrame(self.root, text="Output Directory", padding=10)
-        output_frame.pack(fill='x', padx=10, pady=5)
+        output_frame.pack(fill="x", padx=10, pady=5)
 
         self.output_var = tk.StringVar(value=".")
         output_entry = ttk.Entry(output_frame, textvariable=self.output_var, width=60)
-        output_entry.pack(side='left', padx=5, fill='x', expand=True)
+        output_entry.pack(side="left", padx=5, fill="x", expand=True)
 
-        ttk.Button(output_frame, text="Browse", command=self.browse_output).pack(side='left', padx=5)
+        ttk.Button(output_frame, text="Browse", command=self.browse_output).pack(
+            side="left", padx=5
+        )
 
         # Options frame
         options_frame = ttk.LabelFrame(self.root, text="Options", padding=10)
-        options_frame.pack(fill='x', padx=10, pady=5)
+        options_frame.pack(fill="x", padx=10, pady=5)
 
         self.dry_run_var = tk.BooleanVar()
-        ttk.Checkbutton(options_frame, text="Dry Run (preview only)", variable=self.dry_run_var).pack(anchor='w')
+        ttk.Checkbutton(
+            options_frame, text="Dry Run (preview only)", variable=self.dry_run_var
+        ).pack(anchor="w")
 
         # Control buttons frame
         control_frame = ttk.Frame(self.root)
-        control_frame.pack(fill='x', padx=10, pady=10)
+        control_frame.pack(fill="x", padx=10, pady=10)
 
-        self.start_button = ttk.Button(control_frame, text="Start Conversion", command=self.start_conversion, style='Accent.TButton')
-        self.start_button.pack(side='left', padx=5)
+        self.start_button = ttk.Button(
+            control_frame,
+            text="Start Conversion",
+            command=self.start_conversion,
+            style="Accent.TButton",
+        )
+        self.start_button.pack(side="left", padx=5)
 
-        self.stop_button = ttk.Button(control_frame, text="Stop", command=self.stop_conversion, state='disabled')
-        self.stop_button.pack(side='left', padx=5)
+        self.stop_button = ttk.Button(
+            control_frame, text="Stop", command=self.stop_conversion, state="disabled"
+        )
+        self.stop_button.pack(side="left", padx=5)
 
         # Progress frame
         progress_frame = ttk.LabelFrame(self.root, text="Progress", padding=10)
-        progress_frame.pack(fill='both', expand=True, padx=10, pady=5)
+        progress_frame.pack(fill="both", expand=True, padx=10, pady=5)
 
         self.progress_var = tk.DoubleVar()
-        self.progress_bar = ttk.Progressbar(progress_frame, variable=self.progress_var, mode='indeterminate')
-        self.progress_bar.pack(fill='x', pady=5)
+        self.progress_bar = ttk.Progressbar(
+            progress_frame, variable=self.progress_var, mode="indeterminate"
+        )
+        self.progress_bar.pack(fill="x", pady=5)
 
         self.status_label = ttk.Label(progress_frame, text="Ready")
-        self.status_label.pack(anchor='w', pady=5)
+        self.status_label.pack(anchor="w", pady=5)
 
         # Output log
-        self.log_text = scrolledtext.ScrolledText(progress_frame, height=10, wrap=tk.WORD)
-        self.log_text.pack(fill='both', expand=True)
+        self.log_text = scrolledtext.ScrolledText(
+            progress_frame, height=10, wrap=tk.WORD
+        )
+        self.log_text.pack(fill="both", expand=True)
 
     def update_input_section(self):
         """Update input section based on selected mode"""
@@ -274,7 +365,7 @@ class Slp2Mp4GUI:
         if mode == "single":
             filename = filedialog.askopenfilename(
                 title="Select SLP file",
-                filetypes=[("Slippi files", "*.slp"), ("All files", "*.*")]
+                filetypes=[("Slippi files", "*.slp"), ("All files", "*.*")],
             )
             if filename:
                 self.input_var.set(filename)
@@ -296,7 +387,10 @@ class Slp2Mp4GUI:
             self.save_configuration()
 
     def show_about(self):
-        messagebox.showinfo("About", "slp2mp4 GUI\n\nA graphical interface for converting Slippi replay files to MP4 videos.")
+        messagebox.showinfo(
+            "About",
+            "slp2mp4 GUI\n\nA graphical interface for converting Slippi replay files to MP4 videos.",
+        )
 
     def load_configuration(self):
         """Load configuration from file or use defaults"""
@@ -308,25 +402,25 @@ class Slp2Mp4GUI:
         try:
             # Convert configuration to TOML-friendly format
             toml_config = {
-                'paths': {
-                    'ffmpeg': str(self.config['paths']['ffmpeg']),
-                    'slippi_playback': str(self.config['paths']['slippi_playback']),
-                    'ssbm_iso': str(self.config['paths']['ssbm_iso']),
+                "paths": {
+                    "ffmpeg": str(self.config["paths"]["ffmpeg"]),
+                    "slippi_playback": str(self.config["paths"]["slippi_playback"]),
+                    "ssbm_iso": str(self.config["paths"]["ssbm_iso"]),
                 },
-                'dolphin': {
-                    'backend': self.config['dolphin']['backend'],
-                    'resolution': self.config['dolphin']['resolution'],
-                    'bitrate': int(self.config['dolphin']['bitrate']),
-                    'volume': int(self.config['dolphin']['volume']),
+                "dolphin": {
+                    "backend": self.config["dolphin"]["backend"],
+                    "resolution": self.config["dolphin"]["resolution"],
+                    "bitrate": int(self.config["dolphin"]["bitrate"]),
+                    "volume": int(self.config["dolphin"]["volume"]),
                 },
-                'runtime': {
-                    'parallel': int(self.config['runtime']['parallel']),
+                "runtime": {
+                    "parallel": int(self.config["runtime"]["parallel"]),
                 },
-                'ffmpeg': {
-                    'audio_args': self.config['ffmpeg']['audio_args'],
+                "ffmpeg": {
+                    "audio_args": self.config["ffmpeg"]["audio_args"],
                 },
             }
-            with open(config_path, 'wb') as f:
+            with open(config_path, "wb") as f:
                 tomli_w.dump(toml_config, f)
             self.log("Configuration saved successfully")
         except Exception as e:
@@ -344,11 +438,16 @@ class Slp2Mp4GUI:
 
         # Check if paths exist in config
         if not self.config["paths"]["slippi_playback"]:
-            messagebox.showerror("Error", "Slippi Playback path not configured. Please configure in Settings.")
+            messagebox.showerror(
+                "Error",
+                "Slippi Playback path not configured. Please configure in Settings.",
+            )
             return False
 
         if not self.config["paths"]["ssbm_iso"]:
-            messagebox.showerror("Error", "SSBM ISO path not configured. Please configure in Settings.")
+            messagebox.showerror(
+                "Error", "SSBM ISO path not configured. Please configure in Settings."
+            )
             return False
 
         return True
@@ -358,8 +457,8 @@ class Slp2Mp4GUI:
             return
 
         # Disable controls
-        self.start_button.config(state='disabled')
-        self.stop_button.config(state='normal')
+        self.start_button.config(state="disabled")
+        self.stop_button.config(state="normal")
         self.progress_bar.start()
 
         # Clear log
@@ -372,7 +471,7 @@ class Slp2Mp4GUI:
     def stop_conversion(self):
         # TODO: Implement proper cancellation
         self.log("Stopping conversion...")
-        self.stop_button.config(state='disabled')
+        self.stop_button.config(state="disabled")
 
     def run_conversion(self):
         """Run the actual conversion process"""
@@ -381,18 +480,19 @@ class Slp2Mp4GUI:
             output_directory = pathlib.Path(self.output_var.get())
             dry_run = self.dry_run_var.get()
             mode = modes.MODES[self.mode_var.get()](paths, output_directory)
-            self.queue.put(('log', "Starting conversion..."))
+            self.queue.put(("log", "Starting conversion..."))
             output = mode.run(dry_run)
             if output:
-                self.queue.put(('log', "Dry run results:"))
-                self.queue.put(('log', output))
-            self.queue.put(('log', "\nConversion completed successfully!"))
+                self.queue.put(("log", "Dry run results:"))
+                self.queue.put(("log", output))
+            self.queue.put(("log", "\nConversion completed successfully!"))
         except Exception as e:
             import traceback
-            self.queue.put(('error', str(e)))
-            self.queue.put(('log', f"Full traceback:\n{traceback.format_exc()}"))
+
+            self.queue.put(("error", str(e)))
+            self.queue.put(("log", f"Full traceback:\n{traceback.format_exc()}"))
         finally:
-            self.queue.put(('done', None))
+            self.queue.put(("done", None))
 
     def process_queue(self):
         """Process messages from worker thread"""
@@ -400,15 +500,15 @@ class Slp2Mp4GUI:
             while True:
                 msg_type, msg_data = self.queue.get_nowait()
 
-                if msg_type == 'log':
+                if msg_type == "log":
                     self.log(msg_data)
-                elif msg_type == 'error':
+                elif msg_type == "error":
                     self.log(f"ERROR: {msg_data}")
                     messagebox.showerror("Conversion Error", msg_data)
-                elif msg_type == 'done':
+                elif msg_type == "done":
                     self.progress_bar.stop()
-                    self.start_button.config(state='normal')
-                    self.stop_button.config(state='disabled')
+                    self.start_button.config(state="normal")
+                    self.stop_button.config(state="disabled")
                     self.status_label.config(text="Ready")
 
         except queue.Empty:
@@ -421,12 +521,14 @@ class Slp2Mp4GUI:
         """Add message to log output"""
         self.log_text.insert(tk.END, message + "\n")
         self.log_text.see(tk.END)
-        self.status_label.config(text=message[:80] + "..." if len(message) > 80 else message)
+        self.status_label.config(
+            text=message[:80] + "..." if len(message) > 80 else message
+        )
 
 
 def main():
     # CRITICAL: Add multiprocessing freeze support for Windows executables
-    if getattr(sys, 'frozen', False):
+    if getattr(sys, "frozen", False):
         multiprocessing.freeze_support()
 
     # Set up dark theme if available

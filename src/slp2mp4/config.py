@@ -13,13 +13,7 @@ import slp2mp4.util as util
 DEFAULT_CONFIG_FILE = importlib.resources.files(slp2mp4).joinpath("defaults.toml")
 USER_CONFIG_FILE = pathlib.Path("~/.slp2mp4.toml").expanduser()
 
-RESOLUTIONS = {
-    "480p": "2",
-    "720p": "3",
-    "1080p": "5",
-    "1440p": "6",
-    "2160p": "8"
-}
+RESOLUTIONS = {"480p": "2", "720p": "3", "1080p": "5", "1440p": "6", "2160p": "8"}
 
 DOLPHIN_BACKENDS = ["OGL", "D3D", "D3D12", "Vulkan", "Software"]
 
@@ -94,25 +88,35 @@ def validate_config(conf):
     if not shutil.which(conf["paths"]["ffmpeg"]):
         raise RuntimeError(f"Could not find ffmpeg; path={conf['paths']['ffmpeg']}")
     if not pathlib.Path(conf["paths"]["slippi_playback"]).exists():
-        raise RuntimeError(f"Could not find slippi playback; path={conf['paths']['slippi_playback']}")
+        raise RuntimeError(
+            f"Could not find slippi playback; path={conf['paths']['slippi_playback']}"
+        )
     if not pathlib.Path(conf["paths"]["ssbm_iso"]).exists():
         raise RuntimeError(f"Could not find ssbm iso; path={conf['paths']['ssbm_iso']}")
 
     # Dolphin
     if conf["dolphin"]["backend"] not in DOLPHIN_BACKENDS:
-        raise RuntimeError(f"Invalid dolphin.backend '{conf['dolphin']['backend']}'; must be one of {DOLPHIN_BACKENDS}")
+        raise RuntimeError(
+            f"Invalid dolphin.backend '{conf['dolphin']['backend']}'; must be one of {DOLPHIN_BACKENDS}"
+        )
     if conf["dolphin"]["resolution"] not in RESOLUTIONS.keys():
-        raise RuntimeError(f"Invalid dolphin.resolution '{conf['dolphin']['resolution']}'; must be one of {list(RESOLUTIONS.keys())}")
+        raise RuntimeError(
+            f"Invalid dolphin.resolution '{conf['dolphin']['resolution']}'; must be one of {list(RESOLUTIONS.keys())}"
+        )
     try:
         int(str(conf["dolphin"]["bitrate"]))
     except ValueError:
-        raise RuntimeError(f"Invalid dolphin.bitrate '{conf['dolphin']['bitrate']}'; must be an integer")
+        raise RuntimeError(
+            f"Invalid dolphin.bitrate '{conf['dolphin']['bitrate']}'; must be an integer"
+        )
     try:
         volume = int(str(conf["dolphin"]["volume"]))
         if not (0 <= volume <= 100):
             raise ValueError
     except ValueError:
-        raise RuntimeError(f"Invalid dolphin.volume '{conf['dolphin']['volume']}'; must be an integer [0-100]")
+        raise RuntimeError(
+            f"Invalid dolphin.volume '{conf['dolphin']['volume']}'; must be an integer [0-100]"
+        )
 
     # Runtime
     max_cpus = _get_cpus()
@@ -121,4 +125,6 @@ def validate_config(conf):
         if not (0 <= cpus <= max_cpus):
             raise ValueError
     except ValueError:
-        raise RuntimeError(f"Invalid runtime.parallel '{conf['runtime']['parallel']}'; must be an integer [0-{max_cpus}]")
+        raise RuntimeError(
+            f"Invalid runtime.parallel '{conf['runtime']['parallel']}'; must be an integer [0-{max_cpus}]"
+        )

@@ -74,7 +74,9 @@ class DolphinRunner:
                 )
                 dolphin_args = util.flatten_arg_tuples(args)
                 try:
-                    proc = subprocess.Popen(args=dolphin_args, stdout=subprocess.PIPE, text=True)
+                    proc = subprocess.Popen(
+                        args=dolphin_args, stdout=subprocess.PIPE, text=True
+                    )
                     game_end_frame = -124
                     current_frame = -125
 
@@ -85,9 +87,13 @@ class DolphinRunner:
                         strip_line = line.rstrip()
 
                         if strip_line.startswith("[GAME_END_FRAME] "):
-                            game_end_frame = int(strip_line.removeprefix("[GAME_END_FRAME] "))
+                            game_end_frame = int(
+                                strip_line.removeprefix("[GAME_END_FRAME] ")
+                            )
                         elif strip_line.startswith("[CURRENT_FRAME] "):
-                            current_frame = int(strip_line.removeprefix("[CURRENT_FRAME] "))
+                            current_frame = int(
+                                strip_line.removeprefix("[CURRENT_FRAME] ")
+                            )
 
                         if current_frame >= game_end_frame:
                             break

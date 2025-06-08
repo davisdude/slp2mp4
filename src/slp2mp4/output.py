@@ -3,7 +3,8 @@
 import dataclasses
 import pathlib
 
+
 @dataclasses.dataclass
 class Output:
-    inputs: list[pathlib.Path] = dataclasses.field(default_factory=list) # slps
+    inputs: list[pathlib.Path] = dataclasses.field(default_factory=list)  # slps
     output: pathlib.Path = dataclasses.field(default=pathlib.Path("."))
