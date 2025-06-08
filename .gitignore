@@ -5,3 +5,4 @@ __pycache__
 *.spec
 build/
 dist/
+version.py

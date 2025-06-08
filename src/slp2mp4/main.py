@@ -2,6 +2,7 @@ import argparse
 import pathlib
 
 import slp2mp4.modes as modes
+import slp2mp4.version as version
 
 
 def get_parser():
@@ -25,6 +26,13 @@ def get_parser():
         help="Output videos to this directory",
     )
     parser.add_argument("-n", "--dry-run", action="store_true")
+    parser.add_argument(
+        "-v",
+        "--version",
+        action="version",
+        version=version.version,
+    )
+
     return parser
 
 

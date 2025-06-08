@@ -1,10 +1,9 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
 
 [project]
 name = "slp2mp4"
-version = "3.0.0"
 description = "Convert slippi replays to videos"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -20,6 +19,9 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = []
+dynamic = [
+    "version",
+]
 
 # TODO: Checks for tkinter / tcl
 [project.optional-dependencies]
@@ -27,14 +29,17 @@ gui = [
     "tomli-w",
 ]
 
-[tool.hatch.metadata]
-allow-direct-references = true
-
 [tool.hatch.build.targets.sdist]
 include = [
   "src/slp2mp4/*.py",
   "src/slp2mp4/*.toml",
 ]
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "src/slp2mp4/version.py"
 
 [project.urls]
 Homepage = "https://github.com/davisdude/slp2mp4"
