@@ -19,7 +19,6 @@ class ConfigDialog(tk.Toplevel):
     def __init__(self, parent, current_config):
         super().__init__(parent)
         self.title("slp2mp4 Configuration")
-        self.geometry("600x500")
         self.config = current_config.copy()
         self.result = None
 
@@ -257,7 +256,6 @@ class AboutDialog(tk.Toplevel):
     def __init__(self, parent):
         super().__init__(parent)
         self.title("About")
-        self.geometry("600x500")
 
         # Make dialog modal
         self.transient(parent)
@@ -321,7 +319,6 @@ class Slp2Mp4GUI:
     def __init__(self, root):
         self.root = root
         self.root.title("slp2mp4 GUI")
-        self.root.geometry("800x600")
 
         # Queue for thread communication
         self.queue = queue.Queue()
