@@ -83,7 +83,7 @@ slp2mp4 uses a configuration file system with sensible defaults. User configurat
 
 - `ffmpeg`: Path to FFmpeg executable
 - `slippi_playback`: Path to playback Slippi Dolphin executable
-- `ssbm_ini`: Path to your Melee ISO file
+- `ssbm_iso`: Path to your Melee ISO file
 
 #### Dolphin Settings
 
@@ -102,7 +102,7 @@ slp2mp4 uses a configuration file system with sensible defaults. User configurat
 [paths]
 ffmpeg = "ffmpeg"
 slippi_playback = "~/AppData/Roaming/Slippi Launcher/playback/Slippi Dolphin.exe"
-ssbm_ini = "~/Games/Melee.iso"
+ssbm_iso = "~/Games/Melee.iso"
 
 [dolphin]
 backend = "OGL"
@@ -120,7 +120,7 @@ or on Windows:
 [paths]
 ffmpeg = "C:/Users/user/Downloads/ffmpeg-2025-01-27-git-959b799c8d-essentials_build/bin/ffmpeg.exe"
 slippi_playback = "C:/Users/user/AppData/Roaming/Slippi Launcher/playback/Slippi Dolphin.exe"
-ssbm_ini = "C:/Users/user/Documents/iso/ssbm.iso"
+ssbm_iso = "C:/Users/user/Documents/iso/ssbm.iso"
 
 [dolphin]
 backend = "D3D"
@@ -145,7 +145,7 @@ parallel = 0
   replay file would have to be determined. I could try to determine if the user
   is running under WSL and convert the path if possible.
 
-    * Note to future self: `paths.ssbm_ini` must be the Windows file path (use
+    * Note to future self: `paths.ssbm_iso` must be the Windows file path (use
       `/` instead of `\`)
 
 * Currently using [`py-slippi`][py-slippi] instead of [`peppi-py`][peppi-py]

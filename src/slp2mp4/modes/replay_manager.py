@@ -1,69 +1,38 @@
-import argparse
 import atexit
-import os
 import pathlib
 import shutil
 import tempfile
 import zipfile
 
-from .directory import get_inputs_and_outputs
+import pathlib
+
+from slp2mp4.modes.mode import Mode
+from slp2mp4.output import Output
+from slp2mp4.modes.directory import Directory
+import slp2mp4.util as util
+
 
 # TODO: Use context.json to get names?
 
 
-def _recursively_unzip(zip_file, to_dir):
-    with zipfile.ZipFile(zip_file, "r") as zfile:
-        zfile.extractall(path=to_dir)
-    # Use os.walk instead of Path.walk() for Python 3.11 compatibility
-    for root, dirs, files in os.walk(to_dir):
-        root_path = pathlib.Path(root)
-        for file in files:
-            file_path = root_path / file
-            if zipfile.is_zipfile(file_path):
-                _recursively_unzip(file_path, root_path)
+def _recursive_extract(tmpdir, path):
+    newdir = tmpdir / path.stem
+    newdir.mkdir(parents=True, exist_ok=True)
+    if zipfile.is_zipfile(path):
+        with zipfile.ZipFile(path, "r") as zfile:
+            zfile.extractall(path=newdir)
+    for zfile in newdir.glob("*.zip"):
+        _recursive_extract(newdir, zfile)
 
 
-def run(conf, args):
-    if not args.path.exists():
-        raise FileNotFoundError(args.path.name)
-    if not args.path.is_dir() and zipfile.is_zipfile(args.path):
-        parent_name = args.path.resolve().absolute().parent.name
-        files = [args.path]
-    else:
-        parent_name = args.path.resolve().absolute().name
-        files = []
-        # Use os.walk instead of Path.walk() for Python 3.11 compatibility
-        for root, _, walk_files in os.walk(args.path):
-            root_path = pathlib.Path(root)
-            for file in walk_files:
-                path = root_path / file
-                if zipfile.is_zipfile(path):
-                    files.append(path)
-    # Create a temporary directory manually without the delete parameter
+def _extract(file):
     tmpdir = pathlib.Path(tempfile.mkdtemp())
-
-    # Register cleanup function
     atexit.register(shutil.rmtree, tmpdir)
-
-    try:
-        tmpdir_main = tmpdir / parent_name
-        tmpdir_main.mkdir()
-
-        for file in files:
-            _recursively_unzip(file, tmpdir_main / file.stem)
-
-        return get_inputs_and_outputs(tmpdir_main, tmpdir_main, args.output_directory)
-    except Exception:
-        # Clean up on error
-        shutil.rmtree(tmpdir)
-        raise
+    _recursive_extract(tmpdir, file)
+    return tmpdir
 
 
-
-def register(subparser):
-    parser = subparser.add_parser(
-        "replay_manager",
-        help="render and combine replay manager zips",
-    )
-    parser.add_argument("path", type=pathlib.Path)
-    parser.set_defaults(run=run)
+class ReplayManager(Directory):
+    def __init__(self, paths: list[pathlib.Path], output_directory: pathlib.Path):
+        self.paths = [_extract(path) for path in paths]
+        self.output_directory = output_directory

@@ -3,22 +3,13 @@ from tkinter import ttk, filedialog, messagebox, scrolledtext
 import threading
 import queue
 import pathlib
-import json
-import os
 import sys
-import subprocess
-from typing import Dict, List, Optional
-import configparser
 import multiprocessing
 
-# Add the src directory to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
-
 import slp2mp4.config as config
-import slp2mp4.modes.single as single_mode
-import slp2mp4.modes.directory as directory_mode
-import slp2mp4.modes.replay_manager as replay_manager_mode
-import slp2mp4.orchestrator as orchestrator
+import slp2mp4.modes as modes
+
+import tomli_w
 
 
 class ConfigDialog(tk.Toplevel):
@@ -81,13 +72,13 @@ class ConfigDialog(tk.Toplevel):
         # Video backend
         ttk.Label(dolphin_frame, text="Video Backend:").grid(row=0, column=0, sticky='w', padx=5, pady=5)
         self.backend_var = tk.StringVar()
-        backend_combo = ttk.Combobox(dolphin_frame, textvariable=self.backend_var, values=["OGL", "D3D", "D3D12", "Vulkan", "Software"], state='readonly')
+        backend_combo = ttk.Combobox(dolphin_frame, textvariable=self.backend_var, values=config.DOLPHIN_BACKENDS, state='readonly')
         backend_combo.grid(row=0, column=1, padx=5, pady=5)
 
         # Resolution
         ttk.Label(dolphin_frame, text="Resolution:").grid(row=1, column=0, sticky='w', padx=5, pady=5)
         self.resolution_var = tk.StringVar()
-        resolution_combo = ttk.Combobox(dolphin_frame, textvariable=self.resolution_var, values=["480p", "720p", "1080p", "1440p", "2160p"], state='readonly')
+        resolution_combo = ttk.Combobox(dolphin_frame, textvariable=self.resolution_var, values=config.RESOLUTIONS.keys(), state='readonly')
         resolution_combo.grid(row=1, column=1, padx=5, pady=5)
 
         # Bitrate
@@ -101,6 +92,8 @@ class ConfigDialog(tk.Toplevel):
         self.volume_var = tk.IntVar()
         volume_spin = ttk.Spinbox(dolphin_frame, from_=0, to=100, textvariable=self.volume_var, increment=1)
         volume_spin.grid(row=3, column=1, padx=5, pady=5)
+
+        # TODO: ffmpeg audio args
 
         # Runtime settings tab
         runtime_frame = ttk.Frame(notebook)
@@ -127,50 +120,34 @@ class ConfigDialog(tk.Toplevel):
 
     def load_config(self):
         """Load current configuration into dialog fields"""
-        # Reverse map resolution from internal format to display format
-        resolution_reverse_map = {"2": "480p", "3": "720p", "5": "1080p", "6": "1440p", "8": "2160p"}
 
-        self.ffmpeg_var.set(str(self.config.get('paths', {}).get('ffmpeg', 'ffmpeg')))
-        self.slippi_var.set(str(self.config.get('paths', {}).get('slippi_playback', '')))
-        self.iso_var.set(str(self.config.get('paths', {}).get('ssbm_ini', '')))
-        self.backend_var.set(self.config.get('dolphin', {}).get('backend', 'OGL'))
-
-        # Handle resolution conversion
-        res_value = str(self.config.get('dolphin', {}).get('resolution', '5'))
-        display_resolution = resolution_reverse_map.get(res_value, res_value)
-        # If it's already in display format (e.g. "1080p"), use it as is
-        if display_resolution in ["480p", "720p", "1080p", "1440p", "2160p"]:
-            self.resolution_var.set(display_resolution)
-        else:
-            self.resolution_var.set("1080p")  # Default
-
-        self.bitrate_var.set(int(self.config.get('dolphin', {}).get('bitrate', 16000)))
-        self.volume_var.set(int(self.config.get('dolphin', {}).get('volume', 25)))
-        self.parallel_var.set(self.config.get('runtime', {}).get('parallel', 0))
+        self.ffmpeg_var.set(str(self.config["paths"]["ffmpeg"]))
+        self.slippi_var.set(str(self.config["paths"]["slippi_playback"]))
+        self.iso_var.set(str(self.config["paths"]["ssbm_iso"]))
+        self.backend_var.set(self.config["dolphin"]["backend"])
+        self.resolution_var.set(self.config["dolphin"]["resolution"])
+        self.bitrate_var.set(int(self.config["dolphin"]["bitrate"]))
+        self.volume_var.set(int(self.config["dolphin"]["volume"]))
+        self.parallel_var.set(int(self.config["runtime"]["parallel"]))
 
     def save_config(self):
         """Save configuration and close dialog"""
         # Get the resolution value and convert it to the internal format
-        resolution_map = {"480p": "2", "720p": "3", "1080p": "5", "1440p": "6", "2160p": "8"}
-        resolution = self.resolution_var.get()
-
-        # Convert paths to pathlib.Path objects
-        import pathlib
 
         self.result = {
             'paths': {
                 'ffmpeg': pathlib.Path(self.ffmpeg_var.get()).expanduser(),
                 'slippi_playback': pathlib.Path(self.slippi_var.get()).expanduser(),
-                'ssbm_ini': pathlib.Path(self.iso_var.get()).expanduser(),
+                'ssbm_iso': pathlib.Path(self.iso_var.get()).expanduser(),
             },
             'dolphin': {
                 'backend': self.backend_var.get(),
-                'resolution': resolution_map.get(resolution, "5"),  # Default to 1080p
+                'resolution': self.resolution_var.get(),
                 'bitrate': str(self.bitrate_var.get()),  # Convert to string
                 'volume': str(self.volume_var.get()),  # Convert to string
             },
             'runtime': {
-                'parallel': self.parallel_var.get() if self.parallel_var.get() != 0 else os.cpu_count(),
+                'parallel': str(self.parallel_var.get()),
             },
             'ffmpeg': {
                 'audio_args': '-ar 48000 -c:a libopus -f opus -ac 2 -b:a 128k',
@@ -225,9 +202,8 @@ class Slp2Mp4GUI:
         mode_frame.pack(fill='x', padx=10, pady=5)
 
         self.mode_var = tk.StringVar(value="single")
-        ttk.Radiobutton(mode_frame, text="Single File", variable=self.mode_var, value="single", command=self.update_input_section).pack(side='left', padx=5)
-        ttk.Radiobutton(mode_frame, text="Directory", variable=self.mode_var, value="directory", command=self.update_input_section).pack(side='left', padx=5)
-        ttk.Radiobutton(mode_frame, text="Replay Manager", variable=self.mode_var, value="replay_manager", command=self.update_input_section).pack(side='left', padx=5)
+        for mode in modes.MODES:
+            ttk.Radiobutton(mode_frame, text=mode, variable=self.mode_var, value=mode, command=self.update_input_section).pack(side='left', padx=5)
 
         # Input selection frame
         self.input_frame = ttk.LabelFrame(self.root, text="Input", padding=10)
@@ -293,6 +269,7 @@ class Slp2Mp4GUI:
             self.input_frame.config(text="Replay Manager Zip/Directory")
 
     def browse_input(self):
+        # TODO: Multi-select? (Not sure what that'd look like for dir mode)
         mode = self.mode_var.get()
         if mode == "single":
             filename = filedialog.askopenfilename(
@@ -323,54 +300,27 @@ class Slp2Mp4GUI:
 
     def load_configuration(self):
         """Load configuration from file or use defaults"""
-        try:
-            # Try to load from slp2mp4's config loader
-            conf = config.get_config()
-            # Ensure bitrate is a string for INI file compatibility
-            if 'dolphin' in conf and 'bitrate' in conf['dolphin']:
-                conf['dolphin']['bitrate'] = str(conf['dolphin']['bitrate'])
-            return conf
-        except:
-            # Return default configuration
-            return {
-                'paths': {
-                    'ffmpeg': pathlib.Path('ffmpeg'),
-                    'slippi_playback': pathlib.Path(os.path.expanduser('~/AppData/Roaming/Slippi Launcher/playback/Slippi Dolphin.exe')),
-                    'ssbm_ini': pathlib.Path('')
-                },
-                'dolphin': {
-                    'backend': 'OGL',
-                    'resolution': '5',  # Internal format for 1080p
-                    'bitrate': '16000'  # Must be string
-                },
-                'runtime': {
-                    'parallel': os.cpu_count()
-                },
-                'ffmpeg': {
-                    'audio_args': '-ar 48000 -c:a libopus -f opus -ac 2 -b:a 128k'
-                }
-            }
+        return config.get_config()
 
     def save_configuration(self):
         """Save configuration to user config file"""
-        config_path = pathlib.Path("~/.slp2mp4.toml").expanduser()
+        config_path = pathlib.Path(config.USER_CONFIG_FILE).expanduser()
         try:
-            import tomli_w
             # Convert configuration to TOML-friendly format
             toml_config = {
                 'paths': {
                     'ffmpeg': str(self.config['paths']['ffmpeg']),
                     'slippi_playback': str(self.config['paths']['slippi_playback']),
-                    'ssbm_ini': str(self.config['paths']['ssbm_ini']),
+                    'ssbm_iso': str(self.config['paths']['ssbm_iso']),
                 },
                 'dolphin': {
                     'backend': self.config['dolphin']['backend'],
-                    'resolution': '1080p' if self.config['dolphin']['resolution'] == '5' else '720p',  # Convert back to friendly format
-                    'bitrate': int(self.config['dolphin']['bitrate']),  # Save as int in TOML
-                    'volume': int(self.config['dolphin']['volume']),  # Save as int in TOML
+                    'resolution': self.config['dolphin']['resolution'],
+                    'bitrate': int(self.config['dolphin']['bitrate']),
+                    'volume': int(self.config['dolphin']['volume']),
                 },
                 'runtime': {
-                    'parallel': 0 if self.config['runtime']['parallel'] == os.cpu_count() else self.config['runtime']['parallel'],
+                    'parallel': int(self.config['runtime']['parallel']),
                 },
                 'ffmpeg': {
                     'audio_args': self.config['ffmpeg']['audio_args'],
@@ -379,8 +329,6 @@ class Slp2Mp4GUI:
             with open(config_path, 'wb') as f:
                 tomli_w.dump(toml_config, f)
             self.log("Configuration saved successfully")
-        except ImportError:
-            self.log("Warning: tomli_w not installed, configuration not saved to file")
         except Exception as e:
             self.log(f"Error saving configuration: {e}")
 
@@ -395,11 +343,11 @@ class Slp2Mp4GUI:
             return False
 
         # Check if paths exist in config
-        if not self.config.get('paths', {}).get('slippi_playback'):
+        if not self.config["paths"]["slippi_playback"]:
             messagebox.showerror("Error", "Slippi Playback path not configured. Please configure in Settings.")
             return False
 
-        if not self.config.get('paths', {}).get('ssbm_ini'):
+        if not self.config["paths"]["ssbm_iso"]:
             messagebox.showerror("Error", "SSBM ISO path not configured. Please configure in Settings.")
             return False
 
@@ -429,44 +377,16 @@ class Slp2Mp4GUI:
     def run_conversion(self):
         """Run the actual conversion process"""
         try:
-            # Create args namespace to mimic command line args
-            class Args:
-                pass
-
-            args = Args()
-            args.path = pathlib.Path(self.input_var.get())
-            args.output_directory = pathlib.Path(self.output_var.get())
-            args.dry_run = self.dry_run_var.get()
-
-            mode = self.mode_var.get()
-
-            # Use the config directly - it's already been processed
-            conf = self.config
-
-            # Get inputs and outputs based on mode
-            if mode == "single":
-                products = single_mode.run(conf, args)
-            elif mode == "directory":
-                products = directory_mode.run(conf, args)
-            elif mode == "replay_manager":
-                products = replay_manager_mode.run(conf, args)
-
-            if args.dry_run:
-                # Show dry run results
+            paths = [pathlib.Path(self.input_var.get())]
+            output_directory = pathlib.Path(self.output_var.get())
+            dry_run = self.dry_run_var.get()
+            mode = modes.MODES[self.mode_var.get()](paths, output_directory)
+            self.queue.put(('log', "Starting conversion..."))
+            output = mode.run(dry_run)
+            if output:
                 self.queue.put(('log', "Dry run results:"))
-                for out_file, input_files in products.items():
-                    self.queue.put(('log', f"\n{out_file}:"))
-                    for i in input_files:
-                        self.queue.put(('log', f"  - {i}"))
-            else:
-                # Create output directory
-                os.makedirs(args.output_directory, exist_ok=True)
-
-                # Run orchestrator
-                self.queue.put(('log', "Starting conversion..."))
-                orchestrator.run(conf, products)
-                self.queue.put(('log', "\nConversion completed successfully!"))
-
+                self.queue.put(('log', output))
+            self.queue.put(('log', "\nConversion completed successfully!"))
         except Exception as e:
             import traceback
             self.queue.put(('error', str(e)))

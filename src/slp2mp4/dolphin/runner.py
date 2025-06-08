@@ -22,7 +22,7 @@ def _get_number_of_frames_rendered(frames_file: pathlib.Path) -> int:
 class DolphinRunner:
     def __init__(self, config):
         self.slippi_playback = config["paths"]["slippi_playback"]
-        self.ssbm_ini = config["paths"]["ssbm_ini"]
+        self.ssbm_iso = config["paths"]["ssbm_iso"]
         self.video_backend = config["dolphin"]["backend"]
         self.user_dolphin = {
             "DSP": {
@@ -50,7 +50,7 @@ class DolphinRunner:
                     (self.slippi_playback,),
                     (
                         "--exec",
-                        self.ssbm_ini,
+                        self.ssbm_iso,
                     ),
                     ("--batch",),
                     (

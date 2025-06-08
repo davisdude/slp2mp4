@@ -11,6 +11,7 @@ import tempfile
 
 import slp2mp4.ffmpeg as ffmpeg
 import slp2mp4.video as video
+from slp2mp4.output import Output
 
 
 def _render(conf, slp_queue, video_queue):
@@ -25,29 +26,30 @@ def _render(conf, slp_queue, video_queue):
         video_queue.put((output_name, slp_path, tmp.name))
 
 
-def _concat(conf, video_queue, inputs_and_outputs):
+def _concat(conf, video_queue, outputs):
     Ffmpeg = ffmpeg.FfmpegRunner(conf)
-    outputs = {}
+    mp4s = {}
     while True:
         data = video_queue.get()
         if data is None:
             break
         output_name, slp_path, mp4_path = data
-        if output_name not in outputs:
-            outputs[output_name] = {}
-        outputs[output_name][slp_path] = mp4_path
-        if len(outputs[output_name]) < len(inputs_and_outputs[output_name]):
+        if output_name not in mp4s:
+            mp4s[output_name] = {}
+        mp4s[output_name][slp_path] = mp4_path
+        output = list(filter(lambda o: o.output == output_name, outputs))[0]
+        if len(mp4s[output_name]) < len(output.inputs):
             continue
         tmpfiles = [
-            pathlib.Path(outputs[output_name][slp])
-            for slp in inputs_and_outputs[output_name]
+            pathlib.Path(mp4s[output_name][slp])
+            for slp in output.inputs
         ]
         Ffmpeg.concat_videos(tmpfiles, output_name)
         for tmp in tmpfiles:
             os.unlink(tmp)
 
 
-def run(conf, inputs_and_outputs):
+def run(conf, outputs: list[Output]):
     num_procs = conf["runtime"]["parallel"]
     slp_queue = multiprocessing.Queue()
     video_queue = multiprocessing.Queue()
@@ -66,15 +68,15 @@ def run(conf, inputs_and_outputs):
         (
             conf,
             video_queue,
-            inputs_and_outputs,
+            outputs,
         ),
     )
 
-    for output_name, input_names in inputs_and_outputs.items():
-        for slp in input_names:
+    for output in outputs:
+        for slp in output.inputs:
             slp_queue.put(
                 (
-                    output_name,
+                    output.output,
                     slp,
                 )
             )
