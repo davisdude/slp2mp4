@@ -152,20 +152,25 @@ class ConfigDialog(tk.Toplevel):
 
         # Runtime settings tab
         runtime_frame = ttk.Frame(notebook)
+        runtime_frame.pack(side="top", pady=5)
         notebook.add(runtime_frame, text="Runtime")
 
         # Parallel processes
-        ttk.Label(runtime_frame, text="Parallel Processes:").grid(
-            row=0, column=0, sticky="w", padx=5, pady=5
-        )
+        parallel_frame = ttk.Frame(runtime_frame)
+        parallel_frame.pack(side="top", pady=5)
+        ttk.Label(parallel_frame, text="Parallel Processes:").pack(side="left", padx=5)
         self.parallel_var = tk.IntVar()
-        ttk.Label(runtime_frame, text="(0 = auto-detect CPU cores)").grid(
-            row=0, column=2, sticky="w", padx=5, pady=5
-        )
         parallel_spin = ttk.Spinbox(
-            runtime_frame, from_=0, to=32, textvariable=self.parallel_var
+            parallel_frame,
+            from_=0,
+            to=32,
+            textvariable=self.parallel_var
         )
-        parallel_spin.grid(row=0, column=1, padx=5, pady=5)
+        parallel_spin.pack(side="left", padx=5)
+
+        parallel_info_frame = ttk.Frame(runtime_frame)
+        parallel_info_frame.pack(side="top", pady=5)
+        ttk.Label(parallel_info_frame, text="(0 = auto-detect CPU cores)").pack(side="left", padx=5)
 
         # Buttons
         button_frame = ttk.Frame(self)
@@ -269,9 +274,9 @@ class AboutDialog(tk.Toplevel):
         button_frame = ttk.Frame(self, padding=10)
         button_frame.pack(side="bottom", pady=10)
         ttk.Button(button_frame, text="Copy Version", command=self.copy_version).pack(
-            side="left"
+            side="left", padx=5
         )
-        ttk.Button(button_frame, text="Quit", command=self.destroy).pack(side="left")
+        ttk.Button(button_frame, text="Quit", command=self.destroy).pack(side="left", padx=5)
 
     def _get_version(self):
         return version.version
