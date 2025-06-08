@@ -212,24 +212,21 @@ class ConfigDialog(tk.Toplevel):
 
     def save_config(self):
         """Save configuration and close dialog"""
-        # Get the resolution value and convert it to the internal format
-        # TODO: Commonize this and save_configuration
-
         self.result = {
             "paths": {
-                "ffmpeg": pathlib.Path(self.ffmpeg_var.get()).expanduser(),
-                "slippi_playback": pathlib.Path(self.slippi_var.get()).expanduser(),
-                "ssbm_iso": pathlib.Path(self.iso_var.get()).expanduser(),
+                "ffmpeg": self.ffmpeg_var.get(),
+                "slippi_playback": self.slippi_var.get(),
+                "ssbm_iso": self.iso_var.get(),
             },
             "dolphin": {
                 "backend": self.backend_var.get(),
                 "resolution": self.resolution_var.get(),
-                "bitrate": str(self.bitrate_var.get()),  # Convert to string
-                "volume": str(self.volume_var.get()),  # Convert to string
+                "bitrate": self.bitrate_var.get(),
+                "volume": self.volume_var.get(),
             },
             "runtime": {
-                "parallel": str(self.parallel_var.get()),
-                "prepend_directory": bool(self.prepend_var.get()),
+                "parallel": self.parallel_var.get(),
+                "prepend_directory": self.prepend_var.get(),
             },
             "ffmpeg": {
                 "audio_args": "-ar 48000 -c:a libopus -f opus -ac 2 -b:a 128k",
@@ -478,29 +475,8 @@ class Slp2Mp4GUI:
         """Save configuration to user config file"""
         config_path = pathlib.Path(config.USER_CONFIG_FILE).expanduser()
         try:
-            # Convert configuration to TOML-friendly format
-            toml_config = {
-                "paths": {
-                    "ffmpeg": str(self.config["paths"]["ffmpeg"]),
-                    "slippi_playback": str(self.config["paths"]["slippi_playback"]),
-                    "ssbm_iso": str(self.config["paths"]["ssbm_iso"]),
-                },
-                "dolphin": {
-                    "backend": self.config["dolphin"]["backend"],
-                    "resolution": self.config["dolphin"]["resolution"],
-                    "bitrate": int(self.config["dolphin"]["bitrate"]),
-                    "volume": int(self.config["dolphin"]["volume"]),
-                },
-                "runtime": {
-                    "parallel": int(self.config["runtime"]["parallel"]),
-                    "prepend_directory": bool(self.config["runtime"]["prepend_directory"]),
-                },
-                "ffmpeg": {
-                    "audio_args": self.config["ffmpeg"]["audio_args"],
-                },
-            }
             with open(config_path, "wb") as f:
-                tomli_w.dump(toml_config, f)
+                tomli_w.dump(self.config, f)
             self.log("Configuration saved successfully")
         except Exception as e:
             self.log(f"Error saving configuration: {e}")
