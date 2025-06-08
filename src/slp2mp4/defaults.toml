@@ -15,3 +15,4 @@ audio_args = "-ar 48000 -c:a libopus -f opus -ac 2 -b:a 128k"
 [runtime]
 parallel = 0
 prepend_directory = true
+youtubify_names = true

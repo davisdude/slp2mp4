@@ -47,7 +47,6 @@ CONSTRUCTORS = {
     },
     "runtime": {
         "parallel": _parse_parallel,
-        "prepend_directory": bool,
     },
 }
 
@@ -134,4 +133,10 @@ def validate_config(conf):
     except ValueError:
         raise RuntimeError(
             f"Invalid runtime.prepend_directory '{conf['runtime']['prepend_directory']}'; must be true/false"
+        )
+    try:
+        bool(conf["runtime"]["youtubify_names"])
+    except ValueError:
+        raise RuntimeError(
+            f"Invalid runtime.youtubify_names '{conf['runtime']['youtubify_names']}'; must be true/false"
         )

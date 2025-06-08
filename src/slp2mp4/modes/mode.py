@@ -21,7 +21,12 @@ class Mode:
             parent_prefix = f"{parent_part}_" if path.parent != pathlib.Path(".") else ""
         else:
             parent_prefix = ""
-        return self.output_directory / f"{parent_prefix}{path.stem}.mp4"
+        name = f"{parent_prefix}{path.stem}.mp4"
+        if self.conf["runtime"]["youtubify_names"]:
+            name = name.replace("-", "—")
+            name = name.replace("(", "⟮")
+            name = name.replace(")", "⟯")
+        return self.output_directory / name
 
     def get_outputs(self) -> list[Output]:
         return [

@@ -179,6 +179,20 @@ class ConfigDialog(tk.Toplevel):
         prepend_box = ttk.Checkbutton(prepend_frame, variable=self.prepend_var)
         prepend_box.pack(side="left", padx=5)
 
+        # Youtubify names
+        youtubify_frame = ttk.Frame(runtime_frame)
+        youtubify_frame.pack(side="top", pady=5)
+        ttk.Label(youtubify_frame, text="Youtubify names?").pack(side="left", padx=5)
+        self.youtubify_var = tk.BooleanVar()
+        youtubify_box = ttk.Checkbutton(youtubify_frame, variable=self.youtubify_var)
+        youtubify_box.pack(side="left", padx=5)
+
+        youtubify_info_frame = ttk.Frame(runtime_frame)
+        youtubify_info_frame.pack(side="top", pady=5)
+        ttk.Label(youtubify_info_frame, text="Replace some characters in file names for YouTube uploads").pack(
+            side="left", padx=5
+        )
+
         # Buttons
         button_frame = ttk.Frame(self)
         button_frame.pack(side="bottom", pady=10)
@@ -209,6 +223,7 @@ class ConfigDialog(tk.Toplevel):
         self.volume_var.set(int(self.config["dolphin"]["volume"]))
         self.parallel_var.set(int(self.config["runtime"]["parallel"]))
         self.prepend_var.set(bool(self.config["runtime"]["prepend_directory"]))
+        self.youtubify_var.set(bool(self.config["runtime"]["youtubify_names"]))
 
     def save_config(self):
         """Save configuration and close dialog"""
@@ -227,6 +242,7 @@ class ConfigDialog(tk.Toplevel):
             "runtime": {
                 "parallel": self.parallel_var.get(),
                 "prepend_directory": self.prepend_var.get(),
+                "youtubify_names": self.youtubify_var.get(),
             },
             "ffmpeg": {
                 "audio_args": "-ar 48000 -c:a libopus -f opus -ac 2 -b:a 128k",
