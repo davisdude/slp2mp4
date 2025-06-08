@@ -18,7 +18,9 @@ class Mode:
     def get_name(self, path):
         if self.conf["runtime"]["prepend_directory"]:
             parent_part = ("_").join(path.parent.parts)
-            parent_prefix = f"{parent_part}_" if path.parent != pathlib.Path(".") else ""
+            parent_prefix = (
+                f"{parent_part}_" if path.parent != pathlib.Path(".") else ""
+            )
         else:
             parent_prefix = ""
         name = f"{parent_prefix}{path.stem}.mp4"

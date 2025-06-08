@@ -188,9 +188,10 @@ class ConfigDialog(tk.Toplevel):
 
         youtubify_info_frame = ttk.Frame(runtime_frame)
         youtubify_info_frame.pack(side="top", pady=5)
-        ttk.Label(youtubify_info_frame, text="Replace some characters in file names for YouTube uploads").pack(
-            side="left", padx=5
-        )
+        ttk.Label(
+            youtubify_info_frame,
+            text="Replace some characters in file names for YouTube uploads",
+        ).pack(side="left", padx=5)
 
         # Buttons
         button_frame = ttk.Frame(self)
