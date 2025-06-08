@@ -147,7 +147,21 @@ class ConfigDialog(tk.Toplevel):
         )
         volume_spin.grid(row=3, column=1, padx=5, pady=5)
 
-        # TODO: ffmpeg audio args
+        # FFmpeg settings tab
+        ffmpeg_frame = ttk.Frame(notebook)
+        ffmpeg_frame.pack(side="top", pady=5)
+        notebook.add(ffmpeg_frame, text="FFmpeg")
+
+        # FFmpeg audio args
+        ttk.Label(ffmpeg_frame, text="Audio args").grid(
+            row=0, column=0, sticky="w", padx=5, pady=5
+        )
+        self.ffmpeg_args_var = scrolledtext.ScrolledText(
+            ffmpeg_frame,
+            height=2,
+            wrap=tk.WORD,
+        )
+        self.ffmpeg_args_var.grid(row=1, column=0, padx=5, pady=5)
 
         # Runtime settings tab
         runtime_frame = ttk.Frame(notebook)
@@ -221,12 +235,15 @@ class ConfigDialog(tk.Toplevel):
         self.resolution_var.set(self.config["dolphin"]["resolution"])
         self.bitrate_var.set(int(self.config["dolphin"]["bitrate"]))
         self.volume_var.set(int(self.config["dolphin"]["volume"]))
+        self.ffmpeg_args_var.delete("1.0", tk.END)
+        self.ffmpeg_args_var.insert(tk.END, str(self.config["ffmpeg"]["audio_args"]))
         self.parallel_var.set(int(self.config["runtime"]["parallel"]))
         self.prepend_var.set(bool(self.config["runtime"]["prepend_directory"]))
         self.youtubify_var.set(bool(self.config["runtime"]["youtubify_names"]))
 
     def save_config(self):
         """Save configuration and close dialog"""
+        audio_args = self.ffmpeg_args_var.get("1.0", tk.END).replace("\n", "")
         self.result = {
             "paths": {
                 "ffmpeg": self.ffmpeg_var.get(),
@@ -239,13 +256,13 @@ class ConfigDialog(tk.Toplevel):
                 "bitrate": self.bitrate_var.get(),
                 "volume": self.volume_var.get(),
             },
+            "ffmpeg": {
+                "audio_args": audio_args,
+            },
             "runtime": {
                 "parallel": self.parallel_var.get(),
                 "prepend_directory": self.prepend_var.get(),
                 "youtubify_names": self.youtubify_var.get(),
-            },
-            "ffmpeg": {
-                "audio_args": "-ar 48000 -c:a libopus -f opus -ac 2 -b:a 128k",
             },
         }
         self.destroy()
