@@ -267,7 +267,7 @@ class Slp2Mp4GUI:
         mode_frame = ttk.LabelFrame(self.root, text="Conversion Mode", padding=10)
         mode_frame.pack(fill="x", padx=10, pady=5)
 
-        self.mode_var = tk.StringVar(value="single")
+        self.mode_var = tk.StringVar(value=list(modes.MODES.keys())[-1])
         for mode in modes.MODES:
             ttk.Radiobutton(
                 mode_frame,
@@ -280,6 +280,7 @@ class Slp2Mp4GUI:
         # Input selection frame
         self.input_frame = ttk.LabelFrame(self.root, text="Input", padding=10)
         self.input_frame.pack(fill="x", padx=10, pady=5)
+        self.update_input_section()  # Update title to default
 
         self.input_var = tk.StringVar()
         self.input_entry = ttk.Entry(
@@ -352,12 +353,9 @@ class Slp2Mp4GUI:
     def update_input_section(self):
         """Update input section based on selected mode"""
         mode = self.mode_var.get()
-        if mode == "single":
-            self.input_frame.config(text="Input File")
-        elif mode == "directory":
-            self.input_frame.config(text="Input Directory")
-        elif mode == "replay_manager":
-            self.input_frame.config(text="Replay Manager Zip/Directory")
+        words = modes.MODES[mode].description.split(" ")
+        words = (" ").join([words[0].title()] + words[1:])
+        self.input_frame.config(text=words)
 
     def browse_input(self):
         # TODO: Multi-select? (Not sure what that'd look like for dir mode)
@@ -479,12 +477,12 @@ class Slp2Mp4GUI:
             paths = [pathlib.Path(self.input_var.get())]
             output_directory = pathlib.Path(self.output_var.get())
             dry_run = self.dry_run_var.get()
-            mode = modes.MODES[self.mode_var.get()](paths, output_directory)
+            mode = modes.MODES[self.mode_var.get()].mode(paths, output_directory)
             self.queue.put(("log", "Starting conversion..."))
             output = mode.run(dry_run)
             if output:
                 self.queue.put(("log", "Dry run results:"))
-                self.queue.put(("log", output))
+                self.queue.put(("log", output.rstrip()))
             self.queue.put(("log", "\nConversion completed successfully!"))
         except Exception as e:
             import traceback

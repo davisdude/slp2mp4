@@ -8,30 +8,34 @@ import slp2mp4.version as version
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "mode",
-        choices=modes.MODES.keys(),
-        help="Run mode",
-    )
-    parser.add_argument(
-        "paths",
-        nargs="+",
-        help="Paths to convert",
-        type=pathlib.Path,
-    )
-    parser.add_argument(
         "-o",
         "--output-directory",
         type=pathlib.Path,
         default=".",
-        help="Output videos to this directory",
+        help="set path to output videos",
     )
-    parser.add_argument("-n", "--dry-run", action="store_true")
+    parser.add_argument(
+        "-n",
+        "--dry-run",
+        action="store_true",
+        help="show inputs and outputs and exit",
+    )
     parser.add_argument(
         "-v",
         "--version",
         action="version",
         version=version.version,
     )
+    subparser = parser.add_subparsers(title="mode", required=True)
+    for mode_name, mode in modes.MODES.items():
+        mode_parser = subparser.add_parser(mode_name, help=mode.help)
+        mode_parser.add_argument(
+            "paths",
+            nargs="+",
+            help=mode.description,
+            type=pathlib.Path,
+        )
+        mode_parser.set_defaults(run=mode.mode)
 
     return parser
 
@@ -39,7 +43,7 @@ def get_parser():
 def main():
     parser = get_parser()
     args = parser.parse_args()
-    mode = modes.MODES[args.mode](args.paths, args.output_directory)
+    mode = args.run(args.paths, args.output_directory)
     output = mode.run(args.dry_run)
     if output:
         print(output.rstrip())

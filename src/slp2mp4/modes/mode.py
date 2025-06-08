@@ -1,3 +1,4 @@
+import dataclasses
 import pathlib
 
 from slp2mp4.output import Output
@@ -40,3 +41,10 @@ class Mode:
         else:
             self.output_directory.mkdir(parents=True, exist_ok=True)
             orchestrator.run(conf, products)
+
+
+@dataclasses.dataclass
+class ModeContainer:
+    mode: Mode
+    help: str
+    description: str
