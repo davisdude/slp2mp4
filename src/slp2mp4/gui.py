@@ -8,6 +8,7 @@ import multiprocessing
 
 import slp2mp4.config as config
 import slp2mp4.modes as modes
+import slp2mp4.version as version
 
 import tomli_w
 
@@ -222,6 +223,70 @@ class ConfigDialog(tk.Toplevel):
         self.destroy()
 
 
+class AboutDialog(tk.Toplevel):
+    """Show about / version information"""
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.title("About")
+        self.geometry("600x500")
+
+        # Make dialog modal
+        self.transient(parent)
+        self.grab_set()
+
+        self.create_widgets()
+
+        # Center the dialog
+        self.update_idletasks()
+        x = (self.winfo_screenwidth() // 2) - (self.winfo_width() // 2)
+        y = (self.winfo_screenheight() // 2) - (self.winfo_height() // 2)
+        self.geometry(f"+{x}+{y}")
+
+    def create_widgets(self):
+        info_frame = ttk.LabelFrame(self, text="Info", padding=10)
+        info_frame.pack(fill="x", padx=10, pady=10)
+        info_text = scrolledtext.ScrolledText(
+            info_frame,
+            height=5,
+            wrap=tk.WORD,
+        )
+        info_text.insert(tk.END, self._get_info())
+        info_text["state"] = "disabled"
+        info_text.pack(side="left", padx=5)
+
+        version_frame = ttk.LabelFrame(self, text="Version", padding=10)
+        version_frame.pack(fill="x", padx=10, pady=10)
+        version_text = scrolledtext.ScrolledText(
+            version_frame,
+            height=1,
+            wrap=tk.WORD,
+        )
+        version_text.insert(tk.END, self._get_version())
+        version_text["state"] = "disabled"
+        version_text.pack(side="left", padx=5)
+
+        button_frame = ttk.Frame(self, padding=10)
+        button_frame.pack(side="bottom", pady=10)
+        ttk.Button(button_frame, text="Copy Version", command=self.copy_version).pack(
+            side="left"
+        )
+        ttk.Button(button_frame, text="Quit", command=self.destroy).pack(side="left")
+
+    def _get_version(self):
+        return version.version
+
+    def _get_info(self):
+        return (
+            "slp2mp4 GUI\n\n"
+            "A graphical interface for converting Slippi replay files to MP4 videos."
+        )
+
+    def copy_version(self):
+        self.clipboard_clear()
+        self.clipboard_append(self._get_version())
+
+
 class Slp2Mp4GUI:
     def __init__(self, root):
         self.root = root
@@ -385,10 +450,8 @@ class Slp2Mp4GUI:
             self.save_configuration()
 
     def show_about(self):
-        messagebox.showinfo(
-            "About",
-            "slp2mp4 GUI\n\nA graphical interface for converting Slippi replay files to MP4 videos.",
-        )
+        dialog = AboutDialog(self.root)
+        self.root.wait_window(dialog)
 
     def load_configuration(self):
         """Load configuration from file or use defaults"""
