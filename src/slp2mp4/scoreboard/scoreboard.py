@@ -39,8 +39,12 @@ class DrawtextContainer:
 
     # Assumes text will not overlap
     def get_args(self, x, y, fontcolor="white", fontsize="trunc(main_h/32)"):
+        # Make path safe for windows - replace \\ with / and replace C:\ with C:\\
+        path = self.textfile.name
+        relative = path.relative_to(anchor)
+        textfile_name = f"{anchor}/{relative.as_posix()}"
         settings = [
-            f"textfile={self.textfile.name}",
+            f"textfile={textfile_name}",
             "font=Mono",  # Makes wrapping easier / prettier
             f"fontcolor={fontcolor}",
             f"fontsize={fontsize}",
