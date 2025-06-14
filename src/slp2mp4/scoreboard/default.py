@@ -3,7 +3,7 @@ import textwrap
 from slp2mp4.scoreboard import scoreboard
 
 # Assumes drawtext.fontsize is default
-MAX_WIDTH = 30
+MAX_WIDTH = 28
 
 
 def _wrap_line(line):
@@ -19,6 +19,15 @@ def _wrap_lines(lines):
 
 # Assumes standard melee aspect ratio (73x60)
 class DefaultScoreboard(scoreboard.Scoreboard):
+    def __post_init__(self):
+        super().__post_init__()
+        self.drawtext_args = [
+            {
+                "x": "main_w/60",  # ~1 character's width
+                "y": "(main_h-text_h)/2",
+            }
+        ]
+
     def make_drawtexts(self):
         # TODO: Handle challonge / manual data
         tournament_data = _wrap_lines(
@@ -26,7 +35,7 @@ class DefaultScoreboard(scoreboard.Scoreboard):
                 self.context_data["startgg"]["tournament"]["name"],
                 self.context_data["startgg"]["tournament"]["location"],
                 self.context_data["startgg"]["event"]["name"],
-                f"{self.context_data['startgg']['set']['fullRoundText']} (BO{self.context_data['bestOf']})",
+                f"{self.context_data['startgg']['set']['fullRoundText']} (Bo{self.context_data['bestOf']})",
             ]
         )
         name_data = _wrap_lines(

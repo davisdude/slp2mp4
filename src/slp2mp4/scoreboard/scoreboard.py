@@ -23,7 +23,6 @@ def _remove_invalid_utf8(line):
     return bytes(line, "utf-8").decode("utf-8", "ignore")
 
 
-# TODO: Support x, y, w, h, alignment, etc.
 @dataclasses.dataclass
 class DrawtextContainer:
     lines: list[str] = dataclasses.field(default_factory=list)
@@ -35,13 +34,14 @@ class DrawtextContainer:
         self.textfile.flush()
 
     # Assumes text will not overlap
-    def get_args(self, fontcolor="white", fontsize="trunc(main_h/32)"):
+    def get_args(self, x, y, fontcolor="white", fontsize="trunc(main_h/32)"):
         settings = [
             f"textfile={self.textfile.name}",
             "font=Mono",  # Makes wrapping easier / prettier
             f"fontcolor={fontcolor}",
             f"fontsize={fontsize}",
-            f"y=(main_h-text_h)/2",
+            f"x={x}",
+            f"y={y}",
         ]
         return f"drawtext={(':').join(settings)}"
 
@@ -68,7 +68,7 @@ class Scoreboard:
     output_video_path: pathlib.Path
     game_index: int
     pad_args: dict = dataclasses.field(default_factory=dict)
-    drawtext_args: dict = dataclasses.field(default_factory=dict)
+    drawtext_args: list[dict] = dataclasses.field(default_factory=list)
     context_data: dict = dataclasses.field(init=False)
     Ffmpeg: ffmpeg.FfmpegRunner = dataclasses.field(init=False, default=None)
 
@@ -85,7 +85,8 @@ class Scoreboard:
         pad_args = _get_pad_args(**self.pad_args)
         with drawtext_manager(drawtexts) as drawtexts:
             drawtext_args = tuple(
-                drawtext.get_args(**self.drawtext_args) for drawtext in drawtexts
+                drawtext.get_args(**args)
+                for drawtext, args in zip(drawtexts, self.drawtext_args)
             )
             vf_args = (",").join(pad_args + drawtext_args)
             args = (
