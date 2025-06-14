@@ -7,7 +7,7 @@ import slp2mp4.util as util
 
 class Directory(Mode):
     def __init__(self, paths, *args, **kwargs):
-        super().__init__(paths, *args, **kwargs)
+        super().__init__(paths, *args, **kwargs, supports_scoreboard=True)
         self.lookups = {}
         self.paths = self._extract_helper(paths)
 
@@ -34,8 +34,11 @@ class Directory(Mode):
     def _add_slps(self, location, path):
         slps = list(sorted(path.glob("*.slp"), key=util.natsort))
         if len(slps) > 0:
+            context_path = path / "context.json"
+            context = context_path if context_path.exists() else None
             self.lookups[location] = (
                 slps,
                 location.parent,
                 pathlib.Path(location.name),
+                context,
             )

@@ -9,10 +9,11 @@ import pathvalidate
 
 
 class Mode:
-    def __init__(self, paths: list[pathlib.Path], output_directory: pathlib.Path):
+    def __init__(self, paths: list[pathlib.Path], output_directory: pathlib.Path, supports_scoreboard=False):
         self.paths = paths
         self.output_directory = output_directory
         self.conf = None
+        self.supports_scoreboard = supports_scoreboard
 
     def iterator(self, location, path):
         raise NotImplementedError("Child must implement `iterator`")
@@ -39,9 +40,9 @@ class Mode:
 
     def get_outputs(self) -> list[Output]:
         return [
-            Output(slps, self.get_name(prefix, mp4))
+            Output(slps, self.get_name(prefix, mp4), context)
             for path in self.paths
-            for slps, prefix, mp4 in self.iterator(pathlib.Path("."), path)
+            for slps, prefix, mp4, context in self.iterator(pathlib.Path("."), path)
         ]
 
     def run(self, dry_run=False):
@@ -54,6 +55,8 @@ class Mode:
                 out += f"{output.output}\n"
                 for i in output.inputs:
                     out += f"\t{i}\n"
+                if output.context:
+                    out += f"\tcontext: {output.context}\n"
             return out
         else:
             self.output_directory.mkdir(parents=True, exist_ok=True)
