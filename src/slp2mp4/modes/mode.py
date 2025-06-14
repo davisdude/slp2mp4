@@ -13,12 +13,10 @@ class Mode:
         self,
         paths: list[pathlib.Path],
         output_directory: pathlib.Path,
-        supports_scoreboard=False,
     ):
         self.paths = paths
         self.output_directory = output_directory
         self.conf = None
-        self.supports_scoreboard = supports_scoreboard
 
     def iterator(self, location, path):
         raise NotImplementedError("Child must implement `iterator`")

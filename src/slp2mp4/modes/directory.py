@@ -7,7 +7,7 @@ import slp2mp4.util as util
 
 class Directory(Mode):
     def __init__(self, paths, *args, **kwargs):
-        super().__init__(paths, *args, **kwargs, supports_scoreboard=True)
+        super().__init__(paths, *args, **kwargs)
         self.lookups = {}
         self.paths = self._extract_helper(paths)
 
