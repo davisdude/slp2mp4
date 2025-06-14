@@ -43,8 +43,8 @@ class DrawtextContainer:
         path = pathlib.Path(self.textfile.name)
         anchor = path.anchor
         relative = path.relative_to(anchor)
-        slash = chr(92) + ':'  # Pyinstaller doesn't like \: on Windows...
-        textfile_name = f"{anchor.replace(':\\', replace)}/{relative.as_posix()}"
+        slash = chr(92)  # Pyinstaller doesn't like \ on Windows...
+        textfile_name = f"{anchor.replace(f':{slash}', f'{slash}:')}/{relative.as_posix()}"
         settings = [
             f"textfile={textfile_name}",
             "font=Mono",  # Makes wrapping easier / prettier
