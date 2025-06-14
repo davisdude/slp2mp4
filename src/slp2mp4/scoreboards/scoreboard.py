@@ -2,6 +2,7 @@ import contextlib
 import dataclasses
 import io
 import json
+import os
 import pathlib
 import tempfile
 
@@ -40,7 +41,7 @@ class DrawtextContainer:
     # Assumes text will not overlap
     def get_args(self, x, y, fontcolor="white", fontsize="trunc(main_h/32)"):
         settings = [
-            f"textfile={self.textfile.name}",
+            f"textfile={self.textfile.name.replace(':', '\\:').replace(os.sep, '/')}",
             "font=Mono",  # Makes wrapping easier / prettier
             f"fontcolor={fontcolor}",
             f"fontsize={fontsize}",

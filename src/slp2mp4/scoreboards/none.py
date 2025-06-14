@@ -1,9 +1,9 @@
 import contextlib
 
-from slp2mp4.scoreboard import scoreboard
+from slp2mp4.scoreboards.scoreboard import Scoreboard
 
 
-class NoneScoreboard(scoreboard.Scoreboard):
+class NoneScoreboard(Scoreboard):
     @contextlib.contextmanager
     def get_args(self):
         try:

@@ -1,6 +1,6 @@
 import textwrap
 
-from slp2mp4.scoreboard import scoreboard
+from slp2mp4.scoreboards.scoreboard import Scoreboard
 
 # Assumes drawtext.fontsize is default
 MAX_WIDTH = 28
@@ -18,7 +18,7 @@ def _wrap_lines(lines):
 
 
 # Assumes standard melee aspect ratio (73x60)
-class DefaultScoreboard(scoreboard.Scoreboard):
+class DefaultScoreboard(Scoreboard):
     def __post_init__(self):
         super().__post_init__()
         self.pad_args = {

@@ -9,7 +9,7 @@ import typing
 
 import slp2mp4
 import slp2mp4.util as util
-import slp2mp4.scoreboard as scoreboard
+import slp2mp4.scoreboards as scoreboards
 
 DEFAULT_CONFIG_FILE = importlib.resources.files(slp2mp4).joinpath("defaults.toml")
 USER_CONFIG_FILE = pathlib.Path("~/.slp2mp4.toml").expanduser()
@@ -86,7 +86,7 @@ def _parse_resolution(resolution):
 
 
 def _parse_scoreboard_type(sb_type):
-    return _parse_from_dict(sb_type, scoreboard.SCOREBOARDS)
+    return _parse_from_dict(sb_type, scoreboards.SCOREBOARDS)
 
 
 def _parse_parallel(parallel):
