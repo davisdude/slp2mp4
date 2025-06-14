@@ -29,7 +29,7 @@ jobs:
 
       - name: Run pyinstaller
         run: |
-          pyinstaller --name ${{ matrix.name }} --add-data "src/slp2mp4/defaults.toml:slp2mp4/" --onefile ${{ matrix.script }}
+          pyinstaller --name ${{ matrix.name }} --add-data "src/slp2mp4/defaults.toml:slp2mp4/" ${{ matrix.script }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
