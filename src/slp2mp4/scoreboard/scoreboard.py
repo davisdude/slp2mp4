@@ -38,6 +38,7 @@ class DrawtextContainer:
     def get_args(self, fontcolor="white", fontsize="trunc(main_h/32)"):
         settings = [
             f"textfile={self.textfile.name}",
+            "font=Mono",  # Makes wrapping easier / prettier
             f"fontcolor={fontcolor}",
             f"fontsize={fontsize}",
             f"y=(main_h-text_h)/2",
