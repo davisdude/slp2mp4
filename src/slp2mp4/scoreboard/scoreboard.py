@@ -41,6 +41,7 @@ class DrawtextContainer:
     def get_args(self, x, y, fontcolor="white", fontsize="trunc(main_h/32)"):
         # Make path safe for windows - replace \\ with / and replace C:\ with C:\\
         path = pathlib.Path(self.textfile.name)
+        anchor = path.anchor
         relative = path.relative_to(anchor)
         textfile_name = f"{anchor}/{relative.as_posix()}"
         settings = [
