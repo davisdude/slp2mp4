@@ -14,7 +14,7 @@ class FfmpegRunner:
         self.ffmpeg_path = config["paths"]["ffmpeg"]
         self.audio_args = shlex.split(config["ffmpeg"]["audio_args"])
 
-    def _run(self, args):
+    def run(self, args):
         ffmpeg_args = [self.ffmpeg_path] + util.flatten_arg_tuples(args)
         subprocess.run(ffmpeg_args, check=True)
 
@@ -33,7 +33,7 @@ class FfmpegRunner:
             ),
             (reencoded_path,),
         )
-        self._run(args)
+        self.run(args)
         return reencoded_path
 
     # Assumes output file can handle no reencoding for concat
@@ -73,7 +73,7 @@ class FfmpegRunner:
             ("-xerror",),
             (output_file,),
         )
-        self._run(args)
+        self.run(args)
 
     # Assumes all videos have the same encoding
     def concat_videos(self, videos: [pathlib.Path], output_file: pathlib.Path):
@@ -104,4 +104,4 @@ class FfmpegRunner:
                     ("-xerror",),
                     (output_file,),
                 )
-                self._run(args)
+                self.run(args)
