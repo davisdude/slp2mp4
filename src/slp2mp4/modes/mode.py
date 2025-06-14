@@ -9,7 +9,12 @@ import pathvalidate
 
 
 class Mode:
-    def __init__(self, paths: list[pathlib.Path], output_directory: pathlib.Path, supports_scoreboard=False):
+    def __init__(
+        self,
+        paths: list[pathlib.Path],
+        output_directory: pathlib.Path,
+        supports_scoreboard=False,
+    ):
         self.paths = paths
         self.output_directory = output_directory
         self.conf = None

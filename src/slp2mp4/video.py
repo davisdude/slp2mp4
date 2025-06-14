@@ -20,7 +20,13 @@ def _no_context():
 
 # Returns True if the render succeeded, False otherwise
 # output_path must be a container that requires no reencoding, e.g. mkv
-def render(conf, slp_path: pathlib.Path, output_path: pathlib.Path, context: pathlib.Path, index):
+def render(
+    conf,
+    slp_path: pathlib.Path,
+    output_path: pathlib.Path,
+    context: pathlib.Path,
+    index,
+):
     Ffmpeg = ffmpeg.FfmpegRunner(conf)
     Dolphin = dolphin_runner.DolphinRunner(conf)
     if context:
