@@ -60,6 +60,7 @@ class Mode:
                     out += f"\t{i}\n"
                 if output.context:
                     out += f"\tcontext: {output.context}\n"
+                out += "\n"
             return out
         else:
             self.output_directory.mkdir(parents=True, exist_ok=True)

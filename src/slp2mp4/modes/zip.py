@@ -18,7 +18,7 @@ def _make_tmpdir():
     return pathlib.Path(tmpdir)
 
 
-class ReplayManager(Directory):
+class Zip(Directory):
     def _recursive_find(self, location, path, fromzip=False):
         if zipfile.is_zipfile(path):
             tmpdir = _make_tmpdir()
