@@ -9,7 +9,7 @@ import multiprocessing
 import slp2mp4.config as config
 import slp2mp4.modes as modes
 import slp2mp4.version as version
-import slp2mp4.scoreboards as scoreboards
+import slp2mp4.scoreboard as scoreboard
 
 import tomli_w
 
@@ -225,7 +225,7 @@ class ConfigDialog(tk.Toplevel):
         scoreboard_type_combo = ttk.Combobox(
             scoreboard_frame,
             textvariable=self.scoreboard_type_var,
-            values=list(scoreboards.SCOREBOARDS.keys()),
+            values=list(scoreboard.SCOREBOARDS.keys()),
             state="readonly",
         )
         scoreboard_type_combo.grid(row=0, column=1, padx=5, pady=5)
