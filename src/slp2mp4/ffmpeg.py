@@ -43,7 +43,10 @@ class FfmpegRunner:
         audio_file: pathlib.Path,
         video_file: pathlib.Path,
         output_file: pathlib.Path,
+        video_filter: tuple[str],
     ):
+        copy_args = ("-c:v", "copy")
+        video_args = video_filter or copy_args
         args = (
             ("-y",),
             (
@@ -58,10 +61,7 @@ class FfmpegRunner:
                 "-c:a",
                 "copy",
             ),
-            (
-                "-c:v",
-                "copy",
-            ),
+            video_args,
             (
                 "-b:v",
                 "7500k",  # TODO follow setting

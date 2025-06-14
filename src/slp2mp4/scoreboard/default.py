@@ -21,6 +21,9 @@ def _wrap_lines(lines):
 class DefaultScoreboard(scoreboard.Scoreboard):
     def __post_init__(self):
         super().__post_init__()
+        self.pad_args = {
+            "align": "right",
+        }
         self.drawtext_args = [
             {
                 "x": "main_w/60",  # ~1 character's width

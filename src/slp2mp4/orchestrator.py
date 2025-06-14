@@ -18,11 +18,11 @@ def _render(conf, slp_queue, video_queue):
         data = slp_queue.get()
         if data is None:
             break
-        output_name, slp_path = data
+        output_name, slp_path, context, index = data
         tmp = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False)
-        video.render(conf, slp_path, pathlib.Path(tmp.name))
+        video.render(conf, slp_path, pathlib.Path(tmp.name), context, index)
         tmp.close()
-        video_queue.put((output_name, slp_path, tmp.name))
+        video_queue.put((output_name, tmp.name, index))
 
 
 def _concat(conf, video_queue, outputs):
@@ -32,17 +32,17 @@ def _concat(conf, video_queue, outputs):
         data = video_queue.get()
         if data is None:
             break
-        output_name, slp_path, mp4_path = data
+        output_name, mp4_path, index = data
         if output_name not in mp4s:
             mp4s[output_name] = {}
-        mp4s[output_name][slp_path] = mp4_path
+        mp4s[output_name][index] = mp4_path
         output = list(filter(lambda o: o.output == output_name, outputs))[0]
         if len(mp4s[output_name]) < len(output.inputs):
             continue
-        tmpfiles = [pathlib.Path(mp4s[output_name][slp]) for slp in output.inputs]
+        tmpfiles = [pathlib.Path(mp4s[output_name][index]) for index in range(len(output.inputs))]
         Ffmpeg.concat_videos(tmpfiles, output_name)
         for tmp in tmpfiles:
-            pathlib.Path(tmp).unlink()
+            tmp.unlink()
 
 
 def run(conf, outputs: list[Output]):
@@ -69,11 +69,13 @@ def run(conf, outputs: list[Output]):
     )
 
     for output in outputs:
-        for slp in output.inputs:
+        for index, slp in enumerate(output.inputs):
             slp_queue.put(
                 (
                     output.output,
                     slp,
+                    output.context,
+                    index,
                 )
             )
 

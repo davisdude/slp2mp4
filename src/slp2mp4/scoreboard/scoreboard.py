@@ -62,47 +62,33 @@ def drawtext_manager(drawtexts: list[DrawtextContainer]):
 
 @dataclasses.dataclass
 class Scoreboard:
-    conf: dict
-    gameplay_video_path: pathlib.Path
     context_json_path: pathlib.Path
-    output_video_path: pathlib.Path
     game_index: int
     pad_args: dict = dataclasses.field(default_factory=dict)
     drawtext_args: list[dict] = dataclasses.field(default_factory=list)
     context_data: dict = dataclasses.field(init=False)
-    Ffmpeg: ffmpeg.FfmpegRunner = dataclasses.field(init=False, default=None)
 
     def __post_init__(self):
-        self.Ffmpeg = ffmpeg.FfmpegRunner(self.conf)
         with open(self.context_json_path) as json_data:
             self.context_data = json.load(json_data)
 
     def make_drawtexts(self) -> list[DrawtextContainer]:
         raise NotImplementedError
 
-    def render(self):
-        drawtexts = self.make_drawtexts()
-        pad_args = _get_pad_args(**self.pad_args)
-        with drawtext_manager(drawtexts) as drawtexts:
-            drawtext_args = tuple(
-                drawtext.get_args(**args)
-                for drawtext, args in zip(drawtexts, self.drawtext_args)
-            )
-            vf_args = (",").join(pad_args + drawtext_args)
-            args = (
-                ("-y",),
-                (
-                    "-i",
-                    self.gameplay_video_path,
-                ),
-                (
-                    "-vf",
-                    vf_args,
-                ),
-                ("-xerror",),
-                (self.output_video_path,),
-            )
-            self.Ffmpeg.run(args)
+    @contextlib.contextmanager
+    def get_args(self):
+        try:
+            drawtexts = self.make_drawtexts()
+            pad_args = _get_pad_args(**self.pad_args)
+            with drawtext_manager(drawtexts) as drawtexts:
+                drawtext_args = tuple(
+                    drawtext.get_args(**args)
+                    for drawtext, args in zip(drawtexts, self.drawtext_args)
+                )
+                vf_args = (",").join(pad_args + drawtext_args)
+                yield ("-vf", vf_args)
+        finally:
+            pass
 
 
 def _get_name(name, prefixes, pronouns, ports, is_singles=True):
