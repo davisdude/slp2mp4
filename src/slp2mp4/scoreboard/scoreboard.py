@@ -43,7 +43,7 @@ class DrawtextContainer:
         path = pathlib.Path(self.textfile.name)
         anchor = path.anchor
         relative = path.relative_to(anchor)
-        textfile_name = f"{anchor}/{relative.as_posix()}"
+        textfile_name = f"{anchor.replace(':\\', '\\:')}/{relative.as_posix()}"
         settings = [
             f"textfile={textfile_name}",
             "font=Mono",  # Makes wrapping easier / prettier
