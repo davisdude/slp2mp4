@@ -40,11 +40,11 @@ class DrawtextContainer:
     # Assumes text will not overlap
     def get_args(self, x, y, fontcolor="white", fontsize="trunc(main_h/32)"):
         # Make path safe for windows - replace \\ with / and replace C:\ with C:\\
-        path = pathlib.Path(self.textfile.name).as_posix()
+        path = pathlib.Path(self.textfile.name)
         anchor = path.anchor
         relative = path.relative_to(anchor)
-        replace = chr(92) + ':'
-        textfile_name = f"{anchor.replace(':/', replace)}/{relative}"
+        slash = chr(92) + ':'  # Pyinstaller doesn't like \: on Windows...
+        textfile_name = f"{anchor.replace(':\\', replace)}/{relative.as_posix()}"
         settings = [
             f"textfile={textfile_name}",
             "font=Mono",  # Makes wrapping easier / prettier
