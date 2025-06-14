@@ -13,6 +13,20 @@ Convert Slippi replay files (`.slp`) to video files (`.mp4`) with ease.
 - Customizable output resolution and bitrate
 - Cross-platform support for Windows, Linux
     - Dolphin on Mac does not support framedumping
+- Automatically generate scoreboards for sets with `context.json` files
+
+### Scoreboard
+
+`slp2mp4` will generate a scoreboard and overlay it on your video if a
+`context.json` (from [replay-manager][replay-manager]) file is found for a
+group of replays.
+
+Notes:
+
+- Adding scoreboards can be slow and CPU-intensive
+- Scoreboards are only generated for directory-based run modes
+- Scoreboards will not be generated if a `context.json` file is not found
+- Currently, only sets reported with startgg data are supported
 
 ## Requirements
 
@@ -106,6 +120,10 @@ The default settings can be found [here][default-settings].
 - `prepend_directory`: Prepend the parent directory info
 - `youtubify_names`: Replace some characters in file names for YouTube uploads
 
+#### Scoreboard Settings
+
+- `type`: Name of scoreboard to use (`none`, `default`)
+
 ### Example Configuration
 
 ```toml
@@ -148,11 +166,28 @@ parallel = 0
 
 ## Notes
 
-* If you get weird looking video (where half the width is cropped), try
+- The resolutions listed are approximate; Dolphin will not normally output
+  images that are exactly 1080p, for instance. By default, we choose the first
+  dolphin setting that will *exceed* the desired height. This means that the
+  videos will be slightly larger than you expect.
+
+    - For instance, if you render a video at 1080p, the output video will
+      actually be 1605x1320
+
+    - **NOTE**: Videos *are* scaled down to the desired resolution when adding
+      the scoreboard. There are two reasons for this:
+
+        - Avoiding scaling in the non-scoreboard case avoids re-encoding the
+          video
+
+        - Adding the scoreboard requires re-encoding anyways. Scaling down the
+          video reduces render times by ~30 seconds on average.
+
+- If you get weird looking video (where half the width is cropped), try
   changing the video backend (see `backend` in [dolphin
   settings](#dolphin-settings) for possible options).
 
-* Does not play nicely with WSL, since dolphin expects all paths to be relative
+- Does not play nicely with WSL, since dolphin expects all paths to be relative
   to Windows.
 
 ## License
