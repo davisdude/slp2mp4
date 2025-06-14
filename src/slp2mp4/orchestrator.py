@@ -4,7 +4,6 @@
 #   2. The "concat" thread, which contatenates frame-dumps into a single mp4
 
 import multiprocessing
-import os
 import pathlib
 import queue
 import tempfile
@@ -43,7 +42,7 @@ def _concat(conf, video_queue, outputs):
         tmpfiles = [pathlib.Path(mp4s[output_name][slp]) for slp in output.inputs]
         Ffmpeg.concat_videos(tmpfiles, output_name)
         for tmp in tmpfiles:
-            os.unlink(tmp)
+            pathlib.Path(tmp).unlink()
 
 
 def run(conf, outputs: list[Output]):
