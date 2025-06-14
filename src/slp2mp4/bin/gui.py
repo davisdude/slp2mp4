@@ -9,6 +9,7 @@ import multiprocessing
 import slp2mp4.config as config
 import slp2mp4.modes as modes
 import slp2mp4.version as version
+import slp2mp4.scoreboard as scoreboard
 
 import tomli_w
 
@@ -211,6 +212,24 @@ class ConfigDialog(tk.Toplevel):
             text="Replace some characters in file names for YouTube uploads",
         ).pack(side="left", padx=5)
 
+        # Scoreboard settings tab
+        scoreboard_frame = ttk.Frame(notebook)
+        scoreboard_frame.pack(side="top", pady=5)
+        notebook.add(scoreboard_frame, text="Scoreboard")
+
+        # Scoreboard type
+        ttk.Label(scoreboard_frame, text="Scoreboard:").grid(
+            row=0, column=0, sticky="w", padx=5, pady=5
+        )
+        self.scoreboard_type_var = tk.StringVar()
+        scoreboard_type_combo = ttk.Combobox(
+            scoreboard_frame,
+            textvariable=self.scoreboard_type_var,
+            values=list(scoreboard.SCOREBOARDS.keys()),
+            state="readonly",
+        )
+        scoreboard_type_combo.grid(row=0, column=1, padx=5, pady=5)
+
         # Buttons
         button_frame = ttk.Frame(self)
         button_frame.pack(side="bottom", pady=10)
@@ -244,6 +263,7 @@ class ConfigDialog(tk.Toplevel):
         self.parallel_var.set(int(self.config["runtime"]["parallel"]))
         self.prepend_var.set(bool(self.config["runtime"]["prepend_directory"]))
         self.youtubify_var.set(bool(self.config["runtime"]["youtubify_names"]))
+        self.scoreboard_type_var.set(self.config["scoreboard"]["type"])
 
     def save_config(self):
         """Save configuration and close dialog"""
@@ -267,6 +287,9 @@ class ConfigDialog(tk.Toplevel):
                 "parallel": self.parallel_var.get(),
                 "prepend_directory": self.prepend_var.get(),
                 "youtubify_names": self.youtubify_var.get(),
+            },
+            "scoreboard": {
+                "type": self.scoreboard_type_var.get(),
             },
         }
         self.destroy()

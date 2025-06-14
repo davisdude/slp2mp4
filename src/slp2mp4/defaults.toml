@@ -16,3 +16,6 @@ volume = 25
 parallel = 0
 prepend_directory = true
 youtubify_names = true
+
+[scoreboard]
+type="default"
