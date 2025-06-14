@@ -5,7 +5,7 @@ jobs:
     strategy:
       matrix:
         platform: [windows-latest, ubuntu-22.04]
-        script: [src/slp2mp4/gui.py]
+        script: [src/slp2mp4/bin/gui.py]
         include:
           - script: src/slp2mp4/bin/gui.py
             name: slp2mp4_gui
