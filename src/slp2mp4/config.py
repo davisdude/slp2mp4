@@ -23,6 +23,7 @@ RESOLUTIONS = {
     "1440p": "6",
     "2160p": "8",
 }
+RESOLUTIONS_LOOKUP = {v: k for k, v in RESOLUTIONS.items()}
 
 # From https://github.com/project-slippi/Ishiiruka/tree/slippi/Source/Core/VideoBackends
 DOLPHIN_BACKENDS = [
@@ -156,3 +157,11 @@ def get_config():
 
 def translate_and_validate_config(conf):
     _apply_constructors(conf, _TRANSFORMERS)
+
+
+# NOTE: dolphin outputs the first scaled size that *exceeds* the specified
+# resolution, so this won't match the actual output height without downscaling
+# Assumes `conf` has been translated
+def get_expected_height(conf):
+    res_str = RESOLUTIONS_LOOKUP[conf["dolphin"]["resolution"]]
+    return int(res_str.removesuffix("p"))

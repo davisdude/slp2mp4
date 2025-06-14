@@ -4,6 +4,7 @@ import contextlib
 import pathlib
 import tempfile
 
+import slp2mp4.config as config
 import slp2mp4.ffmpeg as ffmpeg
 import slp2mp4.replay as replay
 import slp2mp4.dolphin.runner as dolphin_runner
@@ -23,7 +24,8 @@ def render(conf, slp_path: pathlib.Path, output_path: pathlib.Path, context: pat
     Ffmpeg = ffmpeg.FfmpegRunner(conf)
     Dolphin = dolphin_runner.DolphinRunner(conf)
     if context:
-        sb = conf["scoreboard"]["type"](context, index)
+        height = config.get_expected_height(conf)
+        sb = conf["scoreboard"]["type"](context, index, height)
         context_cm = sb.get_args
     else:
         context_cm = _no_context

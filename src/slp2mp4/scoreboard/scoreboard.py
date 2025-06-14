@@ -19,6 +19,10 @@ def _get_pad_args(aspect_ratio="16/9", align="right", color="black"):
     return (f"pad=aspect={aspect_ratio}:x={x}:color={color}",)
 
 
+def _get_scale_args(height):
+    return (f"scale=width=-2:height={height}",)
+
+
 def _remove_invalid_utf8(line):
     return bytes(line, "utf-8").decode("utf-8", "ignore")
 
@@ -64,6 +68,7 @@ def drawtext_manager(drawtexts: list[DrawtextContainer]):
 class Scoreboard:
     context_json_path: pathlib.Path
     game_index: int
+    height: int
     pad_args: dict = dataclasses.field(default_factory=dict)
     drawtext_args: list[dict] = dataclasses.field(default_factory=list)
     context_data: dict = dataclasses.field(init=False)
@@ -79,13 +84,14 @@ class Scoreboard:
     def get_args(self):
         try:
             drawtexts = self.make_drawtexts()
+            scale_args = _get_scale_args(self.height)
             pad_args = _get_pad_args(**self.pad_args)
             with drawtext_manager(drawtexts) as drawtexts:
                 drawtext_args = tuple(
                     drawtext.get_args(**args)
                     for drawtext, args in zip(drawtexts, self.drawtext_args)
                 )
-                vf_args = (",").join(pad_args + drawtext_args)
+                vf_args = (",").join(scale_args + pad_args + drawtext_args)
                 yield ("-vf", vf_args)
         finally:
             pass
