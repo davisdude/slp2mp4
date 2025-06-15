@@ -1,51 +1,95 @@
-import textwrap
-
 from slp2mp4.scoreboard import scoreboard
 
-# Assumes drawtext.fontsize is default
-MAX_WIDTH = 28
+HTML_STR = r"""
+<!DOCTYPE html>
+<html lang="en">
+    <body>
+        <div class="tournament-name">{TOURNAMENT_NAME}</div>
+        <div class="filler"><hr></div>
+
+        <div id="bottom">
+            <div class="filler"><hr></div>
+
+            <div class="combatant">
+                <span class="combatant-name">{COMBATANT_1_NAME}</span>:
+                <span class="combatant-score">{COMBATANT_1_SCORE}</span>
+            </div>
+
+            <div class="combatant">
+                <span class="combatant-name">{COMBATANT_2_NAME}</span>:
+                <span class="combatant-score">{COMBATANT_2_SCORE}</span>
+            </div>
+
+            <div class="filler"><hr></div>
+
+            <div class="bracket-info">
+                <span class="bracket-info-round">{BRACKET_ROUND}</span>
+                <span class="bracket-info-scoring">{BRACKET_SCORING}</span>
+            </div>
+        </div>
+    </body>
+</html>
+"""
+
+CSS_STR = """
+body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    color: white;
+    background-color: black;
+    font-family: "Inconsolata", "Consolas", "monospace";
+}
+
+div {
+    margin-left: 0.5em;
+    margin-right: 0.5em;
+}
+
+#bottom {
+    position: absolute;
+    bottom: 0px;
+    width: inherit;
+    margin-left: inherit;
+    margin-right: inherit;
+}
+
+.tournament-name {
+    text-align: center;
+    font-size: 5em;
+}
+
+.combatant {
+    font-size: 2.5em;
+}
+
+.combatant-name {
+    text-align: left;
+}
+
+.combatant-score {
+    float: right;
+}
+
+.bracket-info {
+    font-size: 2.5em;
+}
+
+.bracket-info-round {
+    text-align: left;
+}
+
+.bracket-info-scoring {
+    float: right;
+}
+"""
 
 
-def _wrap_line(line):
-    return textwrap.wrap(line, MAX_WIDTH, subsequent_indent="\t")
-
-
-def _wrap_lines(lines):
-    wrapped_lines = []
-    for line in lines:
-        wrapped_lines.extend(_wrap_line(line))
-    return wrapped_lines
-
-
-# Assumes standard melee aspect ratio (73x60)
 class DefaultScoreboard(scoreboard.Scoreboard):
-    def __post_init__(self):
-        super().__post_init__()
-        self.pad_args = {
-            "align": "right",
-        }
-        self.drawtext_args = [
-            {
-                "x": "main_w/60",  # ~1 character's width
-                "y": "(main_h-text_h)/2",
-            }
+    def _get_scoreboard_panels(self):
+        return [
+            scoreboard.ScoreboardPanel(HTML_STR, CSS_STR, 606 / 1080),
         ]
 
-    def make_drawtexts(self):
-        # TODO: Handle challonge / manual data
-        tournament_data = _wrap_lines(
-            [
-                self.context_data["startgg"]["tournament"]["name"],
-                self.context_data["startgg"]["tournament"]["location"],
-                self.context_data["startgg"]["event"]["name"],
-                f"{self.context_data['startgg']['set']['fullRoundText']} (Bo{self.context_data['bestOf']})",
-            ]
-        )
-        name_data = _wrap_lines(
-            [
-                scoreboard.get_name_from_slot_data(slot_data)
-                for slot_data in self.context_data["scores"][self.game_index]["slots"]
-            ]
-        )
-        lines = [*name_data, "", *tournament_data]
-        return [scoreboard.DrawtextContainer(lines)]
+    def _get_scoreboard_args(self):
+        return ("[2][scaled]hstack=inputs=2",)

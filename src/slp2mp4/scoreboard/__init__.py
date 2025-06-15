@@ -1,7 +1,7 @@
-from slp2mp4.scoreboard import default
-from slp2mp4.scoreboard import none
+from slp2mp4.scoreboard.default import DefaultScoreboard
+from slp2mp4.scoreboard.none import NoScoreboard
 
 SCOREBOARDS = {
-    "none": none.NoneScoreboard,
-    "default": default.DefaultScoreboard,
+    "default": DefaultScoreboard,
+    "none": NoScoreboard,
 }

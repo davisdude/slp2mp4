@@ -38,30 +38,24 @@ class FfmpegRunner:
 
     # Assumes output file can handle no reencoding for concat
     # Returns True if ffmpeg ran successfully, False otherwise
+    # TODO: Rename
     def merge_audio_and_video(
         self,
-        audio_file: pathlib.Path,
-        video_file: pathlib.Path,
+        inputs: list[pathlib.Path],
         output_file: pathlib.Path,
         video_filter: tuple[str],
     ):
         copy_args = ("-c:v", "copy")
-        video_args = video_filter or copy_args
+        input_args = tuple(("-i", file) for file in inputs)
+        filter_args = video_filter or copy_args
         args = (
             ("-y",),
-            (
-                "-i",
-                audio_file,
-            ),
-            (
-                "-i",
-                video_file,
-            ),
+            *input_args,
             (
                 "-c:a",
                 "copy",
             ),
-            video_args,
+            filter_args,
             (
                 "-b:v",
                 "7500k",  # TODO follow setting

@@ -1,104 +1,106 @@
 import contextlib
 import dataclasses
-import io
 import json
 import pathlib
 import tempfile
+import typing
 
 from slp2mp4 import ffmpeg
 
-
-# Assumes this will be doing pillar-boxing
-def _get_pad_args(aspect_ratio="16/9", align="right", color="black"):
-    if align == "left":
-        x = "0"
-    elif align == "right":
-        x = "(out_w-in_w-1)"
-    elif aign == "center":
-        x = "(out_w-in_w)/2"
-    return (f"pad=aspect={aspect_ratio}:x={x}:color={color}",)
-
-
-def _get_scale_args(height):
-    return (f"scale=width=-2:height={height}",)
-
-
-def _remove_invalid_utf8(line):
-    return bytes(line, "utf-8").decode("utf-8", "ignore")
+from html2image import Html2Image
 
 
 @dataclasses.dataclass
-class DrawtextContainer:
-    lines: list[str] = dataclasses.field(default_factory=list)
-    textfile: io.TextIOBase = dataclasses.field(init=False)  # Set externally
+class ScoreboardPanel:
+    html_str: str
+    css_str: str
+    aspect_ratio: float
+    png_path: typing.BinaryIO = dataclasses.field(init=False)
 
-    def write_lines(self):
-        validated_lines = [_remove_invalid_utf8(line) for line in self.lines]
-        self.textfile.write(("\n").join(validated_lines))
-        self.textfile.flush()
-
-    # Assumes text will not overlap
-    def get_args(self, x, y, fontcolor="white", fontsize="trunc(main_h/32)"):
-        # Make path safe for windows - replace \\ with / and replace C:\ with C:\\
-        path = pathlib.Path(self.textfile.name)
-        anchor = path.anchor
-        relative = path.relative_to(anchor)
-        slash = chr(92)  # Pyinstaller doesn't like \ on Windows...
-        textfile_name = f"{anchor.replace(f':{slash}', f'{slash}:')}/{relative.as_posix()}"
-        settings = [
-            f"textfile={textfile_name}",
-            "font=Mono",  # Makes wrapping easier / prettier
-            f"fontcolor={fontcolor}",
-            f"fontsize={fontsize}",
-            f"x={x}",
-            f"y={y}",
-        ]
-        return f"drawtext={(':').join(settings)}"
+    def render(self, height):
+        width = self.aspect_ratio * height
+        hti = Html2Image(
+            size=(int(width), int(height)),
+            output_path=self.png_path.parent,
+        )
+        hti.screenshot(
+            html_str=self.html_str,
+            css_str=self.css_str,
+            save_as=self.png_path.name,
+        )
+        return self.png_path.name
 
 
-@contextlib.contextmanager
-def drawtext_manager(drawtexts: list[DrawtextContainer]):
-    tempfiles = [tempfile.NamedTemporaryFile(mode="w", delete=False) for _ in drawtexts]
-    for drawtext, tmp in zip(drawtexts, tempfiles):
-        drawtext.textfile = tmp
-        drawtext.write_lines()
-    try:
-        yield drawtexts
-    finally:
-        for tmpfile in tempfiles:
-            tmpfile.close()
-            pathlib.Path(tmpfile.name).unlink()
-
-
+# TODO: Pass conf to constructor to allow customization
 @dataclasses.dataclass
 class Scoreboard:
     context_json_path: pathlib.Path
     game_index: int
     height: int
-    pad_args: dict = dataclasses.field(default_factory=dict)
-    drawtext_args: list[dict] = dataclasses.field(default_factory=list)
-    context_data: dict = dataclasses.field(init=False)
 
-    def __post_init__(self):
+    def _get_context_data(self):
         with open(self.context_json_path) as json_data:
-            self.context_data = json.load(json_data)
+            return json.load(json_data)
 
-    def make_drawtexts(self) -> list[DrawtextContainer]:
-        raise NotImplementedError
+    def _get_scoreboard_panels(self) -> list[ScoreboardPanel]:
+        raise NotImplementedError("_get_scoreboard_panels must be overridden by child")
+
+    # In the ffmpeg command (ffmpeg.py:merge_audio_and_video()), input 0 =
+    # the audio, input 1 = the video. Remaining inputs are scoreboard images.
+    def _get_scoreboard_args(self):
+        raise NotImplementedError("_get_scoreboard_args must be overridden by child")
+
+    def _get_scale_args(self):
+        return (f"[1]scale=width=-2:height={self.height}[scaled]",)
+
+    def _update_html(self, panels, context_data):
+        for panel in panels:
+            # TODO: Support challonge
+            html = panel.html_str
+            names = [
+                _get_name_from_slot_data(slot_data)
+                for slot_data in context_data["scores"][self.game_index]["slots"]
+            ]
+            scores = [
+                str(slot_data["score"])
+                for slot_data in context_data["scores"][self.game_index]["slots"]
+            ]
+            html = html.replace(
+                "{TOURNAMENT_NAME}", context_data["startgg"]["tournament"]["name"]
+            )
+            html = html.replace(
+                "{BRACKET_ROUND}", context_data["startgg"]["set"]["fullRoundText"]
+            )
+            html = html.replace("{BRACKET_SCORING}", f"Bo{context_data['bestOf']}")
+            html = html.replace("{COMBATANT_1_NAME}", names[0])
+            html = html.replace("{COMBATANT_2_NAME}", names[1])
+            html = html.replace("{COMBATANT_1_SCORE}", scores[0])
+            html = html.replace("{COMBATANT_2_SCORE}", scores[1])
+            panel.html_str = html
+
+    def _render_html(self, panels):
+        for panel in panels:
+            panel.render(self.height)
 
     @contextlib.contextmanager
     def get_args(self):
+        panels = self._get_scoreboard_panels()
+        context_data = self._get_context_data()
+        self._update_html(panels, context_data)
         try:
-            drawtexts = self.make_drawtexts()
-            scale_args = _get_scale_args(self.height)
-            pad_args = _get_pad_args(**self.pad_args)
-            with drawtext_manager(drawtexts) as drawtexts:
-                drawtext_args = tuple(
-                    drawtext.get_args(**args)
-                    for drawtext, args in zip(drawtexts, self.drawtext_args)
-                )
-                vf_args = (",").join(scale_args + pad_args + drawtext_args)
-                yield ("-vf", vf_args)
+            with _scoreboard_panel_context_manager(panels) as png_files:
+                self._render_html(panels)
+                scale_args = self._get_scale_args()
+                scoreboard_args = self._get_scoreboard_args()
+                # Don't re-scale if not doing filtering
+                if scoreboard_args:
+                    filter_args = (
+                        "-filter_complex",
+                        (";").join(scale_args + scoreboard_args),
+                    )
+                else:
+                    filter_args = ()
+                yield png_files, filter_args
         finally:
             pass
 
@@ -114,7 +116,7 @@ def _get_name(name, prefixes, pronouns, ports, is_singles=True):
     return name
 
 
-def get_name_from_slot_data(slot_data):
+def _get_name_from_slot_data(slot_data):
     is_singles = len(slot_data["displayNames"]) == 1
     names = [
         _get_name(name, prefixes, pronouns, ports, is_singles)
@@ -125,8 +127,26 @@ def get_name_from_slot_data(slot_data):
             slot_data["ports"],
         )
     ]
-    name_str = ("/").join(names)
-    return f"{name_str}: {slot_data['score']}"
+    return ("/").join(names)
+
+
+@contextlib.contextmanager
+def _scoreboard_panel_context_manager(panels: list[ScoreboardPanel]):
+    png_temps = [
+        tempfile.NamedTemporaryFile(suffix=".png", delete=False, delete_on_close=False)
+        for _ in panels
+    ]
+    png_paths = []
+    for png_temp in png_temps:
+        png_paths.append(pathlib.Path(png_temp.name))
+        png_temp.close()
+    try:
+        for panel, png_path in zip(panels, png_paths):
+            panel.png_path = png_path
+        yield png_paths
+    finally:
+        for tmpfile in png_paths:
+            tmpfile.unlink()
 
 
 # TODO: Widescreen scoreboard
