@@ -34,6 +34,7 @@ Notes:
 - [FFmpeg](https://ffmpeg.org/) installed and accessible
 - [Slippi Dolphin](https://slippi.gg/downloads) installed
 - Super Smash Bros. Melee ISO file
+- Google Chrome to be installed (if using the [scoreboard](#scoreboard) feature).
 
 ## Installation
 
