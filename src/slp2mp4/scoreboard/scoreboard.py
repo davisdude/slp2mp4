@@ -133,7 +133,7 @@ def _get_name_from_slot_data(slot_data):
 @contextlib.contextmanager
 def _scoreboard_panel_context_manager(panels: list[ScoreboardPanel]):
     png_temps = [
-        tempfile.NamedTemporaryFile(suffix=".png", delete=False, delete_on_close=False)
+        tempfile.NamedTemporaryFile(suffix=".png", delete=False)
         for _ in panels
     ]
     png_paths = []
