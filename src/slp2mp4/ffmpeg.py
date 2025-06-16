@@ -47,7 +47,7 @@ class FfmpegRunner:
     ):
         copy_args = ("-c:v", "copy")
         input_args = tuple(("-i", file) for file in inputs)
-        filter_args = video_filter or copy_args
+        filter_args = video_filter + (("-c:v", "mpeg4")) or copy_args
         args = (
             ("-y",),
             *input_args,
