@@ -31,7 +31,7 @@ HTML_STR = r"""
 </html>
 """
 
-CSS_STR = """
+CSS_STR = r"""
 body {
     width: 100%;
     height: 100%;
@@ -86,10 +86,10 @@ div {
 
 
 class DefaultScoreboard(scoreboard.Scoreboard):
-    def _get_scoreboard_panels(self):
+    def _get_scoreboard_panels(self, pad):
         return [
-            scoreboard.ScoreboardPanel(HTML_STR, CSS_STR, 606 / 1080),
+            scoreboard.ScoreboardPanel(HTML_STR, CSS_STR, 606 / 1080, pad),
         ]
 
     def _get_scoreboard_args(self):
-        return ("[2][scaled]hstack=inputs=2",)
+        return ("[2_cropped][scaled]hstack=inputs=2",)

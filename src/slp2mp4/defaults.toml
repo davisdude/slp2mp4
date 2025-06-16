@@ -18,4 +18,9 @@ prepend_directory = true
 youtubify_names = true
 
 [scoreboard]
-type="default"
+type = "default"
+
+# Hacky workaround until this is resolved:
+# https://github.com/vgalin/html2image/issues/177
+crop_x = 18
+crop_y = 84

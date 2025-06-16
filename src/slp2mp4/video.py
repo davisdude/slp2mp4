@@ -31,7 +31,7 @@ def render(
     Dolphin = dolphin_runner.DolphinRunner(conf)
     if context:
         height = config.get_expected_height(conf)
-        sb = conf["scoreboard"]["type"](context, index, height)
+        sb = conf["scoreboard"]["type"](conf, context, index, height)
         context_cm = sb.get_args
     else:
         context_cm = _no_context

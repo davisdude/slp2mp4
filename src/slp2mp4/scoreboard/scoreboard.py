@@ -16,25 +16,31 @@ class ScoreboardPanel:
     html_str: str
     css_str: str
     aspect_ratio: float
-    png_path: typing.BinaryIO = dataclasses.field(init=False)
+    pad: tuple[int]
 
-    def render(self, height):
-        width = self.aspect_ratio * height
+    def _get_width(self, height):
+        return int(self.aspect_ratio * height)
+
+    def get_crop_args(self, stream_id, height):
+        width = self._get_width(height)
+        return f"[{stream_id}]crop=out_w={width}:out_h={height}[{stream_id}_cropped]"
+
+    def render(self, png_path, height):
+        width = self._get_width(height)
         hti = Html2Image(
-            size=(int(width), int(height)),
-            output_path=self.png_path.parent,
+            size=(width + self.pad[0], height + self.pad[1]),
+            output_path=png_path.parent,
         )
         hti.screenshot(
             html_str=self.html_str,
             css_str=self.css_str,
-            save_as=self.png_path.name,
+            save_as=png_path.name,
         )
-        return self.png_path.name
 
 
-# TODO: Pass conf to constructor to allow customization
 @dataclasses.dataclass
 class Scoreboard:
+    conf: dict
     context_json_path: pathlib.Path
     game_index: int
     height: int
@@ -43,7 +49,7 @@ class Scoreboard:
         with open(self.context_json_path) as json_data:
             return json.load(json_data)
 
-    def _get_scoreboard_panels(self) -> list[ScoreboardPanel]:
+    def _get_scoreboard_panels(self, pad: tuple[int]) -> list[ScoreboardPanel]:
         raise NotImplementedError("_get_scoreboard_panels must be overridden by child")
 
     # In the ffmpeg command (ffmpeg.py:merge_audio_and_video()), input 0 =
@@ -79,27 +85,40 @@ class Scoreboard:
             html = html.replace("{COMBATANT_2_SCORE}", scores[1])
             panel.html_str = html
 
-    def _render_html(self, panels):
-        for panel in panels:
-            panel.render(self.height)
+    def _render_html(self, panels, png_paths):
+        for png_path, panel in zip(png_paths, panels):
+            panel.render(png_path, self.height)
+
+    def _get_pad(self):
+        return (self.conf["scoreboard"]["crop_x"], self.conf["scoreboard"]["crop_y"])
+
+    def _get_crop_args(self, panels):
+        return tuple(
+            (
+                panel.get_crop_args(stream_id, self.height)
+                for stream_id, panel in enumerate(panels, start=2)
+            )
+        )
 
     @contextlib.contextmanager
     def get_args(self):
-        panels = self._get_scoreboard_panels()
+        pad = self._get_pad()
+        panels = self._get_scoreboard_panels(pad)
         context_data = self._get_context_data()
         self._update_html(panels, context_data)
         try:
             with _scoreboard_panel_context_manager(panels) as png_paths:
-                self._render_html(panels)
-                for index, panel in enumerate(panels):
-                    shutil.copyfile(panel.png_path, f"scoreboard_{self.game_index}.png")
+                self._render_html(panels, png_paths)
+                for index, png_path in enumerate(png_paths):
+                    shutil.copyfile(png_path, f"scoreboard_{self.game_index}.png")
                 scale_args = self._get_scale_args()
+                crop_args = self._get_crop_args(panels)
                 scoreboard_args = self._get_scoreboard_args()
                 # Don't re-scale if not doing filtering
                 if scoreboard_args:
                     filter_args = (
                         "-filter_complex",
-                        (",").join(scale_args + scoreboard_args),
+                        (",").join(scale_args + crop_args + scoreboard_args),
                     )
                 else:
                     filter_args = ()
@@ -136,16 +155,13 @@ def _get_name_from_slot_data(slot_data):
 @contextlib.contextmanager
 def _scoreboard_panel_context_manager(panels: list[ScoreboardPanel]):
     png_temps = [
-        tempfile.NamedTemporaryFile(suffix=".png", delete=False)
-        for _ in panels
+        tempfile.NamedTemporaryFile(suffix=".png", delete=False) for _ in panels
     ]
     png_paths = []
     for png_temp in png_temps:
         png_paths.append(pathlib.Path(png_temp.name))
         png_temp.close()
     try:
-        for panel, png_path in zip(panels, png_paths):
-            panel.png_path = png_path
         yield png_paths
     finally:
         for tmpfile in png_paths:
