@@ -62,8 +62,16 @@ class Scoreboard:
 
     def _update_html(self, panels, context_data):
         for panel in panels:
-            # TODO: Support challonge
             html = panel.html_str
+            if "startgg" in context_data:
+                platform_specific_data = context_data["startgg"]
+            elif "challonge" in context_data:
+                platform_specific_data = context_data["challonge"]
+            else:
+                platform_specific_data = {
+                    "tournament": {"name": "Unknown"},
+                    "set": {"fullRoundText": "Unknown"},
+                }
             names = [
                 _get_name_from_slot_data(slot_data)
                 for slot_data in context_data["scores"][self.game_index]["slots"]
@@ -73,10 +81,10 @@ class Scoreboard:
                 for slot_data in context_data["scores"][self.game_index]["slots"]
             ]
             html = html.replace(
-                "{TOURNAMENT_NAME}", context_data["startgg"]["tournament"]["name"]
+                "{TOURNAMENT_NAME}", platform_specific_data["tournament"]["name"]
             )
             html = html.replace(
-                "{BRACKET_ROUND}", context_data["startgg"]["set"]["fullRoundText"]
+                "{BRACKET_ROUND}", platform_specific_data["set"]["fullRoundText"]
             )
             html = html.replace("{BRACKET_SCORING}", f"Bo{context_data['bestOf']}")
             html = html.replace("{COMBATANT_1_NAME}", names[0])
