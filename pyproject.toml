@@ -20,7 +20,8 @@ classifiers = [
 ]
 dependencies = [
     "pathvalidate",
-    "html2image",
+    "pillow",
+    "matplotlib",
 ]
 dynamic = [
     "version",
