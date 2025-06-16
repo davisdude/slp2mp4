@@ -146,7 +146,7 @@ def draw_multiline_text(y, padding, width, draw, text, align="center", anchor="t
     if anchor == "bottom":
         y = y - text_height
     pos = (x, y)
-    draw.multiline_text(pos, text, align=align, **kwargs)
+    draw.multiline_text(pos, text, align="center", **kwargs)
     return draw.multiline_textbbox(pos, text, font=kwargs["font"])
 
 
