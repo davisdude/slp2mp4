@@ -99,7 +99,7 @@ class Scoreboard:
                 if scoreboard_args:
                     filter_args = (
                         "-filter_complex",
-                        (";").join(scale_args + scoreboard_args),
+                        (",").join(scale_args + scoreboard_args),
                     )
                 else:
                     filter_args = ()
