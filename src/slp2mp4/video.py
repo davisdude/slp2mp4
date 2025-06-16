@@ -39,13 +39,12 @@ def render(
         tempfile.TemporaryDirectory() as tmpdir_str,
         context_cm() as (inputs, video_filter_args),
     ):
-        # TODO: Does reencoded audio get deleted? Do this with merge audio and video?
         tmpdir = pathlib.Path(tmpdir_str)
         r = replay.ReplayFile(slp_path)
         audio_file, video_file = Dolphin.run_dolphin(r, tmpdir)
-        reencoded_audio_file = Ffmpeg.reencode_audio(audio_file)
-        Ffmpeg.merge_audio_and_video(
-            [reencoded_audio_file, video_file] + inputs,
+        Ffmpeg.combine_audio_and_video_and_apply_filters(
+            [audio_file, video_file] + inputs,
             output_path,
-            video_filter_args,
+            Ffmpeg.get_audio_filter(),
+            Ffmpeg.get_video_filter(video_filter_args),
         )

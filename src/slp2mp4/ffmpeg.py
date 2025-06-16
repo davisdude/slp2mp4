@@ -11,51 +11,25 @@ import slp2mp4.util as util
 class FfmpegRunner:
     def __init__(self, config):
         self.conf = config
-        self.ffmpeg_path = config["paths"]["ffmpeg"]
-        self.audio_args = shlex.split(config["ffmpeg"]["audio_args"])
 
     def run(self, args):
-        ffmpeg_args = [self.ffmpeg_path] + util.flatten_arg_tuples(args)
+        ffmpeg_args = [self.conf["paths"]["ffmpeg"]] + util.flatten_arg_tuples(args)
         subprocess.run(ffmpeg_args, check=True)
 
-    def reencode_audio(self, audio_file_path: pathlib.Path):
-        reencoded_path = audio_file_path.parent / "fixed.out"
-        args = (
-            ("-y",),
-            (
-                "-i",
-                audio_file_path,
-            ),
-            self.audio_args,
+    def get_audio_filter(self):
+        return (
+            shlex.split(self.conf["ffmpeg"]["audio_args"]),
             (
                 "-filter:a",
                 f"volume='{self.conf['ffmpeg']['volume']/100}'",
             ),
-            (reencoded_path,),
         )
-        self.run(args)
-        return reencoded_path
 
-    # Assumes output file can handle no reencoding for concat
-    # Returns True if ffmpeg ran successfully, False otherwise
-    # TODO: Rename
-    def merge_audio_and_video(
-        self,
-        inputs: list[pathlib.Path],
-        output_file: pathlib.Path,
-        video_filter: tuple[str],
-    ):
-        copy_args = ("-c:v", "copy")
-        input_args = tuple(("-i", file) for file in inputs)
-        filter_args = video_filter + (("-c:v", "mpeg4")) or copy_args
-        args = (
-            ("-y",),
-            *input_args,
-            (
-                "-c:a",
-                "copy",
-            ),
-            filter_args,
+    def get_video_filter(self, video_filter):
+        codec = ("-c:v", "mpeg4") if video_filter else ("-c:v", "copy")
+        video_args = video_filter + codec
+        return (
+            video_args,
             (
                 "-b:v",
                 "7500k",  # TODO follow setting
@@ -64,6 +38,23 @@ class FfmpegRunner:
                 "-avoid_negative_ts",
                 "make_zero",
             ),
+        )
+
+    # Assumes output file can handle no reencoding for concat
+    # Returns True if ffmpeg ran successfully, False otherwise
+    def combine_audio_and_video_and_apply_filters(
+        self,
+        inputs: list[pathlib.Path],
+        output_file: pathlib.Path,
+        audio_filter: tuple[str],
+        video_filter: tuple[str],
+    ):
+        input_args = tuple(("-i", file) for file in inputs)
+        args = (
+            ("-y",),
+            *input_args,
+            *audio_filter,
+            *video_filter,
             ("-xerror",),
             (output_file,),
         )
