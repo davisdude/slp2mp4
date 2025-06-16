@@ -2,6 +2,7 @@ import contextlib
 import dataclasses
 import json
 import pathlib
+import shutil
 import tempfile
 import typing
 
@@ -88,8 +89,10 @@ class Scoreboard:
         context_data = self._get_context_data()
         self._update_html(panels, context_data)
         try:
-            with _scoreboard_panel_context_manager(panels) as png_files:
+            with _scoreboard_panel_context_manager(panels) as png_paths:
                 self._render_html(panels)
+                for index, panel in enumerate(panels):
+                    shutil.copyfile(panel.png_path, f"scoreboard_{self.game_index}.png")
                 scale_args = self._get_scale_args()
                 scoreboard_args = self._get_scoreboard_args()
                 # Don't re-scale if not doing filtering
@@ -100,7 +103,7 @@ class Scoreboard:
                     )
                 else:
                     filter_args = ()
-                yield png_files, filter_args
+                yield png_paths, filter_args
         finally:
             pass
 
