@@ -18,4 +18,5 @@ prepend_directory = true
 youtubify_names = true
 
 [scoreboard]
+# TODO: `none` should probably be default if requiring manual font specification
 type="default"
