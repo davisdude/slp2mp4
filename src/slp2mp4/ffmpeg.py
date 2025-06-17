@@ -36,7 +36,7 @@ class FfmpegRunner:
             video_filter += ("[full]fps=60[v]",)
             video_map = (
                 ("-map", "[v]"),
-                ("-vcodec", "mpeg4"),
+                ("-vcodec", "ffv1"),
             )
         else:
             video_map = (
