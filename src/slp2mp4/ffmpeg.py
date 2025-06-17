@@ -31,10 +31,6 @@ class FfmpegRunner:
         return (
             video_args,
             (
-                "-vsync",
-                "0",
-            ),
-            (
                 "-b:v",
                 "7500k",  # TODO follow setting
             ),
