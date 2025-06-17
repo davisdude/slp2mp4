@@ -31,6 +31,10 @@ class FfmpegRunner:
         return (
             video_args,
             (
+                "-vsync",
+                "0",
+            ),
+            (
                 "-b:v",
                 "7500k",  # TODO follow setting
             ),
@@ -53,7 +57,7 @@ class FfmpegRunner:
         args = (
             ("-y",),
             *input_args,
-            #*audio_filter,
+            *audio_filter,
             *video_filter,
             ("-xerror",),
             (output_file,),
