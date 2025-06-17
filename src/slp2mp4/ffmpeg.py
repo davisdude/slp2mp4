@@ -16,17 +16,33 @@ class FfmpegRunner:
         ffmpeg_args = [self.conf["paths"]["ffmpeg"]] + util.flatten_arg_tuples(args)
         subprocess.run(ffmpeg_args, check=True)
 
-    def get_audio_filter(self):
-        # shlex.split(self.conf["ffmpeg"]["audio_args"]), # TODO
-        return (f"[0]volume='{self.conf['ffmpeg']['volume']/100}'[a]",)
+    # Audio reencoding has to be done separately - see "corrupt input packet"
+    # complaints otherwise
+    def reencode_audio(self, audio_file_path: pathlib.Path):
+        reencoded_path = audio_file_path.parent / "fixed.opus"
+        args = (
+            ("-y",),
+            (
+                "-i",
+                audio_file_path,
+            ),
+            shlex.split(self.conf["ffmpeg"]["audio_args"]),
+            (
+                "-filter:a",
+                f"volume='{self.conf['ffmpeg']['volume']/100}'",
+            ),
+            (reencoded_path,),
+        )
+        self.run(args)
+        return reencoded_path
 
     # Assumes output file can handle no reencoding for concat
     # Returns True if ffmpeg ran successfully, False otherwise
+    # inputs[0]=dumped audio; inputs[1]=dumped video; rest are from scoreboard
     def combine_audio_and_video_and_apply_filters(
         self,
         inputs: list[pathlib.Path],
         output_file: pathlib.Path,
-        audio_filter: tuple[str],
         video_filter: tuple[str],
     ):
         input_args = tuple(("-i", file) for file in inputs)
@@ -44,14 +60,14 @@ class FfmpegRunner:
             )
         filter_args = (
             "-filter_complex",
-            (",").join(audio_filter + video_filter),
+            (",").join(video_filter),
         )
         args = (
             ("-y",),
             *input_args,
             filter_args,
             *video_map,
-            ("-map", "[a]"),
+            ("-map", "0:a"),
             ("-avoid_negative_ts", "make_zero"),
             ("-xerror",),
             (output_file,),

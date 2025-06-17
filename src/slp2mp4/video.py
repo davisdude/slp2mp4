@@ -43,13 +43,13 @@ def render(
         tmpdir = pathlib.Path(tmpdir_str)
         r = replay.ReplayFile(slp_path)
         audio_file, video_file = Dolphin.run_dolphin(r, tmpdir)
-        inputs = [audio_file, video_file] + inputs
+        reencoded_audio_file = Ffmpeg.reencode_audio(audio_file)
+        inputs = [reencoded_audio_file, video_file] + inputs
         for i in inputs:
             shutil.copyfile(i, f"{slp_path.name}_{i.name}")
         Ffmpeg.combine_audio_and_video_and_apply_filters(
             inputs,
             output_path,
-            Ffmpeg.get_audio_filter(),
             video_filter_args,
         )
         shutil.copyfile(output_path, f"{slp_path.name}_{output_path.name}")
