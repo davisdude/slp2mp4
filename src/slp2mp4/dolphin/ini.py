@@ -47,7 +47,8 @@ def make_dolphin_file(userdir: pathlib.Path):
         "DSP": {
             "DumpAudio": "True",
             "DumpAudioSilent": "True",
-            "Backend": "ALSA",
+            "Backend": "OpenAL",
+            "Volume": "0",  # Mute playback audio; audio is still dumped
         },
         "Display": {
             "RenderToMain": "True",
