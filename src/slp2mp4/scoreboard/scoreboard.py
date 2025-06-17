@@ -23,7 +23,7 @@ class ScoreboardPanel:
 
     def get_crop_args(self, stream_id, height):
         width = self._get_width(height)
-        return f"[{stream_id}]crop=out_w={width}:out_h={height}[{stream_id}_cropped]"
+        return f"[{stream_id}]crop=w={width}:h={height}:x=0:y=0:exact=1[{stream_id}_cropped]"
 
     def render(self, png_path, height):
         width = self._get_width(height)
