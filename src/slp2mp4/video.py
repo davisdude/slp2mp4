@@ -50,6 +50,6 @@ def render(
             inputs,
             output_path,
             Ffmpeg.get_audio_filter(),
-            Ffmpeg.get_video_filter(video_filter_args),
+            video_filter_args,
         )
         shutil.copyfile(output_path, f"{slp_path.name}_{output_path.name}")

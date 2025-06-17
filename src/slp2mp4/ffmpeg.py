@@ -17,27 +17,9 @@ class FfmpegRunner:
         subprocess.run(ffmpeg_args, check=True)
 
     def get_audio_filter(self):
+        # shlex.split(self.conf["ffmpeg"]["audio_args"]), # TODO
         return (
-            shlex.split(self.conf["ffmpeg"]["audio_args"]),
-            (
-                "-filter:a",
-                f"volume='{self.conf['ffmpeg']['volume']/100}'",
-            ),
-        )
-
-    def get_video_filter(self, video_filter):
-        codec = ("-c:v", "mpeg4") if video_filter else ("-c:v", "copy")
-        video_args = video_filter + codec
-        return (
-            video_args,
-            (
-                "-b:v",
-                "7500k",  # TODO follow setting
-            ),
-            (
-                "-avoid_negative_ts",
-                "make_zero",
-            ),
+            f"[0:a]volume='{self.conf['ffmpeg']['volume']/100}'[a]",
         )
 
     # Assumes output file can handle no reencoding for concat
@@ -50,11 +32,31 @@ class FfmpegRunner:
         video_filter: tuple[str],
     ):
         input_args = tuple(("-i", file) for file in inputs)
+        if video_filter:
+            video_filter += ("[full]fps=60[v]",)
+            video_map = (
+                ("-map", "[v]"),
+                ("-vcodec", "mpeg4"),
+            )
+        else:
+            video_map = (
+                ("-map", "1:v"),
+                ("-c:v", "copy"),
+            )
+        filter_args = (
+            "-filter_complex",
+            (",").join(audio_filter + video_filter),
+        )
         args = (
             ("-y",),
             *input_args,
-            *audio_filter,
-            *video_filter,
+            filter_args,
+            *video_map,
+            ("-map", "[a]"),
+            (
+                "-avoid_negative_ts",
+                "make_zero",
+            ),
             ("-xerror",),
             (output_file,),
         )

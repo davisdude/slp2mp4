@@ -92,4 +92,4 @@ class DefaultScoreboard(scoreboard.Scoreboard):
         ]
 
     def _get_scoreboard_args(self):
-        return ("[2_cropped][scaled]hstack=inputs=2",)
+        return ("[2_cropped][scaled]hstack=inputs=2[full]",)
