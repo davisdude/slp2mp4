@@ -23,7 +23,7 @@ class ScoreboardPanel:
 
     def get_crop_args(self, stream_id, height):
         width = self._get_width(height)
-        return f"[{stream_id}:v]crop=w={width}:h={height}:x=0:y=0:exact=1[{stream_id}_cropped]"
+        return f"[{stream_id}]crop=w={width}:h={height}:x=0:y=0:exact=1[{stream_id}_cropped]"
 
     def render(self, png_path, height):
         width = self._get_width(height)
@@ -58,7 +58,7 @@ class Scoreboard:
         raise NotImplementedError("_get_scoreboard_args must be overridden by child")
 
     def _get_scale_args(self):
-        return (f"[1:v]scale=width=-2:height={self.height}[scaled]",)
+        return (f"[1]scale=width=-2:height={self.height}[scaled]",)
 
     def _update_html(self, panels, context_data):
         for panel in panels:

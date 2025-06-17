@@ -18,9 +18,7 @@ class FfmpegRunner:
 
     def get_audio_filter(self):
         # shlex.split(self.conf["ffmpeg"]["audio_args"]), # TODO
-        return (
-            f"[0:a]volume='{self.conf['ffmpeg']['volume']/100}'[a]",
-        )
+        return (f"[0]volume='{self.conf['ffmpeg']['volume']/100}'[a]",)
 
     # Assumes output file can handle no reencoding for concat
     # Returns True if ffmpeg ran successfully, False otherwise
@@ -36,12 +34,14 @@ class FfmpegRunner:
             video_filter += ("[full]fps=60[v]",)
             video_map = (
                 ("-map", "[v]"),
-                ("-vcodec", "ffv1"),
+                ("-codec:[v]", "h264"),
             )
         else:
             video_map = (
                 ("-map", "1:v"),
                 ("-c:v", "copy"),
+                ("-crf", "17"),
+                ("-r", "60"),
             )
         filter_args = (
             "-filter_complex",
@@ -53,10 +53,7 @@ class FfmpegRunner:
             filter_args,
             *video_map,
             ("-map", "[a]"),
-            (
-                "-avoid_negative_ts",
-                "make_zero",
-            ),
+            ("-avoid_negative_ts", "make_zero"),
             ("-xerror",),
             (output_file,),
         )
