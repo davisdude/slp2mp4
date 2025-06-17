@@ -3,7 +3,6 @@
 import contextlib
 import pathlib
 import tempfile
-import shutil
 
 import slp2mp4.config as config
 import slp2mp4.ffmpeg as ffmpeg
@@ -43,8 +42,6 @@ def render(
         tmpdir = pathlib.Path(tmpdir_str)
         r = replay.ReplayFile(slp_path)
         audio_file, video_file = Dolphin.run_dolphin(r, tmpdir)
-        shutil.copyfile(video_file, video_file.name)
-        shutil.copyfile(audio_file, audio_file.name)
         Ffmpeg.combine_audio_and_video_and_apply_filters(
             [audio_file, video_file] + inputs,
             output_path,
