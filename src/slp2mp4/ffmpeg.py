@@ -53,7 +53,7 @@ class FfmpegRunner:
         args = (
             ("-y",),
             *input_args,
-            #*audio_filter,
+            *audio_filter,
             *video_filter,
             ("-xerror",),
             (output_file,),
