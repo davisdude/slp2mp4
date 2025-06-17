@@ -52,6 +52,8 @@ def make_dolphin_file(userdir: pathlib.Path):
         },
         "Display": {
             "RenderToMain": "True",
+            "RenderWindowWidth": None,
+            "RenderWindowHeight": None,
             "RenderWindowAutoSize": "True",
         },
     }
