@@ -31,17 +31,16 @@ class FfmpegRunner:
     ):
         input_args = tuple(("-i", file) for file in inputs)
         if video_filter:
-            video_filter += ("[full]fps=60[v]",)
             video_map = (
                 ("-map", "[v]"),
-                ("-codec:[v]", "h264"),
+                ("-codec:v", "h264"),
+                ("-crf", "17"),
+                ("-r", "60"),
             )
         else:
             video_map = (
                 ("-map", "1:v"),
-                ("-c:v", "copy"),
-                ("-crf", "17"),
-                ("-r", "60"),
+                ("-codec:v", "copy"),
             )
         filter_args = (
             "-filter_complex",
