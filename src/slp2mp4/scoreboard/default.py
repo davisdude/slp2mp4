@@ -74,6 +74,7 @@ div {
 .combatant-score {
     white-space: nowrap;
     text-align: right;
+    margin-top: auto;
 }
 
 .bracket-info {
