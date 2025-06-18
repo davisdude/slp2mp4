@@ -23,8 +23,10 @@ HTML_STR = r"""
             <div class="filler"><hr></div>
 
             <div class="bracket-info">
-                <span class="bracket-info-round">{BRACKET_ROUND}</span>
-                <span class="bracket-info-scoring">{BRACKET_SCORING}</span>
+                <span class="bracket-info-data">{EVENT_NAME}</span>
+                <span class="bracket-info-data">{PHASE_NAME}</span>
+                <span class="bracket-info-data">{BRACKET_ROUND}</span>
+                <span class="bracket-info-data">{BRACKET_SCORING}</span>
             </div>
         </div>
     </body>
@@ -80,19 +82,12 @@ div {
 .bracket-info {
     font-size: 2.5em;
     display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
     flex-wrap: wrap;
 }
 
-.bracket-info-round {
-    flex: 1;
-    overflow-wrap: break-word;
-}
-
-.bracket-info-scoring {
-    white-space: nowrap;
-    text-align: right;
+.bracket-info-data {
+    flex: 1 1;
+    text-align: center;
 }
 """
 

@@ -83,6 +83,12 @@ class Scoreboard:
                 "{TOURNAMENT_NAME}", html.escape(platform_specific_data["tournament"]["name"])
             )
             panel.html_str = panel.html_str.replace(
+                "{EVENT_NAME}", html.escape(platform_specific_data["event"]["name"])
+            )
+            panel.html_str = panel.html_str.replace(
+                "{PHASE_NAME}", html.escape(platform_specific_data["phase"]["name"])
+            )
+            panel.html_str = panel.html_str.replace(
                 "{BRACKET_ROUND}", html.escape(platform_specific_data["set"]["fullRoundText"])
             )
             panel.html_str = panel.html_str.replace("{BRACKET_SCORING}", f"Bo{context_data['bestOf']}")
