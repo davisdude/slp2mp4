@@ -6,6 +6,8 @@ HTML_STR = r"""
     <body>
         <div class="tournament-name">{TOURNAMENT_NAME}</div>
         <div class="filler"><hr></div>
+        <div class="tournament-location">{TOURNAMENT_LOCATION}</div>
+        <div class="filler"><hr></div>
 
         <div id="bottom">
             <div class="filler"><hr></div>
@@ -22,11 +24,11 @@ HTML_STR = r"""
 
             <div class="filler"><hr></div>
 
-            <div class="bracket-info">
-                <span class="bracket-info-data">{EVENT_NAME}</span>
-                <span class="bracket-info-data">{PHASE_NAME}</span>
-                <span class="bracket-info-data">{BRACKET_ROUND}</span>
-                <span class="bracket-info-data">{BRACKET_SCORING}</span>
+            <div class="bracket">
+                <span class="bracket-data">{EVENT_NAME}</span>
+                <span class="bracket-data">{PHASE_NAME}</span>
+                <span class="bracket-data">{BRACKET_ROUND_SHORT}</span>
+                <span class="bracket-data">{BRACKET_SCORING_SHORT}</span>
             </div>
         </div>
     </body>
@@ -61,33 +63,32 @@ div {
     font-size: 5em;
 }
 
+.tournament-location {
+    text-align: center;
+    font-size: 2em;
+}
+
 .combatant {
     font-size: 2.5em;
     display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
+    align-items: end;
 }
 
 .combatant-name {
     flex: 1;
-    overflow-wrap: break-word;
 }
 
-.combatant-score {
-    white-space: nowrap;
-    text-align: right;
-    margin-top: auto;
-}
-
-.bracket-info {
-    font-size: 2.5em;
+.bracket {
+    font-size: 2em;
     display: flex;
     flex-wrap: wrap;
+    justify-content: space-between;
 }
 
-.bracket-info-data {
-    flex: 1 1;
+.bracket-data {
     text-align: center;
+    margin-top: auto;
+    margin-bottom: auto;
 }
 """
 

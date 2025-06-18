@@ -79,23 +79,22 @@ class Scoreboard:
                 str(slot_data["score"])
                 for slot_data in context_data["scores"][self.game_index]["slots"]
             ]
-            panel.html_str = panel.html_str.replace(
-                "{TOURNAMENT_NAME}", html.escape(platform_specific_data["tournament"]["name"])
-            )
-            panel.html_str = panel.html_str.replace(
-                "{EVENT_NAME}", html.escape(platform_specific_data["event"]["name"])
-            )
-            panel.html_str = panel.html_str.replace(
-                "{PHASE_NAME}", html.escape(platform_specific_data["phase"]["name"])
-            )
-            panel.html_str = panel.html_str.replace(
-                "{BRACKET_ROUND}", html.escape(platform_specific_data["set"]["fullRoundText"])
-            )
-            panel.html_str = panel.html_str.replace("{BRACKET_SCORING}", f"Bo{context_data['bestOf']}")
-            panel.html_str = panel.html_str.replace("{COMBATANT_1_NAME}", html.escape(names[0]))
-            panel.html_str = panel.html_str.replace("{COMBATANT_2_NAME}", html.escape(names[1]))
-            panel.html_str = panel.html_str.replace("{COMBATANT_1_SCORE}", scores[0])
-            panel.html_str = panel.html_str.replace("{COMBATANT_2_SCORE}", scores[1])
+            mapping = {
+                "{TOURNAMENT_NAME}": html.escape(platform_specific_data["tournament"]["name"]),
+                "{TOURNAMENT_LOCATION}": html.escape(platform_specific_data["tournament"]["location"]),
+                "{EVENT_NAME}": html.escape(platform_specific_data["event"]["name"]),
+                "{PHASE_NAME}": html.escape(platform_specific_data["phase"]["name"]),
+                "{BRACKET_ROUND}": html.escape(platform_specific_data["set"]["fullRoundText"]),
+                "{BRACKET_ROUND_SHORT}": html.escape(_shorten_round(platform_specific_data["set"]["fullRoundText"])),
+                "{BRACKET_SCORING}": f"Best of {context_data['bestOf']}",
+                "{BRACKET_SCORING_SHORT}": f"Bo{context_data['bestOf']}",
+                "{COMBATANT_1_NAME}": html.escape(names[0]),
+                "{COMBATANT_2_NAME}": html.escape(names[1]),
+                "{COMBATANT_1_SCORE}": str(scores[0]),
+                "{COMBATANT_2_SCORE}": str(scores[1]),
+            }
+            panel.html_str = _translate(panel.html_str, mapping)
+
 
     def _render_html(self, panels, png_paths):
         for png_path, panel in zip(png_paths, panels):
@@ -157,6 +156,27 @@ def _get_name_from_slot_data(slot_data):
         )
     ]
     return ("/").join(names)
+
+
+def _translate(string, mapping):
+    for old, new in mapping.items():
+        string = string.replace(old, new)
+    return string
+
+
+def _shorten_round(round_text):
+    return _translate(round_text, {
+        "Winners": "W",
+        "Losers": "L",
+        "Grand": "F",
+        "Semi": "S",
+        "Quarter": "Q",
+        "Round" : "R",
+        "Final": "F",
+        "Reset": "R",
+        " ": "",
+        "-": "",
+    })
 
 
 @contextlib.contextmanager
