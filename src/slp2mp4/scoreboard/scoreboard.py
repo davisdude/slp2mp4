@@ -2,7 +2,6 @@ import contextlib
 import dataclasses
 import json
 import pathlib
-import shutil
 import tempfile
 import typing
 
@@ -117,8 +116,6 @@ class Scoreboard:
         try:
             with _scoreboard_panel_context_manager(panels) as png_paths:
                 self._render_html(panels, png_paths)
-                for index, png_path in enumerate(png_paths):
-                    shutil.copyfile(png_path, f"scoreboard_{self.game_index}.png")
                 scale_args = self._get_scale_args()
                 crop_args = self._get_crop_args(panels)
                 scoreboard_args = self._get_scoreboard_args()
