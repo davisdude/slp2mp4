@@ -61,26 +61,37 @@ div {
 
 .combatant {
     font-size: 2.5em;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
 }
 
 .combatant-name {
-    text-align: left;
+    flex: 1;
+    overflow-wrap: break-word;
 }
 
 .combatant-score {
-    float: right;
+    white-space: nowrap;
+    text-align: right;
 }
 
 .bracket-info {
     font-size: 2.5em;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
 }
 
 .bracket-info-round {
-    text-align: left;
+    flex: 1;
+    overflow-wrap: break-word;
 }
 
 .bracket-info-scoring {
-    float: right;
+    white-space: nowrap;
+    text-align: right;
 }
 """
 
