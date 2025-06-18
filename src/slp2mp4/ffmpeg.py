@@ -47,7 +47,11 @@ class FfmpegRunner:
     ):
         input_args = tuple(("-i", file) for file in inputs)
         if video_filter:
-            video_map = (
+            filter_args = (
+                "-filter_complex",
+                (",").join(video_filter),
+            )
+            video_map = (filter_args,) + (
                 ("-map", "[v]"),
                 ("-codec:v", "h264"),
                 ("-crf", "17"),
@@ -58,14 +62,9 @@ class FfmpegRunner:
                 ("-map", "1:v"),
                 ("-codec:v", "copy"),
             )
-        filter_args = (
-            "-filter_complex",
-            (",").join(video_filter),
-        )
         args = (
             ("-y",),
             *input_args,
-            filter_args,
             *video_map,
             ("-map", "0:a"),
             ("-avoid_negative_ts", "make_zero"),

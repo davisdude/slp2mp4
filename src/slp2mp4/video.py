@@ -49,4 +49,3 @@ def render(
             output_path,
             video_filter_args,
         )
-        shutil.copyfile(output_path, f"{slp_path.name}_{output_path.name}")
