@@ -1,5 +1,6 @@
 import contextlib
 import dataclasses
+import html
 import json
 import pathlib
 import tempfile
@@ -61,7 +62,6 @@ class Scoreboard:
 
     def _update_html(self, panels, context_data):
         for panel in panels:
-            html = panel.html_str
             if "startgg" in context_data:
                 platform_specific_data = context_data["startgg"]
             elif "challonge" in context_data:
@@ -79,18 +79,17 @@ class Scoreboard:
                 str(slot_data["score"])
                 for slot_data in context_data["scores"][self.game_index]["slots"]
             ]
-            html = html.replace(
-                "{TOURNAMENT_NAME}", platform_specific_data["tournament"]["name"]
+            panel.html_str = panel.html_str.replace(
+                "{TOURNAMENT_NAME}", html.escape(platform_specific_data["tournament"]["name"])
             )
-            html = html.replace(
-                "{BRACKET_ROUND}", platform_specific_data["set"]["fullRoundText"]
+            panel.html_str = panel.html_str.replace(
+                "{BRACKET_ROUND}", html.escape(platform_specific_data["set"]["fullRoundText"])
             )
-            html = html.replace("{BRACKET_SCORING}", f"Bo{context_data['bestOf']}")
-            html = html.replace("{COMBATANT_1_NAME}", names[0])
-            html = html.replace("{COMBATANT_2_NAME}", names[1])
-            html = html.replace("{COMBATANT_1_SCORE}", scores[0])
-            html = html.replace("{COMBATANT_2_SCORE}", scores[1])
-            panel.html_str = html
+            panel.html_str = panel.html_str.replace("{BRACKET_SCORING}", f"Bo{context_data['bestOf']}")
+            panel.html_str = panel.html_str.replace("{COMBATANT_1_NAME}", html.escape(names[0]))
+            panel.html_str = panel.html_str.replace("{COMBATANT_2_NAME}", html.escape(names[1]))
+            panel.html_str = panel.html_str.replace("{COMBATANT_1_SCORE}", scores[0])
+            panel.html_str = panel.html_str.replace("{COMBATANT_2_SCORE}", scores[1])
 
     def _render_html(self, panels, png_paths):
         for png_path, panel in zip(png_paths, panels):
