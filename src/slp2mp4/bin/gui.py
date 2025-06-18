@@ -212,6 +212,21 @@ class ConfigDialog(tk.Toplevel):
             text="Replace some characters in file names for YouTube uploads",
         ).pack(side="left", padx=5)
 
+        # Debug
+        debug_frame = ttk.Frame(runtime_frame)
+        debug_frame.pack(side="top", pady=5)
+        ttk.Label(debug_frame, text="Debug").pack(side="left", padx=5)
+        self.debug_var = tk.BooleanVar()
+        debug_box = ttk.Checkbutton(debug_frame, variable=self.debug_var)
+        debug_box.pack(side="left", padx=5)
+
+        debug_info_frame = ttk.Frame(runtime_frame)
+        debug_info_frame.pack(side="top", pady=5)
+        ttk.Label(
+            debug_info_frame,
+            text="Save intermediate files",
+        ).pack(side="left", padx=5)
+
         # Scoreboard settings tab
         scoreboard_frame = ttk.Frame(notebook)
         scoreboard_frame.pack(side="top", pady=5)
@@ -291,6 +306,7 @@ class ConfigDialog(tk.Toplevel):
         self.parallel_var.set(int(self.config["runtime"]["parallel"]))
         self.prepend_var.set(bool(self.config["runtime"]["prepend_directory"]))
         self.youtubify_var.set(bool(self.config["runtime"]["youtubify_names"]))
+        self.debug_var.set(bool(self.config["runtime"]["debug"]))
         self.scoreboard_type_var.set(self.config["scoreboard"]["type"])
         self.crop_x_var.set(int(self.config["scoreboard"]["crop_x"]))
         self.crop_y_var.set(int(self.config["scoreboard"]["crop_y"]))
@@ -317,6 +333,7 @@ class ConfigDialog(tk.Toplevel):
                 "parallel": self.parallel_var.get(),
                 "prepend_directory": self.prepend_var.get(),
                 "youtubify_names": self.youtubify_var.get(),
+                "debug": self.debug_var.get(),
             },
             "scoreboard": {
                 "type": self.scoreboard_type_var.get(),

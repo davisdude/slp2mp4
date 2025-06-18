@@ -2,6 +2,7 @@
 
 import contextlib
 import pathlib
+import shutil
 import tempfile
 
 import slp2mp4.config as config
@@ -25,7 +26,8 @@ def render(
     slp_path: pathlib.Path,
     output_path: pathlib.Path,
     context: pathlib.Path,
-    index,
+    final_path: pathlib.Path,
+    index: int,
 ):
     Ffmpeg = ffmpeg.FfmpegRunner(conf)
     Dolphin = dolphin_runner.DolphinRunner(conf)
@@ -44,8 +46,13 @@ def render(
         audio_file, video_file = Dolphin.run_dolphin(r, tmpdir)
         reencoded_audio_file = Ffmpeg.reencode_audio(audio_file)
         inputs = [reencoded_audio_file, video_file] + inputs
+        if conf["runtime"]["debug"]:
+            for i in inputs:
+                shutil.copyfile(i, final_path.parent / f"{slp_path.name}_{i.name}")
         Ffmpeg.combine_audio_and_video_and_apply_filters(
             inputs,
             output_path,
             video_filter_args,
         )
+        if conf["runtime"]["debug"]:
+            shutil.copyfile(output_path, final_path.parent / f"{slp_path.name}_{output_path.name}")

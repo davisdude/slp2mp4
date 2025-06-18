@@ -114,6 +114,7 @@ _TRANSFORMERS = {
         "parallel": _parse_parallel,
         "prepend_directory": _parse_bool,
         "youtubify_names": _parse_bool,
+        "debug": _parse_bool,
     },
     "scoreboard": {
         "type": _parse_scoreboard_type,
