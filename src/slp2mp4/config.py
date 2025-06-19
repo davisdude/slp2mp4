@@ -16,7 +16,6 @@ USER_CONFIG_FILE = pathlib.Path("~/.slp2mp4.toml").expanduser()
 
 # https://github.com/project-slippi/Ishiiruka/blob/3e5b185ae080e8dca5e939369572d94d20049fea/Source/Core/VideoCommon/VideoConfig.h#L40
 # https://github.com/project-slippi/Ishiiruka/blob/3e5b185ae080e8dca5e939369572d94d20049fea/Source/Core/DolphinWX/VideoConfigDiag.cpp#L450
-# Windows seems to ignore this setting and sticks to 2x (1280x1056) always?
 RESOLUTIONS = {
     "480p": "2",
     "720p": "3",
