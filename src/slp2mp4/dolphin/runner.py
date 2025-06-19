@@ -22,6 +22,13 @@ class DolphinRunner:
                 "BitrateKbps": str(config["dolphin"]["bitrate"]),
             },
         }
+        # https://github.com/project-slippi/Ishiiruka/blob/3e5b185ae080e8dca5e939369572d94d20049fea/Data/Sys/GameSettings/GAL.ini#L21
+        # Need to override this setting for non-integral scaling
+        self.user_gal = {
+            "Video_Settings": {
+                "EFBScale": config["dolphin"]["resolution"],
+            },
+        }
 
     def run_dolphin(self, replay: replay.ReplayFile, dump_dir: pathlib.Path):
         with tempfile.TemporaryDirectory() as userdir_str:
@@ -30,6 +37,7 @@ class DolphinRunner:
                 comm.make_temp_file(replay) as comm_file,
                 ini.make_dolphin_file(userdir) as dolphin_file,
                 ini.make_gfx_file(userdir, self.user_gfx) as gfx_file,
+                ini.make_gal_file(userdir, self.user_gal) as gal_file,
                 ini.make_hotkeys_file(userdir) as hotkeys_file,
                 ini.make_gecko_file(userdir) as gecko_file,
             ):

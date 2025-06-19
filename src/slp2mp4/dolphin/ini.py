@@ -79,6 +79,15 @@ def make_gfx_file(userdir: pathlib.Path, user_settings):
 
 
 @contextlib.contextmanager
+def make_gal_file(userdir: pathlib.Path, user_settings):
+    settings = {}
+    util.update_dict(settings, user_settings)
+    filename = userdir.joinpath("GameSettings", "GAL.ini")
+    with make_ini_file(filename, settings) as (name, handle):
+        yield name
+
+
+@contextlib.contextmanager
 def make_hotkeys_file(userdir: pathlib.Path):
     settings = {
         "Hotkeys1": {
