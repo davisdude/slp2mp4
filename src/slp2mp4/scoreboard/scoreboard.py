@@ -80,12 +80,20 @@ class Scoreboard:
                 for slot_data in context_data["scores"][self.game_index]["slots"]
             ]
             mapping = {
-                "{TOURNAMENT_NAME}": html.escape(platform_specific_data["tournament"]["name"]),
-                "{TOURNAMENT_LOCATION}": html.escape(platform_specific_data["tournament"]["location"]),
+                "{TOURNAMENT_NAME}": html.escape(
+                    platform_specific_data["tournament"]["name"]
+                ),
+                "{TOURNAMENT_LOCATION}": html.escape(
+                    platform_specific_data["tournament"]["location"]
+                ),
                 "{EVENT_NAME}": html.escape(platform_specific_data["event"]["name"]),
                 "{PHASE_NAME}": html.escape(platform_specific_data["phase"]["name"]),
-                "{BRACKET_ROUND}": html.escape(platform_specific_data["set"]["fullRoundText"]),
-                "{BRACKET_ROUND_SHORT}": html.escape(_shorten_round(platform_specific_data["set"]["fullRoundText"])),
+                "{BRACKET_ROUND}": html.escape(
+                    platform_specific_data["set"]["fullRoundText"]
+                ),
+                "{BRACKET_ROUND_SHORT}": html.escape(
+                    _shorten_round(platform_specific_data["set"]["fullRoundText"])
+                ),
                 "{BRACKET_SCORING}": f"Best of {context_data['bestOf']}",
                 "{BRACKET_SCORING_SHORT}": f"Bo{context_data['bestOf']}",
                 "{COMBATANT_1_NAME}": html.escape(names[0]),
@@ -94,7 +102,6 @@ class Scoreboard:
                 "{COMBATANT_2_SCORE}": str(scores[1]),
             }
             panel.html_str = _translate(panel.html_str, mapping)
-
 
     def _render_html(self, panels, png_paths):
         for png_path, panel in zip(png_paths, panels):
@@ -165,18 +172,21 @@ def _translate(string, mapping):
 
 
 def _shorten_round(round_text):
-    return _translate(round_text, {
-        "Winners": "W",
-        "Losers": "L",
-        "Grand": "F",
-        "Semi": "S",
-        "Quarter": "Q",
-        "Round" : "R",
-        "Final": "F",
-        "Reset": "R",
-        " ": "",
-        "-": "",
-    })
+    return _translate(
+        round_text,
+        {
+            "Winners": "W",
+            "Losers": "L",
+            "Grand": "F",
+            "Semi": "S",
+            "Quarter": "Q",
+            "Round": "R",
+            "Final": "F",
+            "Reset": "R",
+            " ": "",
+            "-": "",
+        },
+    )
 
 
 @contextlib.contextmanager

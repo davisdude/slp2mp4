@@ -20,7 +20,9 @@ def _render(conf, slp_queue, video_queue):
             break
         output_name, slp_path, context, index = data
         tmp = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False)
-        video.render(conf, slp_path, pathlib.Path(tmp.name), context, output_name, index)
+        video.render(
+            conf, slp_path, pathlib.Path(tmp.name), context, output_name, index
+        )
         tmp.close()
         video_queue.put((output_name, tmp.name, index))
 

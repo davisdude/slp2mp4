@@ -55,4 +55,6 @@ def render(
             video_filter_args,
         )
         if conf["runtime"]["debug"]:
-            shutil.copyfile(output_path, final_path.parent / f"{slp_path.name}_{output_path.name}")
+            shutil.copyfile(
+                output_path, final_path.parent / f"{slp_path.name}_{output_path.name}"
+            )
