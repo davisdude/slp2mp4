@@ -71,7 +71,6 @@ class FfmpegRunner:
             ("-xerror",),
             (output_file,),
         )
-        print(args)
         self.run(args)
 
     # Assumes all videos have the same encoding

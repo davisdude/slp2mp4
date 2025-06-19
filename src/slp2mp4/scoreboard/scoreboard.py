@@ -6,7 +6,8 @@ import pathlib
 import tempfile
 import typing
 
-from slp2mp4 import ffmpeg
+from slp2mp4 import util
+from slp2mp4.context_helper import GameContextInfo
 
 from html2image import Html2Image
 
@@ -40,14 +41,9 @@ class ScoreboardPanel:
 
 @dataclasses.dataclass
 class Scoreboard:
+    game_context: GameContextInfo
     conf: dict
-    context_json_path: pathlib.Path
-    game_index: int
     height: int
-
-    def _get_context_data(self):
-        with open(self.context_json_path) as json_data:
-            return json.load(json_data)
 
     def _get_scoreboard_panels(self, pad: tuple[int]) -> list[ScoreboardPanel]:
         raise NotImplementedError("_get_scoreboard_panels must be overridden by child")
@@ -60,56 +56,21 @@ class Scoreboard:
     def _get_scale_args(self):
         return (f"[1]scale=width=-2:height={self.height}[scaled]",)
 
-    def _update_html(self, panels, context_data):
-        for panel in panels:
-            if "startgg" in context_data:
-                platform_specific_data = context_data["startgg"]
-            elif "challonge" in context_data:
-                platform_specific_data = context_data["challonge"]
-            else:
-                platform_specific_data = {
-                    "tournament": {"name": "Unknown"},
-                    "set": {"fullRoundText": "Unknown"},
-                }
-            names = [
-                _get_name_from_slot_data(slot_data)
-                for slot_data in context_data["scores"][self.game_index]["slots"]
-            ]
-            scores = [
-                str(slot_data["score"])
-                for slot_data in context_data["scores"][self.game_index]["slots"]
-            ]
-            mapping = {
-                "{TOURNAMENT_NAME}": html.escape(
-                    platform_specific_data["tournament"]["name"]
-                ),
-                "{TOURNAMENT_LOCATION}": html.escape(
-                    platform_specific_data["tournament"]["location"]
-                ),
-                "{EVENT_NAME}": html.escape(platform_specific_data["event"]["name"]),
-                "{PHASE_NAME}": html.escape(platform_specific_data["phase"]["name"]),
-                "{BRACKET_ROUND}": html.escape(
-                    platform_specific_data["set"]["fullRoundText"]
-                ),
-                "{BRACKET_ROUND_SHORT}": html.escape(
-                    _shorten_round(platform_specific_data["set"]["fullRoundText"])
-                ),
-                "{BRACKET_SCORING}": f"Best of {context_data['bestOf']}",
-                "{BRACKET_SCORING_SHORT}": f"Bo{context_data['bestOf']}",
-                "{COMBATANT_1_NAME}": html.escape(names[0]),
-                "{COMBATANT_2_NAME}": html.escape(names[1]),
-                "{COMBATANT_1_SCORE}": str(scores[0]),
-                "{COMBATANT_2_SCORE}": str(scores[1]),
-            }
-            panel.html_str = _translate(panel.html_str, mapping)
+    def _update_panel_html(self, panel):
+        mapping = self.game_context.get_mapping()
+        for k, v in mapping.items():
+            mapping[k] = html.escape(str(v))
+        panel.html_str = util.translate(panel.html_str, mapping)
 
     def _render_html(self, panels, png_paths):
         for png_path, panel in zip(png_paths, panels):
+            self._update_panel_html(panel)
             panel.render(png_path, self.height)
 
     def _get_pad(self):
         return (self.conf["scoreboard"]["crop_x"], self.conf["scoreboard"]["crop_y"])
 
+    # inputs[0]=dumped audio; inputs[1]=dumped video; rest are from scoreboard
     def _get_crop_args(self, panels):
         return tuple(
             (
@@ -122,8 +83,6 @@ class Scoreboard:
     def get_args(self):
         pad = self._get_pad()
         panels = self._get_scoreboard_panels(pad)
-        context_data = self._get_context_data()
-        self._update_html(panels, context_data)
         try:
             with _scoreboard_panel_context_manager(panels) as png_paths:
                 self._render_html(panels, png_paths)
@@ -138,55 +97,6 @@ class Scoreboard:
                 yield png_paths, filter_args
         finally:
             pass
-
-
-def _get_name(name, prefixes, pronouns, ports, is_singles=True):
-    if is_singles:
-        if prefixes:
-            name = f"{prefixes} | {name}"
-        if pronouns:
-            name = f"{name} ({pronouns})"
-    else:
-        name = f"{name} (P{ports})"
-    return name
-
-
-def _get_name_from_slot_data(slot_data):
-    is_singles = len(slot_data["displayNames"]) == 1
-    names = [
-        _get_name(name, prefixes, pronouns, ports, is_singles)
-        for name, prefixes, pronouns, ports in zip(
-            slot_data["displayNames"],
-            slot_data["prefixes"],
-            slot_data["pronouns"],
-            slot_data["ports"],
-        )
-    ]
-    return ("/").join(names)
-
-
-def _translate(string, mapping):
-    for old, new in mapping.items():
-        string = string.replace(old, new)
-    return string
-
-
-def _shorten_round(round_text):
-    return _translate(
-        round_text,
-        {
-            "Winners": "W",
-            "Losers": "L",
-            "Grand": "F",
-            "Semi": "S",
-            "Quarter": "Q",
-            "Round": "R",
-            "Final": "F",
-            "Reset": "R",
-            " ": "",
-            "-": "",
-        },
-    )
 
 
 @contextlib.contextmanager

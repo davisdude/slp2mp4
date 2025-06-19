@@ -28,3 +28,10 @@ def natsort(s):
 
 def get_parent_as_path(p):
     return pathlib.Path(p.absolute().parent.parts[-1])
+
+
+# Like str.replace, but with a dict
+def translate(string: str, mapping: dict[str, str]):
+    for old, new in mapping.items():
+        string = string.replace(old, new)
+    return string

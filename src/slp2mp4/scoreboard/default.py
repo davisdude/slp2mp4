@@ -13,12 +13,12 @@ HTML_STR = r"""
             <div class="filler"><hr></div>
 
             <div class="combatant">
-                <span class="combatant-name">{COMBATANT_1_NAME}:</span>
+                <span class="combatant-tag">{COMBATANT_1_TAG}:</span>
                 <span class="combatant-score">{COMBATANT_1_SCORE}</span>
             </div>
 
             <div class="combatant">
-                <span class="combatant-name">{COMBATANT_2_NAME}:</span>
+                <span class="combatant-tag">{COMBATANT_2_TAG}:</span>
                 <span class="combatant-score">{COMBATANT_2_SCORE}</span>
             </div>
 
@@ -74,7 +74,7 @@ div {
     align-items: end;
 }
 
-.combatant-name {
+.combatant-tag {
     flex: 1;
 }
 
