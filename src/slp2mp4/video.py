@@ -26,15 +26,13 @@ def render(
     conf,
     slp_path: pathlib.Path,
     output_path: pathlib.Path,
-    context_path: pathlib.Path,
+    context: GameContextInfo | None,
     final_path: pathlib.Path,
-    index: int,
 ):
     Ffmpeg = ffmpeg.FfmpegRunner(conf)
     Dolphin = dolphin_runner.DolphinRunner(conf)
-    if context_path:
+    if context:
         height = config.get_expected_height(conf)
-        context = GameContextInfo(context_path, index)
         sb = conf["scoreboard"]["type"](context, conf, height)
         context_cm = sb.get_args
     else:

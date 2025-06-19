@@ -18,11 +18,9 @@ def _render(conf, slp_queue, video_queue):
         data = slp_queue.get()
         if data is None:
             break
-        output_name, slp_path, context, index = data
+        output_name, slp_path, context = data
         tmp = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False)
-        video.render(
-            conf, slp_path, pathlib.Path(tmp.name), context, output_name, index
-        )
+        video.render(conf, slp_path, pathlib.Path(tmp.name), context, output_name)
         tmp.close()
         video_queue.put((output_name, tmp.name, index))
 
@@ -74,13 +72,12 @@ def run(conf, outputs: list[Output]):
     )
 
     for output in outputs:
-        for index, slp in enumerate(output.inputs):
+        for slp, context in zip(output.inputs, output.contexts):
             slp_queue.put(
                 (
                     output.output,
                     slp,
-                    output.context,
-                    index,
+                    context,
                 )
             )
 
