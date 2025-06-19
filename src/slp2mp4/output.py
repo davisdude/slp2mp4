@@ -7,14 +7,15 @@ from slp2mp4.context_helper import GameContextInfo
 
 
 @dataclasses.dataclass
-class Output:
-    inputs: list[pathlib.Path] = dataclasses.field(default_factory=list)  # slps
-    output: pathlib.Path = dataclasses.field(default=pathlib.Path("."))
-    context_path: pathlib.Path
-    contexts: list[GameContextInfo] = dataclasses.field(init=False)
+class OutputComponent:
+    slp: pathlib.Path
+    context: GameContextInfo | None
 
-    def __post_init__(self):
-        self.contexts = [
-            GameContextInfo(self.context_path, game_index) if self.context_path else None
-            for game_index in range(1, len(self.inputs) + 1)
+
+class Output:
+    def __init__(self, slps: list[pathlib.Path], output: pathlib.Path, context_path: pathlib.Path | None):
+        self.components = [
+            GameContextInfo(context_path, game_index) if context_path else None
+            for game_index in range(1, len(slps) + 1)
         ]
+        self.output = output

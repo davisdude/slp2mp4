@@ -18,9 +18,9 @@ def _render(conf, slp_queue, video_queue):
         data = slp_queue.get()
         if data is None:
             break
-        output_name, slp_path, context = data
+        output_name, component = data
         tmp = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False)
-        video.render(conf, slp_path, pathlib.Path(tmp.name), context, output_name)
+        video.render(conf, component, pathlib.Path(tmp.name), output_name)
         tmp.close()
         video_queue.put((output_name, tmp.name, index))
 
@@ -37,11 +37,11 @@ def _concat(conf, video_queue, outputs):
             mp4s[output_name] = {}
         mp4s[output_name][index] = mp4_path
         output = list(filter(lambda o: o.output == output_name, outputs))[0]
-        if len(mp4s[output_name]) < len(output.inputs):
+        if len(mp4s[output_name]) < len(output.components):
             continue
         tmpfiles = [
             pathlib.Path(mp4s[output_name][index])
-            for index in range(len(output.inputs))
+            for index in range(len(output.components))
         ]
         Ffmpeg.concat_videos(tmpfiles, output_name)
         for tmp in tmpfiles:
@@ -72,12 +72,11 @@ def run(conf, outputs: list[Output]):
     )
 
     for output in outputs:
-        for slp, context in zip(output.inputs, output.contexts):
+        for component in output.components:
             slp_queue.put(
                 (
                     output.output,
-                    slp,
-                    context,
+                    component,
                 )
             )
 

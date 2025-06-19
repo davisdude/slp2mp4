@@ -5,6 +5,7 @@ import json
 from slp2mp4 import util
 
 
+# https://github.com/jmlee337/replay-manager-for-slippi/blob/efe8c246181a6251c268abd2194706db9b7c6c00/src/common/types.ts#L257
 class GameContextInfo:
     """Wraps around context.json to abstract data differences."""
 
