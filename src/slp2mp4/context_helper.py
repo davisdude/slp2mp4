@@ -47,10 +47,7 @@ class GameContextInfo:
 
     @property
     def scores(self):
-        return [
-            str(slot_data["score"])
-            for slot_data in self.context_data["scores"][self.game_index]["slots"]
-        ]
+        return self.context_data["scores"][self.game_index]["slots"]["score"]
 
     @property
     def tournament_name(self):
@@ -135,7 +132,7 @@ def _shorten_round(round_text):
         {
             "Winners": "W",
             "Losers": "L",
-            "Grand": "F",
+            "Grand": "G",
             "Semi": "S",
             "Quarter": "Q",
             "Round": "R",
