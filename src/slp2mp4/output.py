@@ -14,12 +14,17 @@ class OutputComponent:
 
 
 class Output:
-    def __init__(self, slps: list[pathlib.Path], output: pathlib.Path, context_path: pathlib.Path | None):
+    def __init__(
+        self,
+        slps: list[pathlib.Path],
+        output: pathlib.Path,
+        context_path: pathlib.Path | None,
+    ):
         self.components = [
             OutputComponent(
                 slp,
                 game_index,
-                GameContextInfo(context_path, game_index) if context_path else None
+                GameContextInfo(context_path, game_index) if context_path else None,
             )
             for game_index, slp in enumerate(slps)
         ]

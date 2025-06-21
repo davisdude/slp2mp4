@@ -48,7 +48,10 @@ class GameContextInfo:
 
     @property
     def scores(self):
-        return [slot["score"] for slot in self.context_data["scores"][self.game_index]["slots"]]
+        return [
+            slot["score"]
+            for slot in self.context_data["scores"][self.game_index]["slots"]
+        ]
 
     @property
     def tournament_name(self):
