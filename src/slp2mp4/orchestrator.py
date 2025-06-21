@@ -7,6 +7,7 @@ import multiprocessing
 import pathlib
 import queue
 import tempfile
+import os
 
 import slp2mp4.ffmpeg as ffmpeg
 import slp2mp4.video as video
@@ -19,8 +20,10 @@ def _render(conf, slp_queue, video_queue):
         if data is None:
             break
         output, component = data
+        print(f"_render start ({os.getpid()}): {output=} {component=}")
         tmp = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False)
         video.render(conf, component, pathlib.Path(tmp.name), output.output)
+        print(f"_render rendered ({os.getpid()}): {output=} {component=}")
         tmp.close()
         video_queue.put((output, component, tmp.name))
 
@@ -33,16 +36,18 @@ def _concat(conf, video_queue, outputs):
         if data is None:
             break
         output, component, mp4_path = data
+        print(f"_concat start: {output=} {component=} {mp4_path=}")
         if output.output not in mp4s:
             mp4s[output.output] = {}
         mp4s[output.output][component.index] = mp4_path
-        output = list(filter(lambda o: o.output == output.output, outputs))[0]
         if len(mp4s[output.output]) < len(output.components):
+            print(f"_concat continue: {mp4s[output.output]=} {len(output.components)=}")
             continue
         tmpfiles = [
             pathlib.Path(mp4s[output.output][index])
             for index in range(len(output.components))
         ]
+        print(f"_concat concat: {tmpfiles=} {output.output=}")
         Ffmpeg.concat_videos(tmpfiles, output.output)
         for tmp in tmpfiles:
             tmp.unlink()
