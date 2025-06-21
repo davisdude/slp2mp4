@@ -24,7 +24,11 @@ group of replays.
 Notes:
 
 - Adding scoreboards can be slow and CPU-intensive
-- Scoreboards are only generated for directory-based run modes
+- Scoreboards are only generated for `directory` and `zip` run modes
+    - In `directory` mode, if `slp2mp4` finds a `context.json` file, it assumes
+      that all replays in the directory have a `context.json` entry. (I.e.
+      adding files to a folder reported by replay-manager is unsupported and
+      will break things).
 - Scoreboards will not be generated if a `context.json` file is not found
 - Currently, only sets reported with startgg data are supported
 
@@ -34,7 +38,7 @@ Notes:
 - [FFmpeg](https://ffmpeg.org/) installed and accessible
 - [Slippi Dolphin](https://slippi.gg/downloads) installed
 - Super Smash Bros. Melee ISO file
-- Google Chrome to be installed (if using the [scoreboard](#scoreboard) feature).
+- Google Chrome (if using the [scoreboard](#scoreboard) feature)
 
 ## Installation
 
