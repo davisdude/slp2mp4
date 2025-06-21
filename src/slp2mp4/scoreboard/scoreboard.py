@@ -48,13 +48,11 @@ class Scoreboard:
     def _get_scoreboard_panels(self, pad: tuple[int]) -> list[ScoreboardPanel]:
         raise NotImplementedError("_get_scoreboard_panels must be overridden by child")
 
-    # In the ffmpeg command (ffmpeg.py:merge_audio_and_video()), input 0 =
-    # the audio, input 1 = the video. Remaining inputs are scoreboard images.
     def _get_scoreboard_args(self):
         raise NotImplementedError("_get_scoreboard_args must be overridden by child")
 
     def _get_scale_args(self):
-        return (f"[1]scale=width=-2:height={self.height}[scaled]",)
+        return (f"[0]scale=width=-2:height={self.height}[scaled]",)
 
     def _update_panel_html(self, panel):
         mapping = self.game_context.get_mapping()
@@ -70,12 +68,11 @@ class Scoreboard:
     def _get_pad(self):
         return (self.conf["scoreboard"]["crop_x"], self.conf["scoreboard"]["crop_y"])
 
-    # inputs[0]=dumped audio; inputs[1]=dumped video; rest are from scoreboard
     def _get_crop_args(self, panels):
         return tuple(
             (
                 panel.get_crop_args(stream_id, self.height)
-                for stream_id, panel in enumerate(panels, start=2)
+                for stream_id, panel in enumerate(panels, start=1)
             )
         )
 

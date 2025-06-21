@@ -5,12 +5,12 @@ import tempfile
 import subprocess
 import shlex
 
-import slp2mp4.util as util
+from slp2mp4 import config, util
 
 
 class FfmpegRunner:
-    def __init__(self, config):
-        self.conf = config
+    def __init__(self, conf):
+        self.conf = conf
 
     def run(self, args):
         ffmpeg_args = [self.conf["paths"]["ffmpeg"]] + util.flatten_arg_tuples(args)
@@ -43,39 +43,44 @@ class FfmpegRunner:
 
     # Assumes output file can handle no reencoding for concat
     # Returns True if ffmpeg ran successfully, False otherwise
-    # inputs[0]=dumped audio; inputs[1]=dumped video; rest are from scoreboard
-    def combine_audio_and_video_and_apply_filters(
+    def combine_audio_and_video(
         self,
-        inputs: list[pathlib.Path],
+        audio_file: pathlib.Path,
+        video_file: pathlib.Path,
         output_file: pathlib.Path,
-        video_filter: tuple[str],
     ):
-        input_args = tuple(("-i", file) for file in inputs)
-        if video_filter:
-            filter_args = (
-                "-filter_complex",
-                (",").join(video_filter),
-            )
-            video_map = (filter_args,) + (
-                ("-map", "[v]"),
-                ("-codec:v", "h264"),
-            )
-        else:
-            video_map = (
-                ("-map", "1:v"),
-                ("-codec:v", "copy"),
-            )
         args = (
             ("-y",),
-            *input_args,
-            *video_map,
-            ("-map", "0:a"),
-            ("-codec:a", "copy"),
+            ("-i", audio_file),
+            ("-i", video_file),
+            ("-c", "copy"),
             ("-avoid_negative_ts", "make_zero"),
             ("-xerror",),
             (output_file,),
         )
         self.run(args)
+
+    def add_scoreboard(self, replay: pathlib.Path, context, output_file: pathlib.Path):
+        height = config.get_expected_height(self.conf)
+        sb = self.conf["scoreboard"]["type"](context, self.conf, height)
+        with sb.get_args() as (inputs, video_filter):
+            sb_inputs = tuple(("-i", i) for i in inputs)
+            filter_args = (
+                "-filter_complex",
+                (",").join(video_filter),
+            )
+            args = (
+                ("-y",),
+                ("-i", replay),
+                *sb_inputs,
+                filter_args,
+                ("-map", "[v]"),
+                ("-codec:v", "h264"),
+                ("-map", "0:a"),
+                ("-codec:a", "copy"),
+                (output_file,),
+            )
+            self.run(args)
 
     # Assumes all videos have the same encoding
     def concat_videos(self, videos: [pathlib.Path], output_file: pathlib.Path):

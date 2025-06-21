@@ -22,20 +22,17 @@ def _render(conf, slp_queue, video_queue):
         output, component = data
         print(f"_render start ({os.getpid()}): {output=} {component=}")
         tmp = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False)
-        video.render(conf, component, pathlib.Path(tmp.name), output.output)
+        out = pathlib.Path(tmp.name)
+        video.render(conf, component, out, output.output)
         print(f"_render rendered ({os.getpid()}): {output=} {component=}")
-        tmp.close()
-        video_queue.put((output, component, tmp.name))
+        video_queue.put((output, component, out))
 
 
 def _concat(conf, video_queue, outputs):
     Ffmpeg = ffmpeg.FfmpegRunner(conf)
     mp4s = {}
-    while True:
-        data = video_queue.get()
-        if data is None:
-            break
-        output, component, mp4_path = data
+    while not video_queue.empty():
+        output, component, mp4_path = video_queue.get()
         print(f"_concat start: {output=} {component=} {mp4_path=}")
         if output.output not in mp4s:
             mp4s[output.output] = {}
@@ -43,13 +40,19 @@ def _concat(conf, video_queue, outputs):
         if len(mp4s[output.output]) < len(output.components):
             print(f"_concat continue: {mp4s[output.output]=} {len(output.components)=}")
             continue
-        tmpfiles = [
-            pathlib.Path(mp4s[output.output][index])
-            for index in range(len(output.components))
-        ]
-        print(f"_concat concat: {tmpfiles=} {output.output=}")
-        Ffmpeg.concat_videos(tmpfiles, output.output)
-        for tmp in tmpfiles:
+        if output.context:
+            for index in range(len(output.components)):
+                in_video = mp4s[output.output][index]
+                component = output.components[index]
+                new_tmp = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False)
+                out_video = pathlib.Path(new_tmp.name)
+                Ffmpeg.add_scoreboard(in_video, component.context, out_video)
+                in_video.unlink()
+                mp4s[output.output][index] = out_video
+        inputs = [mp4s[output.output][index] for index in range(len(output.components))]
+        print(f"_concat concat: {inputs=} {output.output=}")
+        Ffmpeg.concat_videos(inputs, output.output)
+        for tmp in inputs:
             tmp.unlink()
 
 
@@ -66,15 +69,6 @@ def run(conf, outputs: list[Output]):
             video_queue,
         ),
     )
-    video_pool = multiprocessing.Pool(
-        1,
-        _concat,
-        (
-            conf,
-            video_queue,
-            outputs,
-        ),
-    )
 
     for output in outputs:
         for component in output.components:
@@ -89,10 +83,6 @@ def run(conf, outputs: list[Output]):
     slp_pool.close()
     slp_pool.join()
 
-    video_queue.put(None)
-
+    _concat(conf, video_queue, outputs)
     video_queue.close()
     video_queue.join_thread()
-
-    video_pool.close()
-    video_pool.join()
