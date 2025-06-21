@@ -14,7 +14,7 @@ class FfmpegRunner:
 
     def run(self, args):
         ffmpeg_args = [self.conf["paths"]["ffmpeg"]] + util.flatten_arg_tuples(args)
-        subprocess.run(ffmpeg_args, check=True)
+        subprocess.run(ffmpeg_args, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     # Audio reencoding has to be done separately - see "corrupt input packet"
     # complaints otherwise
