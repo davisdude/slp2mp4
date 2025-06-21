@@ -65,6 +65,7 @@ class FfmpegRunner:
             *input_args,
             *video_map,
             ("-map", "0:a"),
+            ("-codec:a", "copy"),
             ("-avoid_negative_ts", "make_zero"),
             ("-xerror",),
             (output_file,),
