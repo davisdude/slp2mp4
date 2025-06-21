@@ -54,8 +54,6 @@ class FfmpegRunner:
             video_map = (filter_args,) + (
                 ("-map", "[v]"),
                 ("-codec:v", "h264"),
-                ("-crf", "17"),
-                ("-r", "60"),
             )
         else:
             video_map = (
