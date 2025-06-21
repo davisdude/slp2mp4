@@ -56,8 +56,8 @@ class Mode:
             out = ""
             for output in products:
                 out += f"{output.output}\n"
-                for i in output.inputs:
-                    out += f"\t{i}\n"
+                for component in output.components:
+                    out += f"\t{component.slp}\n"
                 if output.context:
                     out += f"\tcontext: {output.context}\n"
                 out += "\n"

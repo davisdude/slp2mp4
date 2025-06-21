@@ -18,6 +18,7 @@ class FfmpegRunner:
 
     # Audio reencoding has to be done separately - see "corrupt input packet"
     # complaints otherwise
+    # TODO: Add back -f opus and change back to fixed.out to support Noxxa use-case
     def reencode_audio(self, audio_file_path: pathlib.Path):
         reencoded_path = audio_file_path.parent / "fixed.opus"
         args = (

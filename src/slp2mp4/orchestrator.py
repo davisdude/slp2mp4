@@ -10,7 +10,7 @@ import tempfile
 
 import slp2mp4.ffmpeg as ffmpeg
 import slp2mp4.video as video
-from slp2mp4.output import Output
+from slp2mp4.output import Output, OutputComponent
 
 
 def _render(conf, slp_queue, video_queue):
@@ -18,11 +18,11 @@ def _render(conf, slp_queue, video_queue):
         data = slp_queue.get()
         if data is None:
             break
-        output_name, component = data
+        output, component = data
         tmp = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False)
-        video.render(conf, component, pathlib.Path(tmp.name), output_name)
+        video.render(conf, component, pathlib.Path(tmp.name), output.output)
         tmp.close()
-        video_queue.put((output_name, tmp.name, index))
+        video_queue.put((output, component, tmp.name))
 
 
 def _concat(conf, video_queue, outputs):
@@ -32,18 +32,18 @@ def _concat(conf, video_queue, outputs):
         data = video_queue.get()
         if data is None:
             break
-        output_name, mp4_path, index = data
-        if output_name not in mp4s:
-            mp4s[output_name] = {}
-        mp4s[output_name][index] = mp4_path
-        output = list(filter(lambda o: o.output == output_name, outputs))[0]
-        if len(mp4s[output_name]) < len(output.components):
+        output, component, mp4_path = data
+        if output.output not in mp4s:
+            mp4s[output.output] = {}
+        mp4s[output.output][component.index] = mp4_path
+        output = list(filter(lambda o: o.output == output.output, outputs))[0]
+        if len(mp4s[output.output]) < len(output.components):
             continue
         tmpfiles = [
-            pathlib.Path(mp4s[output_name][index])
+            pathlib.Path(mp4s[output.output][index])
             for index in range(len(output.components))
         ]
-        Ffmpeg.concat_videos(tmpfiles, output_name)
+        Ffmpeg.concat_videos(tmpfiles, output.output)
         for tmp in tmpfiles:
             tmp.unlink()
 
@@ -73,12 +73,7 @@ def run(conf, outputs: list[Output]):
 
     for output in outputs:
         for component in output.components:
-            slp_queue.put(
-                (
-                    output.output,
-                    component,
-                )
-            )
+            slp_queue.put((output, component))
 
     for i in range(num_procs):
         slp_queue.put(None)
