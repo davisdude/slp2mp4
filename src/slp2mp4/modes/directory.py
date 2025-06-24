@@ -16,10 +16,11 @@ class Directory(Mode):
 
     def _extract_helper(self, paths):
         for path in paths:
+            abs_path = path.absolute()
             root = (
-                pathlib.Path(path.absolute().name)
+                pathlib.Path(abs_path.name)
                 if path.is_dir()
-                else util.get_parent_as_path(path) / path.stem
+                else util.get_parent_as_path(path) / abs_path.name
             )
             self._recursive_find(root, path)
         return self.lookups.keys()
@@ -29,7 +30,7 @@ class Directory(Mode):
             return
         self._add_slps(location, path)
         for child in path.iterdir():
-            self._recursive_find(location / child.stem, child)
+            self._recursive_find(location / child, child)
 
     def _add_slps(self, location, path):
         slps = list(sorted(path.glob("*.slp"), key=util.natsort))

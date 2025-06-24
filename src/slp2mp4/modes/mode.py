@@ -22,7 +22,7 @@ class Mode:
         raise NotImplementedError("Child must implement `iterator`")
 
     def get_name(self, prefix, path):
-        name = path.stem
+        name = path.name
         if self.conf["runtime"]["prepend_directory"]:
             prefix = ("_").join(prefix.parts)
         else:
@@ -33,6 +33,7 @@ class Mode:
             name = name.replace("-", "—")
             name = name.replace("(", "⟮")
             name = name.replace(")", "⟯")
+        name = name.removesuffix(".slp")
         name += ".mp4"
         sanitized = self.output_directory / pathvalidate.sanitize_filename(name)
         # Name too long; suffix got dropped

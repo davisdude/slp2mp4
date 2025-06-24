@@ -29,7 +29,7 @@ class Zip(Directory):
             self._add_slps(location, path, fromzip)
             for child in path.iterdir():
                 if child.is_dir() or zipfile.is_zipfile(child):
-                    self._recursive_find(location / child.stem, child, fromzip)
+                    self._recursive_find(location / child, child, fromzip)
 
     def _add_slps(self, location, path, fromzip):
         if not fromzip:
