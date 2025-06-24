@@ -30,6 +30,7 @@ class Mode:
         if prefix:
             name = f"{prefix}_{name}"
         if self.conf["runtime"]["youtubify_names"]:
+            # TODO: Change to dict replace in utils
             name = name.replace("-", "—")
             name = name.replace("(", "⟮")
             name = name.replace(")", "⟯")
