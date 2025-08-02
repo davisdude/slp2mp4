@@ -46,8 +46,8 @@ body {
 }
 
 div {
-    margin-left: 0.5em;
-    margin-right: 0.5em;
+    margin-left: 1vh;
+    margin-right: 1vh;
 }
 
 #bottom {
@@ -60,16 +60,16 @@ div {
 
 .tournament-name {
     text-align: center;
-    font-size: 5em;
+    font-size: 6vh;
 }
 
 .tournament-location {
     text-align: center;
-    font-size: 2em;
+    font-size: 3vh;
 }
 
 .combatant {
-    font-size: 2.5em;
+    font-size: 4vh;
     display: flex;
     align-items: end;
 }
@@ -79,7 +79,7 @@ div {
 }
 
 .bracket {
-    font-size: 2em;
+    font-size: 3vh;
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
