@@ -43,13 +43,13 @@ def _parse_to_type(string, totype):
         return False, string
 
 
-def _parse_path(path_str):
+def _parse_file_path(path_str):
     path = pathlib.Path(path_str).expanduser()
-    return (path.exists(), path)
+    return (path.exists() and path.is_file(), path)
 
 
 def _parse_bin_path(path_str):
-    status, path = _parse_path(path_str)
+    status, path = _parse_file_path(path_str)
     if status and path.is_absolute():
         return (status, path)
     path = shutil.which(str(path))
@@ -97,8 +97,8 @@ def _parse_parallel(parallel):
 _TRANSFORMERS = {
     "paths": {
         "ffmpeg": _parse_bin_path,
-        "slippi_playback": _parse_path,
-        "ssbm_iso": _parse_path,
+        "slippi_playback": _parse_file_path,
+        "ssbm_iso": _parse_file_path,
     },
     "dolphin": {
         "backend": _parse_backend,

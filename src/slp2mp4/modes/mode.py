@@ -24,16 +24,20 @@ class Mode:
     def get_name(self, prefix, path):
         name = path.name
         if self.conf["runtime"]["prepend_directory"]:
-            prefix = ("_").join(prefix.parts)
+            prefix = (" ").join(prefix.parts)
         else:
-            prefix = ("_").join(prefix.parts[1:])
+            prefix = (" ").join(prefix.parts[1:])
         if prefix:
-            name = f"{prefix}_{name}"
+            name = f"{prefix} {name}"
         if self.conf["runtime"]["youtubify_names"]:
             # TODO: Change to dict replace in utils
             name = name.replace("-", "—")
             name = name.replace("(", "⟮")
             name = name.replace(")", "⟯")
+            name = name.replace("_", "＿")
+            name = name.replace("<", "＜")
+            name = name.replace(">", "＞")
+            name = name.replace(".", "．")
         name = name.removesuffix(".slp")
         name += ".mp4"
         sanitized = self.output_directory / pathvalidate.sanitize_filename(name)

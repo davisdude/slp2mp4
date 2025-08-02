@@ -30,7 +30,7 @@ class Directory(Mode):
             return
         self._add_slps(location, path)
         for child in path.iterdir():
-            self._recursive_find(location / child, child)
+            self._recursive_find(location / child.name, child)
 
     def _add_slps(self, location, path):
         slps = list(sorted(path.glob("*.slp"), key=util.natsort))

@@ -24,12 +24,20 @@ class Zip(Directory):
             tmpdir = _make_tmpdir()
             with zipfile.ZipFile(path, "r") as zfile:
                 zfile.extractall(path=tmpdir)
-            self._recursive_find(location, tmpdir, True)
+            name = location.name
+            if location.suffix.lower() == ".zip":
+                name = location.stem
+            self._recursive_find(location.parent / name, tmpdir, True)
         else:
             self._add_slps(location, path, fromzip)
             for child in path.iterdir():
-                if child.is_dir() or zipfile.is_zipfile(child):
-                    self._recursive_find(location / child, child, fromzip)
+                if child.is_dir():
+                    self._recursive_find(location / child.name, child, fromzip)
+                elif zipfile.is_zipfile(child):
+                    name = child.name
+                    if child.suffix.lower() == ".zip":
+                        name = child.stem
+                    self._recursive_find(location / name, child, fromzip)
 
     def _add_slps(self, location, path, fromzip):
         if not fromzip:
