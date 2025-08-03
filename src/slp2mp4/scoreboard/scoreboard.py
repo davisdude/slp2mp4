@@ -22,10 +22,6 @@ class ScoreboardPanel:
     def _get_width(self, height):
         return int(self.aspect_ratio * height)
 
-    def get_crop_args(self, stream_id, height):
-        width = self._get_width(height)
-        return f"[{stream_id}]fps=60,crop=w={width}:h={height}:x=0:y=0:exact=1[{stream_id}_cropped]"
-
     def render(self, png_path, height):
         width = self._get_width(height)
         hti = Html2Image(
@@ -65,32 +61,17 @@ class Scoreboard:
             self._update_panel_html(panel)
             panel.render(png_path, self.height)
 
-    def _get_pad(self):
-        return (self.conf["scoreboard"]["crop_x"], self.conf["scoreboard"]["crop_y"])
-
-    def _get_crop_args(self, panels):
-        return tuple(
-            (
-                panel.get_crop_args(stream_id, self.height)
-                for stream_id, panel in enumerate(panels, start=1)
-            )
-        )
-
     @contextlib.contextmanager
     def get_args(self):
-        pad = self._get_pad()
-        print(f"{pad=}")
         panels = self._get_scoreboard_panels(pad)
         try:
             with _scoreboard_panel_context_manager(panels) as png_paths:
                 self._render_html(panels, png_paths)
                 scale_args = self._get_scale_args()
-                crop_args = self._get_crop_args(panels)
-                print(f"{crop_args=}")
                 scoreboard_args = self._get_scoreboard_args()
                 # Don't re-scale if not doing filtering
                 if scoreboard_args:
-                    filter_args = scale_args + crop_args + scoreboard_args
+                    filter_args = scale_args + scoreboard_args
                 else:
                     filter_args = ()
                 yield png_paths, filter_args

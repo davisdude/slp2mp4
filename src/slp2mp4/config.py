@@ -117,8 +117,6 @@ _TRANSFORMERS = {
     },
     "scoreboard": {
         "type": _parse_scoreboard_type,
-        "crop_x": _parse_int,
-        "crop_y": _parse_int,
     },
 }
 

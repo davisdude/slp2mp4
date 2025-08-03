@@ -245,34 +245,6 @@ class ConfigDialog(tk.Toplevel):
         )
         scoreboard_type_combo.grid(row=0, column=1, padx=5, pady=5)
 
-        # crop_x
-        ttk.Label(scoreboard_frame, text="crop x:").grid(
-            row=1, column=0, sticky="w", padx=5, pady=5
-        )
-        self.crop_x_var = tk.IntVar()
-        crop_x_spin = ttk.Spinbox(
-            scoreboard_frame,
-            from_=0,
-            to=500,
-            textvariable=self.crop_x_var,
-            increment=1,
-        )
-        crop_x_spin.grid(row=1, column=1, padx=5, pady=5)
-
-        # crop_y
-        ttk.Label(scoreboard_frame, text="crop y:").grid(
-            row=2, column=0, sticky="w", padx=5, pady=5
-        )
-        self.crop_y_var = tk.IntVar()
-        crop_y_spin = ttk.Spinbox(
-            scoreboard_frame,
-            from_=0,
-            to=500,
-            textvariable=self.crop_y_var,
-            increment=1,
-        )
-        crop_y_spin.grid(row=2, column=1, padx=5, pady=5)
-
         # Buttons
         button_frame = ttk.Frame(self)
         button_frame.pack(side="bottom", pady=10)
@@ -308,8 +280,6 @@ class ConfigDialog(tk.Toplevel):
         self.youtubify_var.set(bool(self.config["runtime"]["youtubify_names"]))
         self.debug_var.set(bool(self.config["runtime"]["debug"]))
         self.scoreboard_type_var.set(self.config["scoreboard"]["type"])
-        self.crop_x_var.set(int(self.config["scoreboard"]["crop_x"]))
-        self.crop_y_var.set(int(self.config["scoreboard"]["crop_y"]))
 
     def save_config(self):
         """Save configuration and close dialog"""
@@ -337,8 +307,6 @@ class ConfigDialog(tk.Toplevel):
             },
             "scoreboard": {
                 "type": self.scoreboard_type_var.get(),
-                "crop_x": self.crop_x_var.get(),
-                "crop_y": self.crop_y_var.get(),
             },
         }
         self.destroy()
