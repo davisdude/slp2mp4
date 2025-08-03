@@ -100,4 +100,4 @@ class DefaultScoreboard(scoreboard.Scoreboard):
         ]
 
     def _get_scoreboard_args(self):
-        return ("[scaled]hstack=inputs=2[v]",)
+        return ("[1]fps=fps=60[1_fps];[1_fps][scaled]hstack=inputs=2[v]",)
