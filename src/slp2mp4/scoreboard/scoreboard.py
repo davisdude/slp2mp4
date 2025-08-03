@@ -79,12 +79,14 @@ class Scoreboard:
     @contextlib.contextmanager
     def get_args(self):
         pad = self._get_pad()
+        print(f"{pad=}")
         panels = self._get_scoreboard_panels(pad)
         try:
             with _scoreboard_panel_context_manager(panels) as png_paths:
                 self._render_html(panels, png_paths)
                 scale_args = self._get_scale_args()
                 crop_args = self._get_crop_args(panels)
+                print(f"{crop_args=}")
                 scoreboard_args = self._get_scoreboard_args()
                 # Don't re-scale if not doing filtering
                 if scoreboard_args:
