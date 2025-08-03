@@ -17,7 +17,6 @@ class ScoreboardPanel:
     html_str: str
     css_str: str
     aspect_ratio: float
-    pad: tuple[int]
 
     def _get_width(self, height):
         return int(self.aspect_ratio * height)
@@ -25,7 +24,7 @@ class ScoreboardPanel:
     def render(self, png_path, height):
         width = self._get_width(height)
         hti = Html2Image(
-            size=(width + self.pad[0], height + self.pad[1]),
+            size=(width, height),
             output_path=png_path.parent,
         )
         hti.screenshot(
@@ -41,7 +40,7 @@ class Scoreboard:
     conf: dict
     height: int
 
-    def _get_scoreboard_panels(self, pad: tuple[int]) -> list[ScoreboardPanel]:
+    def _get_scoreboard_panels(self) -> list[ScoreboardPanel]:
         raise NotImplementedError("_get_scoreboard_panels must be overridden by child")
 
     def _get_scoreboard_args(self):
@@ -63,7 +62,7 @@ class Scoreboard:
 
     @contextlib.contextmanager
     def get_args(self):
-        panels = self._get_scoreboard_panels(pad)
+        panels = self._get_scoreboard_panels()
         try:
             with _scoreboard_panel_context_manager(panels) as png_paths:
                 self._render_html(panels, png_paths)

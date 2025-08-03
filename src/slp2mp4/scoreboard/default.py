@@ -94,9 +94,9 @@ div {
 
 
 class DefaultScoreboard(scoreboard.Scoreboard):
-    def _get_scoreboard_panels(self, pad):
+    def _get_scoreboard_panels(self):
         return [
-            scoreboard.ScoreboardPanel(HTML_STR, CSS_STR, 606 / 1080, pad),
+            scoreboard.ScoreboardPanel(HTML_STR, CSS_STR, 606 / 1080),
         ]
 
     def _get_scoreboard_args(self):
