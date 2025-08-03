@@ -11,7 +11,7 @@ class GameContextInfo:
 
     def __init__(self, context_json_path: pathlib.Path, game_index: int):
         self.game_index = game_index
-        with open(context_json_path, "r") as f:
+        with open(context_json_path, "r", encoding="utf-8") as f:
             self.context_data = json.load(f)
             self.context_data["unknown"] = {
                 "tournament": {
