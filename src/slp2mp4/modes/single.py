@@ -10,4 +10,4 @@ class Single(Mode):
         if (not path.exists()) or (not path.is_file()):
             raise FileNotFoundError(path.name)
         if path.suffix.lower() == ".slp":
-            yield [path], util.get_parent_as_path(path), path.parent / path.stem
+            yield [path], util.get_parent_as_path(path), path.parent / path.stem, None
