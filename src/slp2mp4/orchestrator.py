@@ -41,13 +41,15 @@ def _concat(conf, video_dict, outputs):
                 new_tmp = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False)
                 out_video = pathlib.Path(new_tmp.name)
                 Ffmpeg.add_scoreboard(in_video, component.context, out_video)
-                in_video.unlink()
+                os.close(in_video)
+                os.remove(in_video)
                 mp4s[index] = out_video
         inputs = [mp4s[index] for index in range(len(output.components))]
         print(f"_concat concat: {inputs=} {output.output=}")
         Ffmpeg.concat_videos(inputs, output.output)
         for tmp in inputs:
-            tmp.unlink()
+            os.close(tmp)
+            os.remove(tmp)
 
 
 def run(conf, outputs: list[Output]):
