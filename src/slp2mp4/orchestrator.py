@@ -8,6 +8,7 @@ import multiprocessing
 import pathlib
 import tempfile
 import os
+import time
 
 import slp2mp4.ffmpeg as ffmpeg
 import slp2mp4.video as video
@@ -46,6 +47,7 @@ def _concat(conf, video_dict, outputs):
         inputs = [mp4s[index] for index in range(len(output.components))]
         print(f"_concat concat: {inputs=} {output.output=}")
         Ffmpeg.concat_videos(inputs, output.output)
+        time.sleep(1)
         for tmp in inputs:
             tmp.unlink()
 
