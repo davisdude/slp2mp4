@@ -17,6 +17,7 @@ from slp2mp4.output import Output, OutputComponent
 def _render(conf, video_dict, output, component):
     print(f"_render start ({os.getpid()}): {output=} {component=}")
     tmp = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False)
+    tmp.close()
     out = pathlib.Path(tmp.name)
     video.render(conf, component, out, output.output)
     print(f"_render rendered ({os.getpid()}): {output=} {component=}")
@@ -39,6 +40,7 @@ def _concat(conf, video_dict, outputs):
                 in_video = mp4s[index]
                 component = output.components[index]
                 new_tmp = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False)
+                new_tmp.close()
                 out_video = pathlib.Path(new_tmp.name)
                 Ffmpeg.add_scoreboard(in_video, component.context, out_video)
                 in_video.unlink()
