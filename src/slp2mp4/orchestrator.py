@@ -47,6 +47,7 @@ def _concat(conf, video_dict, outputs):
         print(f"_concat concat: {inputs=} {output.output=}")
         Ffmpeg.concat_videos(inputs, output.output)
         for tmp in inputs:
+            print(f"Unlink {tmp=}")
             tmp.unlink()
 
 
