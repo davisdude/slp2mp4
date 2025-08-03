@@ -195,11 +195,25 @@ parallel = 0
 - Does not play nicely with WSL, since dolphin expects all paths to be relative
   to Windows.
 
+- If running for the first time, *please* try running on a smaller subset first to prevent wasted
+  time.
+
+- If your scoreboards have extra space at the bottom or are cropped, this is a
+  known [Chrome issue][chrome-issue]. To address this issue:
+
+    1. Download and install `chrome-headless-shell` from [here][chrome-headless-shell].
+    1. Add the following environment variables to your system:
+        1. Set `HTML2IMAGE_CHROME_BIN` to the path to the chrome executable (which will be called
+           `chrome-headless-shell.exe` on Windows).
+        1. Set `HTML2IMAGE_TOGGLE_ENV_VAR_LOOKUP` to `1`.
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 
+[chrome-headless-shell]: https://googlechromelabs.github.io/chrome-for-testing/
+[chrome-issue]: https://issues.chromium.org/issues/405165895
 [default-settings]: ./src/slp2mp4/defaults.toml
 [dolphin-video-backends-src]: https://github.com/dolphin-emu/dolphin/tree/master/Source/Core/VideoBackends
 [dolphin-video-backends]: https://wiki.dolphin-emu.org/index.php?title=Configuration_Guide#Video_Backend
