@@ -15,7 +15,7 @@ MODES = {
         "recursively convert all replay files in a directory to videos",
         "input directory/directories",
     ),
-    "file_structure": mode.ModeContainer(
+    "directory_structure": mode.ModeContainer(
         DirectoryStructure,
         "recursively convert all replay files in a directory to videos"
             "while preserving the directory structure",
