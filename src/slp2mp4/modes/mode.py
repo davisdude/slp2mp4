@@ -15,6 +15,16 @@ class Mode:
         self.conf = None
 
     def iterator(self, location, path):
+        """
+        This method should be implemented by child classes
+        location: The root directory where the SLP files are located.
+        path: The current path being processed.
+
+        returns: tuples of (slps, prefix, mp4_path).
+        slps: List of SLP files.
+        prefix: Path to the directory containing the SLP files.
+        mp4_path: Path where the output MP4 file should be saved.
+        """
         raise NotImplementedError("Child must implement `iterator`")
 
     def get_name(self, prefix, path):
@@ -30,6 +40,7 @@ class Mode:
             name = name.replace("(", "⟮")
             name = name.replace(")", "⟯")
         name = name.removesuffix(".slp")
+        name = name.removesuffix(".mp4")
         name += ".mp4"
         sanitized = self.output_directory / pathvalidate.sanitize_filename(name)
         # Name too long; suffix got dropped

@@ -41,6 +41,8 @@ def _concat(conf, video_queue, outputs):
         if len(mp4s[output_name]) < len(output.inputs):
             continue
         tmpfiles = [pathlib.Path(mp4s[output_name][slp]) for slp in output.inputs]
+
+        os.makedirs(output_name.parent, exist_ok=True)
         Ffmpeg.concat_videos(tmpfiles, output_name)
         for tmp in tmpfiles:
             os.unlink(tmp)

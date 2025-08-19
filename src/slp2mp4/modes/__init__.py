@@ -1,4 +1,5 @@
 from slp2mp4.modes import mode
+from slp2mp4.modes.directory_structure import DirectoryStructure
 from slp2mp4.modes.single import Single
 from slp2mp4.modes.directory import Directory
 from slp2mp4.modes.zip import Zip
@@ -10,8 +11,14 @@ MODES = {
         "input file(s)",
     ),
     "directory": mode.ModeContainer(
-        directory.Directory,
+        Directory,
         "recursively convert all replay files in a directory to videos",
+        "input directory/directories",
+    ),
+    "file_structure": mode.ModeContainer(
+        DirectoryStructure,
+        "recursively convert all replay files in a directory to videos"
+            "while preserving the directory structure",
         "input directory/directories",
     ),
     "zip": mode.ModeContainer(
