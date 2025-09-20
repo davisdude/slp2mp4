@@ -77,6 +77,22 @@ def _parse_str(str_str):
     return _parse_to_type(str_str, str)
 
 
+def _parse_translation(replacements):
+    success = True
+    inputs = ""
+    outputs = ""
+    removes = ""
+    for input_str, output_str in replacements.items():
+        success = success and (len(input_str) == 1)
+        if output_str == "":
+            removes += input_str
+        else:
+            success = success and (len(output_str) == 1)
+            inputs += input_str
+            outputs += output_str
+    return success, str.maketrans(inputs, outputs, removes)
+
+
 def _parse_backend(backend):
     return _parse_from_list(backend, DOLPHIN_BACKENDS)
 
@@ -112,7 +128,9 @@ _TRANSFORMERS = {
     "runtime": {
         "parallel": _parse_parallel,
         "prepend_directory": _parse_bool,
+        "preserve_directory_structure": _parse_bool,
         "youtubify_names": _parse_bool,
+        "name_replacements": _parse_translation,
         "debug": _parse_bool,
     },
     "scoreboard": {

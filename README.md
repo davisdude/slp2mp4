@@ -123,7 +123,22 @@ The default settings can be found [here][default-settings].
 
 - `parallel`: Number of parallel processes (0 = auto-detect CPU cores)
 - `prepend_directory`: Prepend the parent directory info
-- `youtubify_names`: Replace some characters in file names for YouTube uploads
+- `preserve_directory_structure`: Make video outputs match the input structure
+  instead of being "flat"
+- `youtubify_names`: Enable `name_replacements` (below)
+- `name_replacements`: A mapping of characters to replace in titles; intended  for
+  uploads to websites (e.g. YouTube) that remove or prohibit certain characters
+  in titles
+
+    - To disable entirely, set `youtubify_names` to `false`
+    - To disable for specific characters, have its assignment be to itself, e.g.
+
+      ```toml
+      [runtime.name_replacements]
+      "-" = "-"
+      ```
+
+    - Replacements are only per-character. In other words, you cannot replace a single character with multiple or vice-versa. The only exception to this is if you want a character removed entirely from the title, in which case you assign it to `""`.
 
 #### Scoreboard Settings
 
@@ -131,14 +146,16 @@ The default settings can be found [here][default-settings].
 
 ### Example Configuration
 
+Windows:
+
 ```toml
 [paths]
-ffmpeg = "ffmpeg"
+ffmpeg = "~/Downloads/ffmpeg-2025-01-27-git-959b799c8d-essentials_build/bin/ffmpeg.exe"
 slippi_playback = "~/AppData/Roaming/Slippi Launcher/playback/Slippi Dolphin.exe"
-ssbm_iso = "~/Games/Melee.iso"
+ssbm_iso = "~/Documents/iso/ssbm.iso"
 
 [dolphin]
-backend = "OGL"
+backend = "D3D12"
 resolution = "1080p"
 bitrate = 16000
 
@@ -149,16 +166,16 @@ volume = 25
 parallel = 0
 ```
 
-or on Windows:
+Linux:
 
 ```toml
 [paths]
-ffmpeg = "~/Downloads/ffmpeg-2025-01-27-git-959b799c8d-essentials_build/bin/ffmpeg.exe"
-slippi_playback = "~/AppData/Roaming/Slippi Launcher/playback/Slippi Dolphin.exe"
-ssbm_iso = "~/Documents/iso/ssbm.iso"
+ffmpeg = "ffmpeg"
+slippi_playback = "~/.config/Slippi Launcher/playback/Slippi_Playback-x86_64.AppImage"
+ssbm_iso = "~/Games/Melee.iso"
 
 [dolphin]
-backend = "D3D12"
+backend = "OGL"
 resolution = "1080p"
 bitrate = 16000
 

@@ -47,6 +47,7 @@ def _concat(conf, video_dict, outputs):
                 mp4s[index] = out_video
         inputs = [mp4s[index] for index in range(len(output.components))]
         print(f"_concat concat: {inputs=} {output.output=}")
+        output.output.parent.mkdir(parents=True, exist_ok=True)
         Ffmpeg.concat_videos(inputs, output.output)
         for tmp in inputs:
             print(f"Unlink {tmp=}")

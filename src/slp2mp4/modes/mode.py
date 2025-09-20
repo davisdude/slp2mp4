@@ -23,29 +23,23 @@ class Mode:
 
     def get_name(self, prefix, path):
         name = path.name
-        if self.conf["runtime"]["prepend_directory"]:
-            prefix = (" ").join(prefix.parts)
-        else:
-            prefix = (" ").join(prefix.parts[1:])
-        if prefix:
-            name = f"{prefix} {name}"
+        if not self.conf["runtime"]["prepend_directory"]:
+            prefix = pathlib.Path(*prefix.parts[1:])
+        out_dir = self.output_directory
+        if self.conf["runtime"]["preserve_directory_structure"]:
+            out_dir /= prefix
+        elif prefix.parts:
+            name = f"{(' ').join(prefix.parts)} {name}"
         if self.conf["runtime"]["youtubify_names"]:
-            # TODO: Change to dict replace in utils
-            name = name.replace("-", "—")
-            name = name.replace("(", "⟮")
-            name = name.replace(")", "⟯")
-            name = name.replace("_", "＿")
-            name = name.replace("<", "＜")
-            name = name.replace(">", "＞")
-            name = name.replace(".", "．")
+            name = name.translate(self.conf["runtime"]["name_replacements"])
         name = name.removesuffix(".slp")
         name += ".mp4"
-        sanitized = self.output_directory / pathvalidate.sanitize_filename(name)
+        sanitized = pathlib.Path(pathvalidate.sanitize_filename(name))
         # Name too long; suffix got dropped
         if not sanitized.suffix:
             # Drop beginning of name since it's more likely to be duplicated
             sanitized = sanitized.parent / (sanitized.name[4:] + ".mp4")
-        return sanitized
+        return out_dir / sanitized
 
     def get_outputs(self) -> list[Output]:
         return [

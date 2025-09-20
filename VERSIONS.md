@@ -1,5 +1,31 @@
 # Version History
 
+## In-progress
+
+- Various improvements around output name handling:
+    - Added `runtime.name_replacements` to allow users to have arbitrary
+      replacements for title names.
+    - Fixed handling of titles with periods before the file extension.
+    - Use ` ` instead of `_` for path joining.
+    - In single mode, only consider files ending with `.slp`.
+    - In zip mode, handle nested zip files better.
+- Fixed bug preventing usage of directory mode
+- Ensure that config paths that are expected to be files are actually files
+- Added `preserve_directory_structure`
+
+## 3.0.6
+
+- Fixed directory and zip names getting messed up in GUI mode
+
+## 3.0.5
+
+- Fixed dolphin not respecting resolution settings on Windows
+- Fixed `double` and `zip` modes improperly truncating paths with `.` in their
+  names
+- Renamed `replay_manager` mode to `zip` mode
+- Improved display of mode names / descriptions in GUI
+- Fixed config parsing edge cases
+
 ## 3.0.4
 
 - Fixed `~` not being validated properly in config paths
