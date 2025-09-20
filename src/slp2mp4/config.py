@@ -90,7 +90,8 @@ def _parse_translation(replacements):
             success = success and (len(output_str) == 1)
             inputs += input_str
             outputs += output_str
-    return success, str.maketrans(inputs, outputs, removes)
+    translation = str.maketrans(inputs, outputs, removes) if success else {}
+    return success, translation
 
 
 def _parse_backend(backend):
