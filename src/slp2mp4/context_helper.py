@@ -40,18 +40,8 @@ class GameContextInfo:
         return "unknown"
 
     @property
-    def tags(self):
-        return [
-            _get_tag_from_slot_data(slot_data)
-            for slot_data in self.context_data["scores"][self.game_index]["slots"]
-        ]
-
-    @property
-    def scores(self):
-        return [
-            slot["score"]
-            for slot in self.context_data["scores"][self.game_index]["slots"]
-        ]
+    def slot_data(self):
+        return self.context_data["scores"][self.game_index]["slots"]
 
     @property
     def tournament_name(self):
@@ -85,49 +75,33 @@ class GameContextInfo:
     def best_of_shortened(self):
         return f"Bo{self.context_data['bestOf']}"
 
+    @property
+    def num_teams(self):
+        return len(self.slot_data["displayNames"])
+
     def get_mapping(self):
-        return copy.copy(
-            {
-                "{TOURNAMENT_NAME}": self.tournament_name,
-                "{TOURNAMENT_LOCATION}": self.tournament_location,
-                "{EVENT_NAME}": self.event_name,
-                "{PHASE_NAME}": self.phase_name,
-                "{BRACKET_ROUND}": self.bracket_round_text,
-                "{BRACKET_ROUND_SHORT}": self.bracket_round_text_shortened,
-                "{BRACKET_SCORING}": self.best_of,
-                "{BRACKET_SCORING_SHORT}": self.best_of_shortened,
-                "{COMBATANT_1_TAG}": self.tags[0],
-                "{COMBATANT_2_TAG}": self.tags[1],
-                "{COMBATANT_1_SCORE}": self.scores[0],
-                "{COMBATANT_2_SCORE}": self.scores[1],
-            }
-        )
-
-
-# TODO: Add [L] for GFs
-def _get_tag(tag, prefixes, pronouns, ports, is_singles=True):
-    if is_singles:
-        if prefixes:
-            tag = f"{prefixes} | {tag}"
-        if pronouns:
-            tag = f"{tag} ({pronouns})"
-    else:
-        tag = f"{tag} (P{ports})"
-    return tag
-
-
-def _get_tag_from_slot_data(slot_data):
-    is_singles = len(slot_data["displayNames"]) == 1
-    tags = [
-        _get_tag(tag, prefixes, pronouns, ports, is_singles)
-        for tag, prefixes, pronouns, ports in zip(
-            slot_data["displayNames"],
-            slot_data["prefixes"],
-            slot_data["pronouns"],
-            slot_data["ports"],
-        )
-    ]
-    return ("/").join(tags)
+        # TODO: Add [L] for GFs
+        replacements = {
+            "{TOURNAMENT_NAME}": self.tournament_name,
+            "{TOURNAMENT_LOCATION}": self.tournament_location,
+            "{EVENT_NAME}": self.event_name,
+            "{PHASE_NAME}": self.phase_name,
+            "{BRACKET_ROUND}": self.bracket_round_text,
+            "{BRACKET_ROUND_SHORT}": self.bracket_round_text_shortened,
+            "{BRACKET_SCORING}": self.best_of,
+            "{BRACKET_SCORING_SHORT}": self.best_of_shortened,
+        }
+        for team_id, slot_data in enumerate(self.slot_data, start=1):
+            replacements.update({
+                f"{{COMBATANT_{team_id}_SCORE}}": slot_data["score"]
+            })
+            for player_id in range(self.num_teams):
+                replacements.update({
+                    f"{{COMBATANT_{team_id}_{player_id + 1}_SPONSOR}}": slot_data["prefixes"][player_id],
+                    f"{{COMBATANT_{team_id}_{player_id + 1}_TAG}}": slot_data["displayNames"][player_id],
+                    f"{{COMBATANT_{team_id}_{player_id + 1}_PRONOUNS}}": slot_data["pronouns"][player_id],
+                })
+        return replacements
 
 
 def _shorten_round(round_text):

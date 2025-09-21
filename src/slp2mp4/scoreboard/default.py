@@ -1,5 +1,6 @@
 from slp2mp4.scoreboard import scoreboard
 
+# TODO: Different template vs doubles and singles
 HTML_STR = r"""
 <!DOCTYPE html>
 <html lang="en">
@@ -13,12 +14,16 @@ HTML_STR = r"""
             <div class="filler"><hr></div>
 
             <div class="combatant">
-                <span class="combatant-tag">{COMBATANT_1_TAG}:</span>
+                <span class="combatant-sponsor">{COMBATANT_1_1_SPONSOR}</span>
+                <span class="combatant-tag">{COMBATANT_1_1_TAG}</span>
+                <span class="combatant-pronouns">{COMBATANT_1_1_PRONOUNS}</span>
                 <span class="combatant-score">{COMBATANT_1_SCORE}</span>
             </div>
 
             <div class="combatant">
-                <span class="combatant-tag">{COMBATANT_2_TAG}:</span>
+                <span class="combatant-sponsor">{COMBATANT_2_1_SPONSOR}</span>
+                <span class="combatant-tag">{COMBATANT_2_1_TAG}</span>
+                <span class="combatant-pronouns">{COMBATANT_2_1_PRONOUNS}</span>
                 <span class="combatant-score">{COMBATANT_2_SCORE}</span>
             </div>
 
@@ -71,10 +76,24 @@ div {
 .combatant {
     font-size: 4vh;
     display: flex;
-    align-items: end;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: baseline;
 }
 
-.combatant-tag {
+.combatant-sponsor, .combatant-tag, .combatant-pronouns {
+    padding-right: 1vh;
+    text-align: center;
+}
+
+.combatant-sponsor, .combatant-pronouns {
+    font-size: 60%;
+    color: LightGray;
+}
+
+.combatant-score {
+    padding-left: 1vh;
+    text-align: right;
     flex: 1;
 }
 
@@ -83,12 +102,11 @@ div {
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
+    align-items: baseline;
 }
 
 .bracket-data {
     text-align: center;
-    margin-top: auto;
-    margin-bottom: auto;
 }
 """
 
