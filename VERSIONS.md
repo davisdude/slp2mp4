@@ -2,6 +2,8 @@
 
 ## In-progress
 
+## 3.0.7
+
 - Various improvements around output name handling:
     - Added `runtime.name_replacements` to allow users to have arbitrary
       replacements for title names.
@@ -11,7 +13,7 @@
     - In zip mode, handle nested zip files better.
 - Fixed bug preventing usage of directory mode
 - Ensure that config paths that are expected to be files are actually files
-- Added `preserve_directory_structure`
+- Added `runtime.preserve_directory_structure`
 
 ## 3.0.6
 
