@@ -77,7 +77,8 @@ class GameContextInfo:
 
     @property
     def num_teams(self):
-        return len(self.slot_data["displayNames"])
+        # Assumes teams have an equal number of players
+        return len(self.slot_data[0]["displayNames"])
 
     def get_mapping(self):
         # TODO: Add [L] for GFs

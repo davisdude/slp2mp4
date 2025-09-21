@@ -40,7 +40,7 @@ class Scoreboard:
     conf: dict
     height: int
 
-    def _get_scoreboard_panels(self) -> list[ScoreboardPanel]:
+    def _get_scoreboard_panels(self, num_teams: int) -> list[ScoreboardPanel]:
         raise NotImplementedError("_get_scoreboard_panels must be overridden by child")
 
     def _get_scoreboard_args(self):
@@ -62,7 +62,7 @@ class Scoreboard:
 
     @contextlib.contextmanager
     def get_args(self):
-        panels = self._get_scoreboard_panels()
+        panels = self._get_scoreboard_panels(self.game_context.num_teams)
         try:
             with _scoreboard_panel_context_manager(panels) as png_paths:
                 self._render_html(panels, png_paths)

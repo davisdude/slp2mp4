@@ -1,76 +1,143 @@
 from slp2mp4.scoreboard import scoreboard
 
-# TODO: Different template vs doubles and singles
-HTML_STR = r"""
+HEADER_HTML_STR = r"""
 <!DOCTYPE html>
 <html lang="en">
     <body>
-        <div class="tournament-name">{TOURNAMENT_NAME}</div>
-        <div class="filler"><hr></div>
-        <div class="tournament-location">{TOURNAMENT_LOCATION}</div>
-        <div class="filler"><hr></div>
-
-        <div id="bottom">
-            <div class="filler"><hr></div>
-
-            <div class="combatant">
-                <span class="combatant-sponsor">{COMBATANT_1_1_SPONSOR}</span>
-                <span class="combatant-tag">{COMBATANT_1_1_TAG}</span>
-                <span class="combatant-pronouns">{COMBATANT_1_1_PRONOUNS}</span>
-                <span class="combatant-score">{COMBATANT_1_SCORE}</span>
+        <div id="container">
+            <div class="tournament">
+                <div class="tournament-name">{TOURNAMENT_NAME}</div>
+                <div class="rule"><hr></div>
+                <div class="tournament-location">{TOURNAMENT_LOCATION}</div>
+                <div class="rule"><hr></div>
             </div>
+            <div class="filler"></div>
+"""
 
-            <div class="combatant">
-                <span class="combatant-sponsor">{COMBATANT_2_1_SPONSOR}</span>
-                <span class="combatant-tag">{COMBATANT_2_1_TAG}</span>
-                <span class="combatant-pronouns">{COMBATANT_2_1_PRONOUNS}</span>
-                <span class="combatant-score">{COMBATANT_2_SCORE}</span>
-            </div>
-
-            <div class="filler"><hr></div>
-
+FOOTER_HTML_STR = r"""
             <div class="bracket">
-                <span class="bracket-data">{EVENT_NAME}</span>
-                <span class="bracket-data">{PHASE_NAME}</span>
-                <span class="bracket-data">{BRACKET_ROUND_SHORT}</span>
-                <span class="bracket-data">{BRACKET_SCORING_SHORT}</span>
+                <div class="rule"><hr></div>
+                <div class="bracket-info">
+                    <span class="bracket-data">{EVENT_NAME}</span>
+                    <span class="bracket-data">{PHASE_NAME}</span>
+                    <span class="bracket-data">{BRACKET_ROUND_SHORT}</span>
+                    <span class="bracket-data">{BRACKET_SCORING_SHORT}</span>
+                </div>
             </div>
         </div>
     </body>
 </html>
 """
 
+SINGLES_HTML_STR = r"""
+            <div class="combatants">
+                <div class="rule"><hr></div>
+                <div class="combatant">
+                    <div class="combatant-team">
+                        <div class="combatant-info">
+                            <span class="combatant-sponsor">{COMBATANT_1_1_SPONSOR}</span>
+                            <span class="combatant-tag">{COMBATANT_1_1_TAG}</span>
+                            <span class="combatant-pronouns">{COMBATANT_1_1_PRONOUNS}</span>
+                        </div>
+                    </div>
+                    <span class="combatant-score">{COMBATANT_1_SCORE}</span>
+                </div>
+
+                <div class="combatant">
+                    <div class="combatant-team">
+                        <div class="combatant-info">
+                            <span class="combatant-sponsor">{COMBATANT_2_1_SPONSOR}</span>
+                            <span class="combatant-tag">{COMBATANT_2_1_TAG}</span>
+                            <span class="combatant-pronouns">{COMBATANT_2_1_PRONOUNS}</span>
+                        </div>
+                    </div>
+                    <span class="combatant-score">{COMBATANT_2_SCORE}</span>
+                </div>
+            </div>
+"""
+
+DOUBLES_HTML_STR = r"""
+            <div class="combatants">
+                <div class="rule"><hr></div>
+                <div class="combatant">
+                    <div class="combatant-team">
+                        <div class="combatant-info">
+                            <span class="combatant-sponsor">{COMBATANT_1_1_SPONSOR}</span>
+                            <span class="combatant-tag">{COMBATANT_1_1_TAG}</span>
+                            <span class="combatant-pronouns">{COMBATANT_1_1_PRONOUNS}</span>
+                        </div>
+                        <div class="combatant-info">
+                            <span class="combatant-sponsor">{COMBATANT_1_2_SPONSOR}</span>
+                            <span class="combatant-tag">{COMBATANT_1_2_TAG}</span>
+                            <span class="combatant-pronouns">{COMBATANT_1_2_PRONOUNS}</span>
+                        </div>
+                    </div>
+                    <span class="combatant-score">{COMBATANT_1_SCORE}</span>
+                </div>
+
+                <div class="combatant">
+                    <div class="combatant-team">
+                        <div class="combatant-info">
+                            <span class="combatant-sponsor">{COMBATANT_2_1_SPONSOR}</span>
+                            <span class="combatant-tag">{COMBATANT_2_1_TAG}</span>
+                            <span class="combatant-pronouns">{COMBATANT_2_1_PRONOUNS}</span>
+                        </div>
+                        <div class="combatant-info">
+                            <span class="combatant-sponsor">{COMBATANT_2_2_SPONSOR}</span>
+                            <span class="combatant-tag">{COMBATANT_2_2_TAG}</span>
+                            <span class="combatant-pronouns">{COMBATANT_2_2_PRONOUNS}</span>
+                        </div>
+                    </div>
+                    <span class="combatant-score">{COMBATANT_2_SCORE}</span>
+                </div>
+            </div>
+"""
+
 CSS_STR = r"""
 body {
-    width: 100%;
-    height: 100%;
-    margin: 0;
     color: white;
     background-color: black;
     font-family: "Inconsolata", "Consolas", "monospace";
 }
 
-div {
-    margin-left: 1vh;
-    margin-right: 1vh;
+#container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
-#bottom {
-    position: absolute;
-    bottom: 0px;
-    width: inherit;
-    margin-left: inherit;
-    margin-right: inherit;
+.tournament {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.rule {
+    align-self: stretch;
+    flex-grow: 1;
+}
+
+.tournament-name, .tournament-location {
+    display: flex;
+    text-align: center;
 }
 
 .tournament-name {
-    text-align: center;
     font-size: 6vh;
 }
 
 .tournament-location {
-    text-align: center;
     font-size: 3vh;
+}
+
+.filler {
+    flex-grow: 1;
+}
+
+.combatants {
+    display: flex;
+    flex-direction: column;
 }
 
 .combatant {
@@ -81,8 +148,15 @@ div {
     align-items: baseline;
 }
 
+.combatant-team {
+    flex-direction: column;
+}
+
+.combatant-info {
+    flex-direction: row;
+}
+
 .combatant-sponsor, .combatant-tag, .combatant-pronouns {
-    padding-right: 1vh;
     text-align: center;
 }
 
@@ -100,6 +174,11 @@ div {
 .bracket {
     font-size: 3vh;
     display: flex;
+    flex-direction: column;
+}
+
+.bracket-info {
+    display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
     align-items: baseline;
@@ -112,9 +191,11 @@ div {
 
 
 class DefaultScoreboard(scoreboard.Scoreboard):
-    def _get_scoreboard_panels(self):
+    def _get_scoreboard_panels(self, num_teams: int):
+        html_body = SINGLES_HTML_STR if (num_teams == 1) else DOUBLES_HTML_STR
+        html_str = HEADER_HTML_STR + html_body + FOOTER_HTML_STR
         return [
-            scoreboard.ScoreboardPanel(HTML_STR, CSS_STR, 606 / 1080),
+            scoreboard.ScoreboardPanel(html_str, CSS_STR, 606 / 1080),
         ]
 
     def _get_scoreboard_args(self):
