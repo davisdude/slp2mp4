@@ -94,16 +94,25 @@ DOUBLES_HTML_STR = r"""
 """
 
 CSS_STR = r"""
-body {
+* {
+    box-sizing: border-box;
+}
+
+html, body {
     color: white;
     background-color: black;
     font-family: "Inconsolata", "Consolas", "monospace";
+    height: 100%;
+    width: 100%;
+    margin: 0 0 0 0;
+    padding: 0.5vh 0.5vh 0.5vh 0.5vh;
 }
 
 #container {
     height: 100%;
     display: flex;
     flex-direction: column;
+    justify-content: space-between;
 }
 
 .tournament {
@@ -143,7 +152,7 @@ body {
 .combatant {
     font-size: 4vh;
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: row;
     justify-content: space-between;
     align-items: baseline;
 }
@@ -169,6 +178,7 @@ body {
     padding-left: 1vh;
     text-align: right;
     flex: 1;
+    align-self: center;
 }
 
 .bracket {
