@@ -1,4 +1,10 @@
+import importlib
+
+import slp2mp4
 from slp2mp4.scoreboard import scoreboard
+
+
+DEFAULT_LOGO_PATH = importlib.resources.files(slp2mp4).joinpath("logo.svg")
 
 HEADER_HTML_STR = r"""
 <!DOCTYPE html>
@@ -215,3 +221,9 @@ class DefaultScoreboard(scoreboard.Scoreboard):
 
     def _get_scoreboard_args(self):
         return ("[1]fps=fps=60[1_fps];[1_fps][scaled]hstack=inputs=2[v]",)
+
+    def _get_mapping(self):
+        mapping = super()._get_mapping()
+        path = self.conf["scoreboard"]["default"]["logo_path"] or DEFAULT_LOGO_PATH
+        mapping["LOGO_PATH"] = path.absolute()
+        return mapping

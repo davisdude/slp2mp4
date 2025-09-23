@@ -1,7 +1,6 @@
 import contextlib
 import dataclasses
 import html
-import importlib
 import json
 import pathlib
 import tempfile
@@ -9,11 +8,8 @@ import typing
 
 from slp2mp4 import util
 from slp2mp4.context_helper import GameContextInfo
-import slp2mp4
 
 from html2image import Html2Image
-
-DEFAULT_LOGO_PATH = importlib.resources.files(slp2mp4).joinpath("logo.svg")
 
 
 @dataclasses.dataclass
@@ -50,13 +46,14 @@ class Scoreboard:
     def _get_scoreboard_args(self):
         raise NotImplementedError("_get_scoreboard_args must be overridden by child")
 
+    def _get_mapping(self):
+        return self.game_context.get_mapping()
+
     def _get_scale_args(self):
         return (f"[0]scale=width=-2:height={self.height}[scaled]",)
 
     def _update_panel_html(self, panel):
-        mapping = self.game_context.get_mapping()
-        path = self.conf["scoreboard"]["default"]["logo_path"] or DEFAULT_LOGO_PATH
-        mapping["LOGO_PATH"] = path.absolute()
+        mapping = self._get_mapping()
         for k, v in mapping.items():
             mapping[k] = html.escape(str(v))
         panel.html_str = panel.html_str.format_map(mapping)
