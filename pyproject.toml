@@ -36,6 +36,7 @@ gui = [
 include = [
   "src/slp2mp4/*.py",
   "src/slp2mp4/*.toml",
+  "src/slp2mp4/*.svg",
 ]
 
 [tool.hatch.version]

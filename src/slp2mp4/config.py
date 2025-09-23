@@ -48,6 +48,11 @@ def _parse_file_path(path_str):
     return (path.exists() and path.is_file(), path)
 
 
+def _parse_file_path_or_none(path_str):
+    path = pathlib.Path(path_str).expanduser() if path_str != "" else None
+    return ((path is None) or (path.exists() and path.is_file()), path)
+
+
 def _parse_bin_path(path_str):
     status, path = _parse_file_path(path_str)
     if status and path.is_absolute():
@@ -123,6 +128,9 @@ _TRANSFORMERS = {
     },
     "scoreboard": {
         "type": _parse_scoreboard_type,
+        "default": {
+            "logo_path": _parse_file_path_or_none,
+        },
     },
 }
 

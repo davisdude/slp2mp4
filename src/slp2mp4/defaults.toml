@@ -19,9 +19,6 @@ youtubify_names = true
 preserve_directory_structure = false
 debug = false
 
-[scoreboard]
-type = "default"
-
 [runtime.name_replacements]
 "-" = "–"
 "(" = "⟮"
@@ -32,3 +29,9 @@ type = "default"
 "." = "．"
 "/" = "／"
 ":" = "："
+
+[scoreboard]
+type = "default"
+
+[scoreboard.default]
+logo_path = ""

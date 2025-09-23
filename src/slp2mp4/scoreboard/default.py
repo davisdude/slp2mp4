@@ -12,6 +12,8 @@ HEADER_HTML_STR = r"""
                 <div class="rule"><hr></div>
             </div>
             <div class="filler"></div>
+            <img src="{LOGO_PATH}" width=80%></img>
+            <div class="filler"></div>
 """
 
 FOOTER_HTML_STR = r"""
@@ -113,6 +115,7 @@ html, body {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    align-items: center;
 }
 
 .tournament {
@@ -147,6 +150,7 @@ html, body {
 .combatants {
     display: flex;
     flex-direction: column;
+    align-self: stretch;
 }
 
 .combatant {
@@ -185,6 +189,7 @@ html, body {
     font-size: 3vh;
     display: flex;
     flex-direction: column;
+    align-self: stretch;
 }
 
 .bracket-info {
