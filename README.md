@@ -126,7 +126,7 @@ The default settings can be found [here][default-settings].
 - `preserve_directory_structure`: Make video outputs match the input structure
   instead of being "flat"
 - `youtubify_names`: Enable `name_replacements` (below)
-- `name_replacements`: A mapping of characters to replace in titles; intended  for
+- `name_replacements`: A mapping of characters to replace in titles; intended for
   uploads to websites (e.g. YouTube) that remove or prohibit certain characters
   in titles
 
@@ -138,7 +138,8 @@ The default settings can be found [here][default-settings].
       "-" = "-"
       ```
 
-    - Replacements are only per-character. In other words, you cannot replace a single character with multiple or vice-versa. The only exception to this is if you want a character removed entirely from the title, in which case you assign it to `""`.
+    - Replacements are only per-character. Replacing a single character with multiple characters or
+      vice-versa may result in unexpected behavior.
 
 #### Scoreboard Settings
 

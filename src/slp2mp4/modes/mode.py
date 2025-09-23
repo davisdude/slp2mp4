@@ -4,6 +4,7 @@ import pathlib
 from slp2mp4.output import Output
 import slp2mp4.orchestrator as orchestrator
 import slp2mp4.config as config
+import slp2mp4.util as util
 
 import pathvalidate
 
@@ -31,7 +32,7 @@ class Mode:
         elif prefix.parts:
             name = f"{(' ').join(prefix.parts)} {name}"
         if self.conf["runtime"]["youtubify_names"]:
-            name = name.translate(self.conf["runtime"]["name_replacements"])
+            name = util.translate(name, self.conf["runtime"]["name_replacements"])
         name = name.removesuffix(".slp")
         name += ".mp4"
         sanitized = pathlib.Path(pathvalidate.sanitize_filename(name))

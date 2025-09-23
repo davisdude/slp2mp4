@@ -78,20 +78,7 @@ def _parse_str(str_str):
 
 
 def _parse_translation(replacements):
-    success = True
-    inputs = ""
-    outputs = ""
-    removes = ""
-    for input_str, output_str in replacements.items():
-        success = success and (len(input_str) == 1)
-        if output_str == "":
-            removes += input_str
-        else:
-            success = success and (len(output_str) == 1)
-            inputs += input_str
-            outputs += output_str
-    translation = str.maketrans(inputs, outputs, removes) if success else {}
-    return success, translation
+    return (isinstance(replacements, dict), replacements)
 
 
 def _parse_backend(backend):
