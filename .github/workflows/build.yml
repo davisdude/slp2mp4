@@ -1,7 +1,7 @@
 name: Package Application with PyInstaller
 on: workflow_dispatch
 jobs:
-  build:
+  build-no-ffmpeg:
     strategy:
       matrix:
         platform: [windows-latest, ubuntu-22.04]
@@ -34,6 +34,55 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ runner.os }}
+          name: slp2mp4-${{ runner.os }}-no-ffmpeg
+          path: |
+            dist/*
+
+  build:
+    strategy:
+      matrix:
+        platform: [windows-latest]
+        script: [src/slp2mp4/bin/gui.py]
+        include:
+          - script: src/slp2mp4/bin/gui.py
+            name: slp2mp4_gui
+            pip_install_suffix: "[gui]"
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install pyinstaller
+          pip install ".${{ matrix.pip_install_suffix }}"
+
+      - name: Download FFmpeg
+        run: |
+          Invoke-WebRequest -Uri "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-full.7z" -OutFile "ffmpeg-release-full.7z"
+          7z e ffmpeg-release-full.7z -olib/ffmpeg "*/bin/ffmpeg.exe" "*/LICENSE" "*/README.txt"
+
+      - name: Update defaults.toml to use bundled FFmpeg exe
+        run: |
+          (Get-Content src/slp2mp4/defaults.toml) `
+            -replace 'ffmpeg = "ffmpeg"', 'ffmpeg = "_internal/slp2mp4/lib/ffmpeg/ffmpeg.exe"' |
+            Set-Content src/slp2mp4/defaults.toml
+        shell: pwsh
+
+      - name: Run pyinstaller
+        run: |
+          pyinstaller --name ${{ matrix.name }} --add-data "src/slp2mp4/defaults.toml:slp2mp4/" --add-data "lib/ffmpeg:slp2mp4/lib/ffmpeg" --onedir ${{ matrix.script }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: slp2mp4-${{ runner.os }}
           path: |
             dist/*

@@ -2,6 +2,8 @@
 
 ## In-progress
 
+- Add build that bundles ffmpeg with the install (thanks to @ianwal for contributing!)
+
 ## 3.0.7
 
 - Various improvements around output name handling:
