@@ -50,6 +50,7 @@ class Scoreboard:
         return self.game_context.get_mapping()
 
     def _get_scale_args(self):
+        # Ffmpeg requires images be multiples of 2; this does that
         return (f"[0]scale=width=-2:height={self.height}[scaled]",)
 
     def _update_panel_html(self, panel):
