@@ -83,24 +83,24 @@ class GameContextInfo:
     def get_mapping(self):
         # TODO: Add [L] for GFs
         replacements = {
-            "{TOURNAMENT_NAME}": self.tournament_name,
-            "{TOURNAMENT_LOCATION}": self.tournament_location,
-            "{EVENT_NAME}": self.event_name,
-            "{PHASE_NAME}": self.phase_name,
-            "{BRACKET_ROUND}": self.bracket_round_text,
-            "{BRACKET_ROUND_SHORT}": self.bracket_round_text_shortened,
-            "{BRACKET_SCORING}": self.best_of,
-            "{BRACKET_SCORING_SHORT}": self.best_of_shortened,
+            "TOURNAMENT_NAME": self.tournament_name,
+            "TOURNAMENT_LOCATION": self.tournament_location,
+            "EVENT_NAME": self.event_name,
+            "PHASE_NAME": self.phase_name,
+            "BRACKET_ROUND": self.bracket_round_text,
+            "BRACKET_ROUND_SHORT": self.bracket_round_text_shortened,
+            "BRACKET_SCORING": self.best_of,
+            "BRACKET_SCORING_SHORT": self.best_of_shortened,
         }
         for team_id, slot_data in enumerate(self.slot_data, start=1):
             replacements.update({
-                f"{{COMBATANT_{team_id}_SCORE}}": slot_data["score"]
+                f"COMBATANT_{team_id}_SCORE": slot_data["score"]
             })
             for player_id in range(self.num_teams):
                 replacements.update({
-                    f"{{COMBATANT_{team_id}_{player_id + 1}_SPONSOR}}": slot_data["prefixes"][player_id],
-                    f"{{COMBATANT_{team_id}_{player_id + 1}_TAG}}": slot_data["displayNames"][player_id],
-                    f"{{COMBATANT_{team_id}_{player_id + 1}_PRONOUNS}}": slot_data["pronouns"][player_id],
+                    f"COMBATANT_{team_id}_{player_id + 1}_SPONSOR": slot_data["prefixes"][player_id],
+                    f"COMBATANT_{team_id}_{player_id + 1}_TAG": slot_data["displayNames"][player_id],
+                    f"COMBATANT_{team_id}_{player_id + 1}_PRONOUNS": slot_data["pronouns"][player_id],
                 })
         return replacements
 

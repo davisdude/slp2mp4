@@ -53,7 +53,7 @@ class Scoreboard:
         mapping = self.game_context.get_mapping()
         for k, v in mapping.items():
             mapping[k] = html.escape(str(v))
-        panel.html_str = util.translate(panel.html_str, mapping)
+        panel.html_str = panel.html_str.format_map(mapping)
 
     def _render_html(self, panels, png_paths):
         for png_path, panel in zip(png_paths, panels):
