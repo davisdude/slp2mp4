@@ -77,7 +77,7 @@ def _parse_str(str_str):
     return _parse_to_type(str_str, str)
 
 
-def _parse_translation(replacements):
+def _parse_dict(replacements):
     return (isinstance(replacements, dict), replacements)
 
 
@@ -118,7 +118,7 @@ _TRANSFORMERS = {
         "prepend_directory": _parse_bool,
         "preserve_directory_structure": _parse_bool,
         "youtubify_names": _parse_bool,
-        "name_replacements": _parse_translation,
+        "name_replacements": _parse_dict,
         "debug": _parse_bool,
     },
     "scoreboard": {
