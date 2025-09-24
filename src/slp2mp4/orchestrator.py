@@ -1,70 +1,67 @@
 # Commonizes the batching / concatenating of slippi files
-# There are to threads here:
-#   1. The "render" thread, which runs dolphin / does frame dumps
-#   2. The "concat" thread, which contatenates frame-dumps into a single mp4
-#      and renders scoreboards
+#
+# This renders by "set," which will be slightly slower on average than rendering
+# all videos then concat-ing when the set is finished, but has a few upsides:
+#
+#   1. Reduces memory usage
+#   2. Simplifies implementation
 
-import multiprocessing
+import concurrent.futures
+import dataclasses
+import enum
 import pathlib
 import tempfile
-import os
+import multiprocessing
 
-import slp2mp4.ffmpeg as ffmpeg
+from slp2mp4.dolphin.runner import DolphinRunner
+from slp2mp4.ffmpeg import FfmpegRunner
+
 import slp2mp4.video as video
-from slp2mp4.output import Output, OutputComponent
+from slp2mp4.output import Output
 
 
-def _render(conf, video_dict, output, component):
-    print(f"_render start ({os.getpid()}): {output=} {component=}")
+def render_and_concat(
+    kill_event: multiprocessing.Event,
+    executor: concurrent.futures.Executor,
+    conf: dict,
+    output: Output
+):
+    ffmpeg_runners = [FfmpegRunner(conf) for _ in output.inputs]
+    dolphin_runners = [DolphinRunner(conf, kill_event) for _ in output.inputs]
+    futures = {
+        i: executor.submit(render, fr, dr, i)
+        for fr, dr, i in zip(ffmpeg_runners, dolphin_runners, output.inputs)
+    }
+    concurrent.futures.wait(futures.values())
+    tmp_paths = [futures[i].result() for i in output.inputs]
+    concat(conf, output.output, tmp_paths)
+
+def render(ffmpeg_runner, dolphin_runner, slp_path: pathlib.Path):
     tmp = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False)
+    tmp_path = pathlib.Path(tmp.name)
+    video.render(ffmpeg_runner, dolphin_runner, slp_path, tmp_path)
     tmp.close()
-    out = pathlib.Path(tmp.name)
-    video.render(conf, component, out, output.output)
-    print(f"_render rendered ({os.getpid()}): {output=} {component=}")
-    data = video_dict.get(output.output, {
-        "output": output,
-        "mp4s": {},
-    })
-    data["mp4s"][component.index] = out
-    video_dict[output.output] = data
-    print(video_dict)
+    return tmp_path
 
+def concat(conf: dict, output: Output, renders: list[pathlib.Path]):
+    Ffmpeg = FfmpegRunner(conf)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    if output.context:
+        for index, component in enumerate(output.components):
+            render = renders[index]
+            component = output.components[index]
+            new_render = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False)
+            new_render.close()
+            new_render_path = pathlib.Path(new_render.name)
+            Ffmpeg.add_scoreboard(render, component.context, new_render_path)
+            render.unlink()
+            renders[index] = new_render_path
+    Ffmpeg.concat_videos(renders, output.output)
+    for render in renders:
+        render.unlink()
 
-def _concat(conf, video_dict, outputs):
-    Ffmpeg = ffmpeg.FfmpegRunner(conf)
-    for data in video_dict.values():
-        output = data["output"]
-        mp4s = data["mp4s"]
-        if output.context:
-            for index in range(len(output.components)):
-                in_video = mp4s[index]
-                component = output.components[index]
-                new_tmp = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False)
-                new_tmp.close()
-                out_video = pathlib.Path(new_tmp.name)
-                Ffmpeg.add_scoreboard(in_video, component.context, out_video)
-                in_video.unlink()
-                mp4s[index] = out_video
-        inputs = [mp4s[index] for index in range(len(output.components))]
-        print(f"_concat concat: {inputs=} {output.output=}")
-        output.output.parent.mkdir(parents=True, exist_ok=True)
-        Ffmpeg.concat_videos(inputs, output.output)
-        for tmp in inputs:
-            print(f"Unlink {tmp=}")
-            tmp.unlink()
-
-
-def run(conf, outputs: list[Output]):
+def run(event: multiprocessing.Event, conf: dict, outputs: list[Output]):
     num_procs = conf["runtime"]["parallel"]
-    manager = multiprocessing.Manager()
-    video_dict = manager.dict()
-
-    with multiprocessing.Pool(num_procs) as pool:
-        args = [
-            (conf, video_dict, output, component)
-            for output in outputs
-            for component in output.components
-        ]
-        pool.starmap(_render, args)
-
-    _concat(conf, video_dict, outputs)
+    with concurrent.futures.ProcessPoolExecutor(num_procs) as executor:
+        for output in outputs:
+            render_and_concat(event, executor, conf, output)

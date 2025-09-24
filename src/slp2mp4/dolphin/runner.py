@@ -12,7 +12,8 @@ import slp2mp4.util as util
 
 
 class DolphinRunner:
-    def __init__(self, config):
+    def __init__(self, config, kill_event):
+        self.kill_event = kill_event
         self.slippi_playback = config["paths"]["slippi_playback"]
         self.ssbm_iso = config["paths"]["ssbm_iso"]
         self.video_backend = config["dolphin"]["backend"]
@@ -75,7 +76,7 @@ class DolphinRunner:
                     game_end_frame = -124
                     current_frame = -125
 
-                    while proc.poll() is None:
+                    while (proc.poll() is None) and (not self.kill_event.is_set()):
                         line = proc.stdout.readline()
                         if not line:
                             break

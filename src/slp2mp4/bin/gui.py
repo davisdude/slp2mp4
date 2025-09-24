@@ -408,6 +408,7 @@ class AboutDialog(tk.Toplevel):
 class Slp2Mp4GUI:
     def __init__(self, root):
         self.root = root
+        self.stop = False
         self.root.title("slp2mp4 GUI")
 
         # Queue for thread communication
@@ -616,6 +617,7 @@ class Slp2Mp4GUI:
     def start_conversion(self):
         if not self.validate_inputs():
             return
+        self.stop = False
 
         # Disable controls
         self.start_button.config(state="disabled")
@@ -630,9 +632,9 @@ class Slp2Mp4GUI:
         self.conversion_thread.start()
 
     def stop_conversion(self):
-        # TODO: Implement proper cancellation
         self.log("Stopping conversion...")
         self.stop_button.config(state="disabled")
+        self.stop = True
 
     def run_conversion(self):
         """Run the actual conversion process"""
@@ -641,12 +643,25 @@ class Slp2Mp4GUI:
             output_directory = pathlib.Path(self.output_var.get())
             dry_run = self.dry_run_var.get()
             mode = modes.MODES[self.mode_var.get()].mode(paths, output_directory)
+            manager = multiprocessing.Manager()
+            event = manager.Event()
             self.queue.put(("log", "Starting conversion..."))
-            output = mode.run(dry_run)
-            if output:
-                self.queue.put(("log", "Dry run results:"))
-                self.queue.put(("log", output.rstrip()))
-            self.queue.put(("log", "\nConversion completed successfully!"))
+            with mode.run(event, dry_run) as (executor, future):
+                while True:
+                    if self.stop:
+                        event.set()
+                        break
+                    try:
+                        result = future.result(1)
+                    except TimeoutError:
+                        continue
+                    if result:
+                        self.queue.put(("log", "Dry run results:"))
+                        self.queue.put(("log", result.rstrip()))
+                    self.queue.put(("log", "\nConversion completed successfully!"))
+                    self.stop = True
+                    break
+                executor.shutdown(False, cancel_futures=True)
         except Exception as e:
             import traceback
 

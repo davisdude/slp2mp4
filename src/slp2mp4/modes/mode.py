@@ -1,4 +1,7 @@
+import concurrent.futures
+import contextlib
 import dataclasses
+import multiprocessing
 import pathlib
 
 from slp2mp4.output import Output
@@ -49,23 +52,29 @@ class Mode:
             for slps, prefix, mp4, context in self.iterator(pathlib.Path("."), path)
         ]
 
-    def run(self, dry_run=False):
+    def _get_output(self, products):
+        out = ""
+        for output in products:
+            out += f"{output.output}\n"
+            for i in output.inputs:
+                out += f"\t{i}\n"
+            if output.context:
+                out += f"\tcontext: {output.context}\n"
+            out += "\n"
+        return out
+
+    @contextlib.contextmanager
+    def run(self, event: multiprocessing.Event, dry_run=False):
         self.conf = config.get_config()
         config.translate_and_validate_config(self.conf)
         products = self.get_outputs()
-        if dry_run:
-            out = ""
-            for output in products:
-                out += f"{output.output}\n"
-                for component in output.components:
-                    out += f"\t{component.slp}\n"
-                if output.context:
-                    out += f"\tcontext: {output.context}\n"
-                out += "\n"
-            return out
-        else:
-            self.output_directory.mkdir(parents=True, exist_ok=True)
-            orchestrator.run(self.conf, products)
+        with concurrent.futures.ThreadPoolExecutor(1) as executor:
+            if dry_run:
+                future = executor.submit(self._get_output, products)
+            else:
+                self.output_directory.mkdir(parents=True, exist_ok=True)
+                future = executor.submit(orchestrator.run, event, self.conf, products)
+            yield executor, future
 
 
 @dataclasses.dataclass
