@@ -124,7 +124,6 @@ _TRANSFORMERS = {
         "preserve_directory_structure": _parse_bool,
         "youtubify_names": _parse_bool,
         "name_replacements": _parse_dict,
-        "debug": _parse_bool,
     },
     "scoreboard": {
         "type": _parse_scoreboard_type,

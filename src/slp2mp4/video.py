@@ -21,7 +21,4 @@ def render(
         r = replay.ReplayFile(component.slp)
         tmp_audio_file, video_file = Dolphin.run_dolphin(r, tmpdir)
         audio_file = Ffmpeg.reencode_audio(tmp_audio_file)
-        util.copy_for_debugging(conf, video_file, final_path, component.slp.name)
-        util.copy_for_debugging(conf, audio_file, final_path, component.slp.name)
         Ffmpeg.combine_audio_and_video(audio_file, video_file, output_path)
-        util.copy_for_debugging(conf, output_path, final_path, component.slp.name)

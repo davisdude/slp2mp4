@@ -6,7 +6,7 @@ import pathlib
 from slp2mp4.context_helper import GameContextInfo
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(eq=True, frozen=True)
 class OutputComponent:
     slp: pathlib.Path
     index: int

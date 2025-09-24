@@ -36,11 +36,3 @@ def translate(string: str, mapping: dict[str, str]):
     for old, new in mapping.items():
         string = string.replace(old, new)
     return string
-
-
-def copy_for_debugging(conf, file, outdir, prefix=""):
-    if conf["runtime"]["debug"]:
-        if prefix:
-            prefix += "_"
-        out = outdir.parent / f"{prefix}{file.name}"
-        shutil.copyfile(file, out)

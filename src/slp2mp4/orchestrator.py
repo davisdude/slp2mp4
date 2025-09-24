@@ -17,7 +17,7 @@ from slp2mp4.dolphin.runner import DolphinRunner
 from slp2mp4.ffmpeg import FfmpegRunner
 
 import slp2mp4.video as video
-from slp2mp4.output import Output
+from slp2mp4.output import Output, OutputComponent
 
 
 def render_and_concat(
@@ -26,26 +26,26 @@ def render_and_concat(
     conf: dict,
     output: Output
 ):
-    ffmpeg_runners = [FfmpegRunner(conf) for _ in output.inputs]
-    dolphin_runners = [DolphinRunner(conf, kill_event) for _ in output.inputs]
+    ffmpeg_runners = [FfmpegRunner(conf) for _ in output.components]
+    dolphin_runners = [DolphinRunner(conf, kill_event) for _ in output.components]
     futures = {
-        i: executor.submit(render, fr, dr, i)
-        for fr, dr, i in zip(ffmpeg_runners, dolphin_runners, output.inputs)
+        c: executor.submit(render, fr, dr, c)
+        for fr, dr, c in zip(ffmpeg_runners, dolphin_runners, output.components)
     }
     concurrent.futures.wait(futures.values())
-    tmp_paths = [futures[i].result() for i in output.inputs]
-    concat(conf, output.output, tmp_paths)
+    tmp_paths = [futures[c].result() for c in output.components]
+    concat(conf, output, tmp_paths)
 
-def render(ffmpeg_runner, dolphin_runner, slp_path: pathlib.Path):
+def render(ffmpeg_runner, dolphin_runner, component: OutputComponent):
     tmp = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False)
     tmp_path = pathlib.Path(tmp.name)
-    video.render(ffmpeg_runner, dolphin_runner, slp_path, tmp_path)
+    video.render(ffmpeg_runner, dolphin_runner, component, tmp_path)
     tmp.close()
     return tmp_path
 
 def concat(conf: dict, output: Output, renders: list[pathlib.Path]):
     Ffmpeg = FfmpegRunner(conf)
-    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output.output.parent.mkdir(parents=True, exist_ok=True)
     if output.context:
         for index, component in enumerate(output.components):
             render = renders[index]

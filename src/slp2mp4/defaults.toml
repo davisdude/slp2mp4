@@ -17,7 +17,6 @@ parallel = 0
 prepend_directory = true
 youtubify_names = true
 preserve_directory_structure = false
-debug = false
 
 [runtime.name_replacements]
 "-" = "–"

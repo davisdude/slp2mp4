@@ -223,21 +223,6 @@ class ConfigDialog(tk.Toplevel):
             text="Replace some characters in file names for YouTube uploads",
         ).pack(side="left", padx=5)
 
-        # Debug
-        debug_frame = ttk.Frame(runtime_frame)
-        debug_frame.pack(side="top", pady=5)
-        ttk.Label(debug_frame, text="Debug").pack(side="left", padx=5)
-        self.debug_var = tk.BooleanVar()
-        debug_box = ttk.Checkbutton(debug_frame, variable=self.debug_var)
-        debug_box.pack(side="left", padx=5)
-
-        debug_info_frame = ttk.Frame(runtime_frame)
-        debug_info_frame.pack(side="top", pady=5)
-        ttk.Label(
-            debug_info_frame,
-            text="Save intermediate files",
-        ).pack(side="left", padx=5)
-
         # Name replacement
         name_replacements_frame = ttk.Frame(runtime_frame)
         name_replacements_frame.pack(side="top", pady=5)
@@ -301,7 +286,6 @@ class ConfigDialog(tk.Toplevel):
         self.prepend_var.set(bool(self.config["runtime"]["prepend_directory"]))
         self.preserve_dir_var.set(bool(self.config["runtime"]["preserve_directory_structure"]))
         self.youtubify_var.set(bool(self.config["runtime"]["youtubify_names"]))
-        self.debug_var.set(bool(self.config["runtime"]["debug"]))
         self.name_replacements_var.delete("1.0", tk.END)
         self.name_replacements_var.insert(tk.END, pprint.pformat(self.config["runtime"]["name_replacements"]))
         self.scoreboard_type_var.set(self.config["scoreboard"]["type"])
@@ -331,7 +315,6 @@ class ConfigDialog(tk.Toplevel):
                 "preserve_directory_structure": self.preserve_dir_var.get(),
                 "youtubify_names": self.youtubify_var.get(),
                 "name_replacements": name_replacements_args,
-                "debug": self.debug_var.get(),
             },
             "scoreboard": {
                 "type": self.scoreboard_type_var.get(),
