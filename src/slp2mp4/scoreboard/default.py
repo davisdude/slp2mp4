@@ -14,6 +14,7 @@ HEADER_HTML_STR = r"""
             <div class="tournament">
                 <div class="tournament-name">{TOURNAMENT_NAME}</div>
                 <div class="rule"><hr></div>
+                <div class="tournament-location">{TOURNAMENT_DATE}</div>
                 <div class="tournament-location">{TOURNAMENT_LOCATION}</div>
                 <div class="rule"><hr></div>
             </div>

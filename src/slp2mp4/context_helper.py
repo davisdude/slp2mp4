@@ -1,6 +1,11 @@
+from datetime import datetime
 import copy
 import pathlib
 import json
+
+from timezonefinder import TimezoneFinder
+from geopy.geocoders import Nominatim
+from zoneinfo import ZoneInfo
 
 from slp2mp4 import util
 
@@ -50,6 +55,24 @@ class GameContextInfo:
     @property
     def tournament_location(self):
         return self.platform_data["tournament"]["location"]
+
+    @property
+    def tournament_date(self):
+        location_str = self.tournament_location
+        start_time_ms = self.context_data["startMs"]
+        if location_str != "Unknown":
+            geolocator = Nominatim(user_agent="slp2mp4")
+            # TODO: error handling
+            # TODO: instead of all this, just let user specify timezone?
+            # Or request to add lat/lon to context.json?
+            location = geolocator.geocode(location_str)
+            tf = TimezoneFinder()
+            timezone_str = tf.timezone_at(lat=location.latitude, lng=location.longitude)
+            timezone = ZoneInfo(timezone_str)
+        else:
+            # Assume user's local timezone
+            timezone = datetime.now().astimezone().tzinfo
+        return datetime.fromtimestamp(start_time_ms / 1000, tz=timezone)
 
     @property
     def event_name(self):

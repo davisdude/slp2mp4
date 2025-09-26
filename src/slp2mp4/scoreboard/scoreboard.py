@@ -39,6 +39,7 @@ class Scoreboard:
     game_context: GameContextInfo
     conf: dict
     height: int
+    tournament_date_format: str = dataclasses.field(default="%B %d, %Y", init=False)
 
     def _get_scoreboard_panels(self, num_teams: int) -> list[ScoreboardPanel]:
         raise NotImplementedError("_get_scoreboard_panels must be overridden by child")
@@ -55,6 +56,8 @@ class Scoreboard:
 
     def _update_panel_html(self, panel):
         mapping = self._get_mapping()
+        date = self.game_context.tournament_date
+        mapping["TOURNAMENT_DATE"] = date.strftime(self.tournament_date_format)
         for k, v in mapping.items():
             mapping[k] = html.escape(str(v))
         panel.html_str = panel.html_str.format_map(mapping)
