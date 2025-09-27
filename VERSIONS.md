@@ -4,6 +4,11 @@
 
 - Add build that bundles ffmpeg with the install (thanks to @ianwal for contributing!)
 - Simplified `runtime.name_replacements` implementation
+- The "Stop" button in the GUI now actually works :)
+- Simplified multiprocessing logic - videos are now rendered "by set" instead of simultaneously
+    - This simplifies the implementation significantly, and also is necessary for the future
+      scoreboard functionality to work.
+    - The downside is that rendering will now take slightly longer.
 
 ## 3.0.7
 
