@@ -20,7 +20,7 @@ def download_url(url, name):
 
 def extract_data(path):
     with zipfile.ZipFile(path, "r") as zfile:
-        zfile.extractall()
+        zfile.extractall(path=pathlib.Path("lib/"))
 
 if __name__ == "__main__":
     url = get_url("win64")
