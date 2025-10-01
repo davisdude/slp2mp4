@@ -1,7 +1,7 @@
 name: Package Application with PyInstaller
 on: workflow_dispatch
 jobs:
-  build-no-ffmpeg:
+  build-no-deps:
     strategy:
       matrix:
         platform: [windows-latest, ubuntu-22.04]
@@ -34,7 +34,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: slp2mp4-${{ runner.os }}-no-ffmpeg
+          name: slp2mp4-${{ runner.os }}-no-deps
           path: |
             dist/*
 
