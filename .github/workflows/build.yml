@@ -64,17 +64,17 @@ jobs:
           pip install pyinstaller
           pip install ".${{ matrix.pip_install_suffix }}"
 
-      - name: Download FFmpeg
-        run: |
-          Invoke-WebRequest -Uri "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-full.7z" -OutFile "ffmpeg-release-full.7z"
-          7z e ffmpeg-release-full.7z -olib/ffmpeg "*/bin/ffmpeg.exe" "*/LICENSE" "*/README.txt"
+      #- name: Download FFmpeg
+      #  run: |
+      #    Invoke-WebRequest -Uri "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-full.7z" -OutFile "ffmpeg-release-full.7z"
+      #    7z e ffmpeg-release-full.7z -olib/ffmpeg "*/bin/ffmpeg.exe" "*/LICENSE" "*/README.txt"
 
-      - name: Update defaults.toml to use bundled FFmpeg exe
-        run: |
-          (Get-Content src/slp2mp4/defaults.toml) `
-            -replace 'ffmpeg = "ffmpeg"', 'ffmpeg = "_internal/slp2mp4/lib/ffmpeg/ffmpeg.exe"' |
-            Set-Content src/slp2mp4/defaults.toml
-        shell: pwsh
+      #- name: Update defaults.toml to use bundled FFmpeg exe
+      #  run: |
+      #    (Get-Content src/slp2mp4/defaults.toml) `
+      #      -replace 'ffmpeg = "ffmpeg"', 'ffmpeg = "_internal/slp2mp4/lib/ffmpeg/ffmpeg.exe"' |
+      #      Set-Content src/slp2mp4/defaults.toml
+      #  shell: pwsh
 
       - name: Download chrome-headless-shell
         run: |
@@ -89,7 +89,7 @@ jobs:
 
       - name: Run pyinstaller
         run: |
-          pyinstaller --name ${{ matrix.name }} --add-data "src/slp2mp4/defaults.toml:slp2mp4/" --add-data "src/slp2mp4/logo.svg:slp2mp4/" --add-data "lib/ffmpeg:slp2mp4/lib/ffmpeg" --add-data "lib/chrome-headless-shell:slp2mp4/lib/chrome-headless-shell" --onedir ${{ matrix.script }}
+          pyinstaller --name ${{ matrix.name }} --add-data "src/slp2mp4/defaults.toml:slp2mp4/" --add-data "src/slp2mp4/logo.svg:slp2mp4/" --add-data "lib/chrome-headless-shell:slp2mp4/lib/chrome-headless-shell" --onedir ${{ matrix.script }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
