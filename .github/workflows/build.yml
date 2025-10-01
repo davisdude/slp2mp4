@@ -28,12 +28,8 @@ jobs:
           pip install ".${{ matrix.pip_install_suffix }}"
 
       - name: Run pyinstaller
-        run: >
-          pyinstaller
-            --name ${{ matrix.name }}
-            --add-data "src/slp2mp4/defaults.toml:slp2mp4/"
-            --add-data "src/slp2mp4/logo.svg:slp2mp4/"
-            --onefile ${{ matrix.script }}
+        run: |
+          pyinstaller --name ${{ matrix.name }} --add-data "src/slp2mp4/defaults.toml:slp2mp4/" --add-data "src/slp2mp4/logo.svg:slp2mp4/" --onefile ${{ matrix.script }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -92,14 +88,8 @@ jobs:
         shell: pwsh
 
       - name: Run pyinstaller
-        run: >
-          pyinstaller
-            --name ${{ matrix.name }}
-            --add-data "src/slp2mp4/defaults.toml:slp2mp4/"
-            --add-data "src/slp2mp4/logo.svg:slp2mp4/"
-            --add-data "lib/ffmpeg:slp2mp4/lib/ffmpeg"
-            --add-data "lib/chrome-headless-shell:slp2mp4/lib/chrome-headless-shell"
-            --onedir ${{ matrix.script }}
+        run: |
+          pyinstaller --name ${{ matrix.name }} --add-data "src/slp2mp4/defaults.toml:slp2mp4/" --add-data "src/slp2mp4/logo.svg:slp2mp4/" --add-data "lib/ffmpeg:slp2mp4/lib/ffmpeg" --add-data "lib/chrome-headless-shell:slp2mp4/lib/chrome-headless-shell" --onedir ${{ matrix.script }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
