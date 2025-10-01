@@ -29,7 +29,11 @@ jobs:
 
       - name: Run pyinstaller
         run: |
-          pyinstaller --name ${{ matrix.name }} --add-data "src/slp2mp4/defaults.toml:slp2mp4/" --add-data "src/slp2mp4/logo.svg:slp2mp4/" --onefile ${{ matrix.script }}
+          pyinstaller \
+            --name ${{ matrix.name }} \
+            --add-data "src/slp2mp4/defaults.toml:slp2mp4/" \
+            --add-data "src/slp2mp4/logo.svg:slp2mp4/" \
+            --onefile ${{ matrix.script }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -76,9 +80,26 @@ jobs:
             Set-Content src/slp2mp4/defaults.toml
         shell: pwsh
 
+      - name: Download chrome-headless-shell
+        run: |
+          python .github/workflows/download-chrome-headless-shell.py
+
+      - name: Update defaults.toml to use chrome-headless-shell
+        run: |
+          (Get-Content src/slp2mp4/defaults.toml) `
+            -replace 'chrome =', 'chrome = "_internal/slp2mp4/lib/chrome-headless-shell-win64/chrome-headless-shell.exe"' |
+            Set-Content src/slp2mp4/defaults.toml
+        shell: pwsh
+
       - name: Run pyinstaller
         run: |
-          pyinstaller --name ${{ matrix.name }} --add-data "src/slp2mp4/defaults.toml:slp2mp4/" --add-data "src/slp2mp4/logo.svg:slp2mp4/" --add-data "lib/ffmpeg:slp2mp4/lib/ffmpeg" --onedir ${{ matrix.script }}
+          pyinstaller \
+            --name ${{ matrix.name }} \
+            --add-data "src/slp2mp4/defaults.toml:slp2mp4/" \
+            --add-data "src/slp2mp4/logo.svg:slp2mp4/" \
+            --add-data "lib/ffmpeg:slp2mp4/lib/ffmpeg" \
+            --add-data "lib/chrome-headless-shell:slp2mp4/lib/chrome-headless-shell" \
+            --onedir ${{ matrix.script }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
