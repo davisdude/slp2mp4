@@ -21,9 +21,10 @@ class ScoreboardPanel:
     def _get_width(self, height):
         return int(self.aspect_ratio * height)
 
-    def render(self, png_path, height):
+    def render(self, conf, png_path, height):
         width = self._get_width(height)
         hti = Html2Image(
+            browser_executable=conf["paths"]["chrome"],
             size=(width, height),
             output_path=png_path.parent,
         )
@@ -65,7 +66,7 @@ class Scoreboard:
     def _render_html(self, panels, png_paths):
         for png_path, panel in zip(png_paths, panels):
             self._update_panel_html(panel)
-            panel.render(png_path, self.height)
+            panel.render(self.conf, png_path, self.height)
 
     @contextlib.contextmanager
     def get_args(self):

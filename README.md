@@ -103,9 +103,10 @@ The default settings can be found [here][default-settings].
 
 #### Paths
 
-- `ffmpeg`: Path to FFmpeg executable
 - `slippi_playback`: Path to playback Slippi Dolphin executable
 - `ssbm_iso`: Path to your Melee ISO file
+- `ffmpeg`: Path to FFmpeg executable
+- `chrome`: Path to Chrome executable; optional
 
 #### Dolphin Settings
 
@@ -151,9 +152,10 @@ Windows:
 
 ```toml
 [paths]
-ffmpeg = "~/Downloads/ffmpeg-2025-01-27-git-959b799c8d-essentials_build/bin/ffmpeg.exe"
 slippi_playback = "~/AppData/Roaming/Slippi Launcher/playback/Slippi Dolphin.exe"
 ssbm_iso = "~/Documents/iso/ssbm.iso"
+ffmpeg = "~/Downloads/ffmpeg-2025-01-27-git-959b799c8d-essentials_build/bin/ffmpeg.exe"
+chrome = ""
 
 [dolphin]
 backend = "D3D12"
@@ -171,9 +173,10 @@ Linux:
 
 ```toml
 [paths]
-ffmpeg = "ffmpeg"
 slippi_playback = "~/.config/Slippi Launcher/playback/Slippi_Playback-x86_64.AppImage"
 ssbm_iso = "~/Games/Melee.iso"
+ffmpeg = "ffmpeg"
+chrome = ""
 
 [dolphin]
 backend = "OGL"
@@ -217,13 +220,11 @@ parallel = 0
   time.
 
 - If your scoreboards have extra space at the bottom or are cropped, this is a
-  known [Chrome issue][chrome-issue]. To address this issue:
+  known [Chrome issue][chrome-issue]. To address this issue, either install the
+  "full" build, or:
 
     1. Download and install `chrome-headless-shell` from [here][chrome-headless-shell].
-    1. Add the following environment variables to your system:
-        1. Set `HTML2IMAGE_CHROME_BIN` to the path to the chrome executable (which will be called
-           `chrome-headless-shell.exe` on Windows).
-        1. Set `HTML2IMAGE_TOGGLE_ENV_VAR_LOOKUP` to `1`.
+    1. Change `paths.chrome` to point to it.
 
 ## License
 

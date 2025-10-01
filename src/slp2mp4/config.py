@@ -105,9 +105,10 @@ def _parse_parallel(parallel):
 
 _TRANSFORMERS = {
     "paths": {
-        "ffmpeg": _parse_bin_path,
         "slippi_playback": _parse_file_path,
         "ssbm_iso": _parse_file_path,
+        "ffmpeg": _parse_bin_path,
+        "chrome": _parse_file_path_or_none,
     },
     "dolphin": {
         "backend": _parse_backend,

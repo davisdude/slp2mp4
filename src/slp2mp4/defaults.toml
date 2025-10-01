@@ -2,7 +2,7 @@
 slippi_playback = "~/AppData/Roaming/Slippi Launcher/playback/Slippi Dolphin.exe"
 ssbm_iso = "~/Downloads/Super Smash Bros. Melee (USA) (En,Ja) (Rev 2).iso"
 ffmpeg = "ffmpeg"
-chrome =
+chrome = ""
 
 [dolphin]
 backend = "OGL"

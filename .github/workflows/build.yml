@@ -83,7 +83,7 @@ jobs:
       - name: Update defaults.toml to use chrome-headless-shell
         run: |
           (Get-Content src/slp2mp4/defaults.toml) `
-            -replace 'chrome =', 'chrome = "_internal/slp2mp4/lib/chrome-headless-shell-win64/chrome-headless-shell.exe"' |
+            -replace 'chrome = ""', 'chrome = "_internal/slp2mp4/lib/chrome-headless-shell-win64/chrome-headless-shell.exe"' |
             Set-Content src/slp2mp4/defaults.toml
         shell: pwsh
 
