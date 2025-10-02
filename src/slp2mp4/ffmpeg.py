@@ -84,25 +84,19 @@ class FfmpegRunner:
 
     # Assumes all videos have the same encoding
     def concat_videos(self, videos: [pathlib.Path], output_file: pathlib.Path):
-        merged_ts = tempfile.NamedTemporaryFile(suffix=".ts", delete=False)
-        merged_ts.close()
-        merged_ts_path = pathlib.Path(merged_ts.name)
-        concat = ("|").join(str(v) for v in videos)
-        merge_args = (
-            ("-y",),
-            ("-fflags", "+igndts"),
-            ("-i", f"concat:{concat}"),
-            ("-c", "copy"),
-            (merged_ts_path,),
-        )
-        self.run(merge_args)
-
-        mux_args = (
-            ("-y",),
-            ("-i", merged_ts_path),
-            ("-c", "copy"),
-            ("-movflags", "faststart"),
-            (output_file,),
-        )
-        self.run(mux_args)
-        merged_ts_path.unlink()
+        # Make a temp directory because windows doesn't like NamedTemporaryFiles :(
+        with tempfile.TemporaryDirectory() as tmpdir:
+            with open(pathlib.Path(tmpdir) / "concat.txt", "w") as concat_file:
+                files = ("\n").join(f"file '{video.resolve()}'" for video in videos)
+                concat_file.write(files)
+                concat_file.flush()
+                args = (
+                    ("-y",),
+                    ("-f", "concat"),
+                    ("-safe", "0"),
+                    ("-i", concat_file.name),
+                    ("-c", "copy"),
+                    ("-xerror",),
+                    (output_file,),
+                )
+                self.run(args)
