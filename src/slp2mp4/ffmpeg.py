@@ -93,6 +93,7 @@ class FfmpegRunner:
                 args = (
                     ("-y",),
                     ("-f", "concat"),
+                    ("-fflags", "+igndts"),
                     ("-safe", "0"),
                     ("-i", concat_file.name),
                     ("-c", "copy"),
