@@ -37,7 +37,7 @@ def render_and_concat(
     concat(conf, output, tmp_paths)
 
 def render(ffmpeg_runner, dolphin_runner, component: OutputComponent):
-    tmp = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False)
+    tmp = tempfile.NamedTemporaryFile(suffix=".ts", delete=False)
     tmp_path = pathlib.Path(tmp.name)
     video.render(ffmpeg_runner, dolphin_runner, component, tmp_path)
     tmp.close()
@@ -50,7 +50,7 @@ def concat(conf: dict, output: Output, renders: list[pathlib.Path]):
         for index, component in enumerate(output.components):
             render = renders[index]
             component = output.components[index]
-            new_render = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False)
+            new_render = tempfile.NamedTemporaryFile(suffix=".ts", delete=False)
             new_render.close()
             new_render_path = pathlib.Path(new_render.name)
             Ffmpeg.add_scoreboard(render, component.context, new_render_path)
