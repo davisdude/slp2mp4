@@ -25,7 +25,7 @@ class ScoreboardPanel:
         width = self._get_width(height)
         executable = str(conf["paths"]["chrome"]) if (conf["paths"]["chrome"] is not None) else None
         hti = Html2Image(
-            browser_executable=,
+            browser_executable=executable,
             size=(width, height),
             output_path=png_path.parent,
         )
