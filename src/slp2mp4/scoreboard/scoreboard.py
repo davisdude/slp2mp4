@@ -23,8 +23,9 @@ class ScoreboardPanel:
 
     def render(self, conf, png_path, height):
         width = self._get_width(height)
+        executable = str(conf["paths"]["chrome"]) if (conf["paths"]["chrome"] is not None) else None
         hti = Html2Image(
-            browser_executable=conf["paths"]["chrome"],
+            browser_executable=,
             size=(width, height),
             output_path=png_path.parent,
         )
