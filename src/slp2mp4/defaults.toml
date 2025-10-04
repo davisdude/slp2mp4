@@ -29,6 +29,8 @@ preserve_directory_structure = false
 "." = "．"
 "/" = "／"
 ":" = "："
+"'" = "＇"
+"\\"" = "＂"
 
 [scoreboard]
 type = "default"
