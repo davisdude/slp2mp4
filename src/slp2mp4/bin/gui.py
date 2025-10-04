@@ -232,7 +232,7 @@ class ConfigDialog(tk.Toplevel):
         # Preserve directory structure
         preserve_dir_frame = ttk.Frame(runtime_frame)
         preserve_dir_frame.pack(side="top", pady=5)
-        ttk.Label(preserve_dir_frame, text="Preserve directory structuRE?").pack(side="left", padx=5)
+        ttk.Label(preserve_dir_frame, text="Preserve directory structure?").pack(side="left", padx=5)
         self.preserve_dir_var = tk.BooleanVar()
         preserve_dir_box = ttk.Checkbutton(preserve_dir_frame, variable=self.preserve_dir_var)
         preserve_dir_box.pack(side="left", padx=5)
