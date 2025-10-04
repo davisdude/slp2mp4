@@ -1,8 +1,6 @@
 # Logic for dolphin INIs
 # https://github.com/dolphin-emu/fifoci/
 
-# TODO: More config options (e.g. widescreen, gecko codes, hide tags)
-
 import configparser
 import contextlib
 import pathlib
@@ -100,11 +98,9 @@ def make_hotkeys_file(userdir: pathlib.Path):
 
 
 @contextlib.contextmanager
-def make_gecko_file(userdir: pathlib.Path):
-    settings = {
-        "Gecko": {},
-        "Gecko_Enabled": {"$Optional: Hide Waiting For Game": None},
-    }
+def make_gecko_file(userdir: pathlib.Path, user_gecko):
+    settings = {"Gecko": {}}
+    util.update_dict(settings, user_gecko)
     filename = userdir.joinpath("GameSettings", "GALE01.ini")
     with make_ini_file(filename, settings) as (name, handle):
         yield name

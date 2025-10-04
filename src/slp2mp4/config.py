@@ -35,6 +35,18 @@ DOLPHIN_BACKENDS = [
     "Vulkan",
 ]
 
+# From https://github.com/project-slippi/slippi-ssbm-asm/blob/5fe022edae0382832caeeee859915160338c8043/playback.json#L292
+GECKO_CODES = [
+    "$Optional: Show Player Names",
+    "$Optional: Game Music OFF",
+    "$Optional: Widescreen 16:9",
+    "$Optional: Disable Screen Shake",
+    "$Optional: Hide HUD",
+    "$Optional: Hide Waiting For Game",
+    "$Optional: Enable Develop Mode",
+    "$Optional: Lagless FoD",
+]
+
 
 def _parse_to_type(string, totype):
     try:
@@ -67,6 +79,11 @@ def _parse_from_dict(key, dictionary):
 
 def _parse_from_list(key, input_list):
     return (key in input_list, key)
+
+
+def _parse_dict_of_bools(dict_of_bools):
+    all_good = all(isinstance(value, bool) for value in dict_of_bools.values())
+    return (all_good, dict_of_bools)
 
 
 def _parse_int(int_str):
@@ -114,6 +131,8 @@ _TRANSFORMERS = {
         "backend": _parse_backend,
         "resolution": _parse_resolution,
         "bitrate": _parse_int,
+        # Not specifying gecko codes allows support for future ones with no changes
+        "gecko_codes": _parse_dict_of_bools,
     },
     "ffmpeg": {
         "audio_args": _parse_str,

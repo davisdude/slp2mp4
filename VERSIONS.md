@@ -9,6 +9,8 @@
     - This simplifies the implementation significantly, and also is necessary for the future
       scoreboard functionality to work.
     - The downside is that rendering will now take slightly longer.
+- Added quotes / apostrophes to the default replacement list
+- Allow changing gecko codes via the config
 
 ## 3.0.7
 

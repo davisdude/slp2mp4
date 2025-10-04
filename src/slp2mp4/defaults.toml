@@ -9,6 +9,16 @@ backend = "OGL"
 resolution = "1080p"
 bitrate = 16000
 
+[dolphin.gecko_codes]
+"$Optional: Show Player Names" = true
+"$Optional: Game Music OFF" = false
+"$Optional: Widescreen 16:9" = false
+"$Optional: Disable Screen Shake" = false
+"$Optional: Hide HUD" = false
+"$Optional: Hide Waiting For Game" = true
+"$Optional: Enable Develop Mode" = false
+"$Optional: Lagless FoD" = false
+
 [ffmpeg]
 audio_args = "-ar 48000 -c:a libopus -f opus -ac 2 -b:a 128k"
 volume = 25
@@ -30,7 +40,7 @@ preserve_directory_structure = false
 "/" = "／"
 ":" = "："
 "'" = "＇"
-"\\"" = "＂"
+'"' = "＂"
 
 [scoreboard]
 type = "default"

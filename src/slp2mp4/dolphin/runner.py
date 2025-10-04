@@ -30,6 +30,18 @@ class DolphinRunner:
                 "EFBScale": config["dolphin"]["resolution"],
             },
         }
+        self.user_gecko = {
+            "Gecko_Enabled": {
+                key: None
+                for key, value in config["dolphin"]["gecko_codes"].items()
+                if value is True
+            },
+            "Gecko_Disabled": {
+                key: None
+                for key, value in config["dolphin"]["gecko_codes"].items()
+                if value is False
+            },
+        }
 
     def run_dolphin(self, replay: replay.ReplayFile, dump_dir: pathlib.Path):
         with tempfile.TemporaryDirectory() as userdir_str:
@@ -40,7 +52,7 @@ class DolphinRunner:
                 ini.make_gfx_file(userdir, self.user_gfx) as gfx_file,
                 ini.make_gal_file(userdir, self.user_gal) as gal_file,
                 ini.make_hotkeys_file(userdir) as hotkeys_file,
-                ini.make_gecko_file(userdir) as gecko_file,
+                ini.make_gecko_file(userdir, self.user_gecko) as gecko_file,
             ):
                 args = (
                     (self.slippi_playback,),

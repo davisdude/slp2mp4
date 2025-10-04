@@ -5,12 +5,14 @@ import multiprocessing
 import pathlib
 import pprint
 import queue
+import re
 import sys
 import threading
 import tkinter as tk
 
 import slp2mp4.config as config
 import slp2mp4.modes as modes
+import slp2mp4.util as util
 import slp2mp4.version as version
 import slp2mp4.scoreboard as scoreboard
 
@@ -19,6 +21,16 @@ import tomli_w
 
 def _snake_to_title(string):
     return (" ").join(string.split("_")).title()
+
+
+def _gecko_code_to_display(string):
+    return string.removeprefix("$Optional: ")
+
+
+def _gecko_code_to_variable(string):
+    name = "gecko_" + _gecko_code_to_display(string).lower()
+    name = re.sub(r"[^a-z]", "_", name).strip("_")
+    return re.sub(r"_+", "_", name)
 
 
 class ConfigDialog(tk.Toplevel):
@@ -145,6 +157,23 @@ class ConfigDialog(tk.Toplevel):
         )
         bitrate_spin.grid(row=2, column=1, padx=5, pady=5)
 
+        # Gecko codes
+        ttk.Label(dolphin_frame, text="Gecko codes").grid(
+            row=3, column=0, sticky="w", padx=5, pady=5
+        )
+        gecko_start_row = 3
+        for i, name in enumerate(config.GECKO_CODES):
+            display_name = _gecko_code_to_display(name)
+            variable_name = _gecko_code_to_variable(name)
+            ttk.Label(dolphin_frame, text=display_name).grid(
+                row=gecko_start_row + i, column=1, sticky="w", padx=5, pady=5
+            )
+            setattr(self, variable_name, tk.BooleanVar())
+            prop = getattr(self, variable_name)
+            box = ttk.Checkbutton(dolphin_frame, variable=prop).grid(
+                row=gecko_start_row + i, column=2, sticky="w", padx=5, pady=5
+            )
+
         # FFmpeg settings tab
         ffmpeg_frame = ttk.Frame(notebook)
         ffmpeg_frame.pack(side="top", pady=5)
@@ -203,7 +232,7 @@ class ConfigDialog(tk.Toplevel):
         # Preserve directory structure
         preserve_dir_frame = ttk.Frame(runtime_frame)
         preserve_dir_frame.pack(side="top", pady=5)
-        ttk.Label(preserve_dir_frame, text="Preserve directory structure?").pack(side="left", padx=5)
+        ttk.Label(preserve_dir_frame, text="Preserve directory structuRE?").pack(side="left", padx=5)
         self.preserve_dir_var = tk.BooleanVar()
         preserve_dir_box = ttk.Checkbutton(preserve_dir_frame, variable=self.preserve_dir_var)
         preserve_dir_box.pack(side="left", padx=5)
@@ -270,6 +299,16 @@ class ConfigDialog(tk.Toplevel):
         if filename:
             var.set(filename)
 
+    def get_gecko_codes(self):
+        default_codes = {
+            name: getattr(self, _gecko_code_to_variable(name)).get()
+            for name in config.GECKO_CODES
+        }
+        # Don't override 'unsupported' codes
+        existing_codes = self.config["dolphin"]["gecko_codes"]
+        util.update_dict(existing_codes, default_codes)
+        return existing_codes
+
     def load_config(self):
         """Load current configuration into dialog fields"""
 
@@ -279,6 +318,10 @@ class ConfigDialog(tk.Toplevel):
         self.backend_var.set(self.config["dolphin"]["backend"])
         self.resolution_var.set(self.config["dolphin"]["resolution"])
         self.bitrate_var.set(int(self.config["dolphin"]["bitrate"]))
+        for name in config.GECKO_CODES:
+            value = self.config["dolphin"]["gecko_codes"][name]
+            prop = getattr(self, _gecko_code_to_variable(name))
+            prop.set(value)
         self.volume_var.set(int(self.config["ffmpeg"]["volume"]))
         self.ffmpeg_args_var.delete("1.0", tk.END)
         self.ffmpeg_args_var.insert(tk.END, str(self.config["ffmpeg"]["audio_args"]))
@@ -304,6 +347,7 @@ class ConfigDialog(tk.Toplevel):
                 "backend": self.backend_var.get(),
                 "resolution": self.resolution_var.get(),
                 "bitrate": self.bitrate_var.get(),
+                "gecko_codes": self.get_gecko_codes(),
             },
             "ffmpeg": {
                 "volume": self.volume_var.get(),
