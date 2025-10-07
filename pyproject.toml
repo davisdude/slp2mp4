@@ -21,9 +21,6 @@ classifiers = [
 dependencies = [
     "pathvalidate",
     "html2image",
-    "tzdata",
-    "timezonefinder",
-    "geopy",
 ]
 dynamic = [
     "version",
