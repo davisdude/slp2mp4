@@ -7,9 +7,6 @@ import pathlib
 from slp2mp4.output import Output
 import slp2mp4.orchestrator as orchestrator
 import slp2mp4.config as config
-import slp2mp4.util as util
-
-import pathvalidate
 
 
 class Mode:
@@ -25,29 +22,9 @@ class Mode:
     def iterator(self, location, path):
         raise NotImplementedError("Child must implement `iterator`")
 
-    def get_name(self, prefix, path):
-        name = path.name
-        if not self.conf["runtime"]["prepend_directory"]:
-            prefix = pathlib.Path(*prefix.parts[1:])
-        out_dir = self.output_directory
-        if self.conf["runtime"]["preserve_directory_structure"]:
-            out_dir /= prefix
-        elif prefix.parts:
-            name = f"{(' ').join(prefix.parts)} {name}"
-        if self.conf["runtime"]["youtubify_names"]:
-            name = util.translate(name, self.conf["runtime"]["name_replacements"])
-        name = name.removesuffix(".slp")
-        name += ".mp4"
-        sanitized = pathlib.Path(pathvalidate.sanitize_filename(name))
-        # Name too long; suffix got dropped
-        if not sanitized.suffix:
-            # Drop beginning of name since it's more likely to be duplicated
-            sanitized = sanitized.parent / (sanitized.name[4:] + ".mp4")
-        return out_dir / sanitized
-
     def get_outputs(self) -> list[Output]:
         return [
-            Output(slps, self.get_name(prefix, mp4), context)
+            Output(self.conf, self.output_directory, slps, prefix, mp4, context)
             for path in self.paths
             for slps, prefix, mp4, context in self.iterator(pathlib.Path("."), path)
         ]
