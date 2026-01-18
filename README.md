@@ -47,20 +47,24 @@ Both methods require having `git` and `pip` installed
 ### Command Line Interface
 
 ```text
-usage: slp2mp4 [-h] [-o OUTPUT_DIRECTORY] [-n] [-v] {single,directory,replay_manager} ...
+usage:
+  slp2mp4 [-h] [-o OUTPUT_DIRECTORY] [-n] [-v] {single,directory,replay_manager} <input> ...
 
 options:
-  -h, --help            show this help message and exit
-  -o, --output-directory OUTPUT_DIRECTORY
-                        set path to output videos
-  -n, --dry-run         show inputs and outputs and exit
-  -v, --version         show program's version number and exit
+  -h, --help                     show this help message and exit
+  -o, --output-directory DIR     set path to output videos
+  -n, --dry-run                  show inputs and outputs and exit
+  -v, --version                  show program's version number and exit
 
 mode:
-  {single,directory,replay_manager}
-    single              convert single replay files to videos
-    directory           recursively convert all replay files in a directory to videos
-    replay_manager      recursively convert all replay files in a zip to videos
+  single <file.slp>
+        convert a single replay file to a video
+
+  directory <folder>
+        recursively convert all .slp files in a directory to videos
+
+  replay_manager <replays.zip>
+        recursively convert all replay files in a zip to videos
 ```
 
 ### Graphical User Interface
