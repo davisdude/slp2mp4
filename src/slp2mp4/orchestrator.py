@@ -24,7 +24,7 @@ def render_and_concat(
     kill_event: multiprocessing.Event,
     executor: concurrent.futures.Executor,
     conf: dict,
-    output: Output
+    output: Output,
 ):
     ffmpeg_runners = [FfmpegRunner(conf) for _ in output.inputs]
     dolphin_runners = [DolphinRunner(conf, kill_event) for _ in output.inputs]
@@ -36,6 +36,7 @@ def render_and_concat(
     tmp_paths = [futures[i].result() for i in output.inputs]
     concat(conf, output.output, tmp_paths)
 
+
 def render(ffmpeg_runner, dolphin_runner, slp_path: pathlib.Path):
     tmp = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False)
     tmp_path = pathlib.Path(tmp.name)
@@ -43,12 +44,14 @@ def render(ffmpeg_runner, dolphin_runner, slp_path: pathlib.Path):
     tmp.close()
     return tmp_path
 
+
 def concat(conf: dict, output_path: pathlib.Path, renders: list[pathlib.Path]):
     Ffmpeg = FfmpegRunner(conf)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     Ffmpeg.concat_videos(renders, output_path)
     for render in renders:
         render.unlink()
+
 
 def run(event: multiprocessing.Event, conf: dict, outputs: list[Output]):
     num_procs = conf["runtime"]["parallel"]
