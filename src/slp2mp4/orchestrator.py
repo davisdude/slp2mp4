@@ -13,6 +13,8 @@ from slp2mp4.output import Output
 
 
 def render(conf: dict, slp_path: pathlib.Path, kill_event: multiprocessing.Event):
+    if kill_event.is_set():
+        return
     ffmpeg_runner = FfmpegRunner(conf)
     dolphin_runner = DolphinRunner(conf, kill_event)
     tmp = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False)
@@ -26,8 +28,11 @@ def concat(
     conf: dict,
     output_path: pathlib.Path,
     renders: list[concurrent.futures.Future[pathlib.Path]],
+    kill_event: multiprocessing.Event,
 ):
-    renders = list(renders)
+    if kill_event.is_set():
+        return
+    renders = [future.result() for future in concurrent.futures.wait(renders).done]
     Ffmpeg = FfmpegRunner(conf)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     Ffmpeg.concat_videos(renders, output_path)
@@ -37,14 +42,20 @@ def concat(
 
 def run(kill_event: multiprocessing.Event, conf: dict, outputs: list[Output]):
     num_workers = conf["runtime"]["parallel"]
+    futures = []
     with concurrent.futures.ThreadPoolExecutor(max_workers=num_workers) as render_pool:
         with concurrent.futures.ThreadPoolExecutor() as concat_pool:
             for output in outputs:
-                confs = (conf for _ in output.inputs)
-                kill_events = (kill_event for _ in output.inputs)
-                render_futures = render_pool.map(
-                    render, confs, output.inputs, kill_events
-                )
+                render_futures = [
+                    render_pool.submit(render, conf, slp_path, kill_event)
+                    for slp_path in output.inputs
+                ]
                 concat_futures = concat_pool.submit(
-                    concat, conf, output.output, render_futures
+                    concat, conf, output.output, render_futures, kill_event
                 )
+                futures.extend(render_futures)
+                futures.append(concat_futures)
+            concurrent.futures.wait(futures)
+            for future in futures:
+                if future.exception():
+                    raise future.exception()
