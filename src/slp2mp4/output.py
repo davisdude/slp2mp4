@@ -41,7 +41,11 @@ class Output:
     def _get_name(self, output_directory, prefix, path):
         if self.conf["runtime"]["preserve_directory_structure"]:
             output_directory /= prefix
-        name = self._get_name_context() if self.context is not None else self.get_name_no_context(prefix, path)
+        name = (
+            self._get_name_context()
+            if self.context is not None
+            else self.get_name_no_context(prefix, path)
+        )
         if self.conf["runtime"]["youtubify_names"]:
             name = util.translate(name, self.conf["runtime"]["name_replacements"])
         name += ".mp4"
@@ -53,7 +57,9 @@ class Output:
         return output_directory / sanitized
 
     def _get_name_context(self):
-        comp = self.components[0].context # Assumes this is representative enough of the set
+        comp = self.components[
+            0
+        ].context  # Assumes this is representative enough of the set
         team_1 = ("/").join(comp.slot_data[0]["displayNames"])
         team_2 = ("/").join(comp.slot_data[1]["displayNames"])
         tournament = comp.tournament_name

@@ -103,15 +103,21 @@ class GameContextInfo:
             "BRACKET_SCORING_SHORT": self.best_of_shortened,
         }
         for team_id, slot_data in enumerate(self.slot_data, start=1):
-            replacements.update({
-                f"COMBATANT_{team_id}_SCORE": slot_data["score"]
-            })
+            replacements.update({f"COMBATANT_{team_id}_SCORE": slot_data["score"]})
             for player_id in range(self.num_teams):
-                replacements.update({
-                    f"COMBATANT_{team_id}_{player_id + 1}_SPONSOR": slot_data["prefixes"][player_id],
-                    f"COMBATANT_{team_id}_{player_id + 1}_TAG": slot_data["displayNames"][player_id],
-                    f"COMBATANT_{team_id}_{player_id + 1}_PRONOUNS": slot_data["pronouns"][player_id],
-                })
+                replacements.update(
+                    {
+                        f"COMBATANT_{team_id}_{player_id + 1}_SPONSOR": slot_data[
+                            "prefixes"
+                        ][player_id],
+                        f"COMBATANT_{team_id}_{player_id + 1}_TAG": slot_data[
+                            "displayNames"
+                        ][player_id],
+                        f"COMBATANT_{team_id}_{player_id + 1}_PRONOUNS": slot_data[
+                            "pronouns"
+                        ][player_id],
+                    }
+                )
         return replacements
 
 

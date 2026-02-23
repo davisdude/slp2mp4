@@ -10,17 +10,20 @@ def get_url(platform):
     with urlrequest.urlopen(json_url) as response:
         body = response.read()
     data = json.loads(body)
-    downloads=data["channels"]["Stable"]["downloads"]["chrome-headless-shell"]
+    downloads = data["channels"]["Stable"]["downloads"]["chrome-headless-shell"]
     return [d["url"] for d in downloads if d["platform"] == platform][0]
+
 
 def download_url(url, name):
     with urlrequest.urlopen(url) as data:
         with open(name, "wb") as f:
             f.write(data.read())
 
+
 def extract_data(path):
     with zipfile.ZipFile(path, "r") as zfile:
         zfile.extractall(path=pathlib.Path("lib/"))
+
 
 if __name__ == "__main__":
     url = get_url("win64")

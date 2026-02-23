@@ -10,12 +10,7 @@ from slp2mp4 import ffmpeg, output, replay, util
 
 # Returns True if the render succeeded, False otherwise
 # output_path must be a container that requires no reencoding, e.g. mkv
-def render(
-    Ffmpeg,
-    Dolphin,
-    component: output.OutputComponent,
-    output_path
-):
+def render(Ffmpeg, Dolphin, component: output.OutputComponent, output_path):
     with tempfile.TemporaryDirectory() as tmpdir_str:
         tmpdir = pathlib.Path(tmpdir_str)
         r = replay.ReplayFile(component.slp)

@@ -3,7 +3,6 @@ import importlib
 import slp2mp4
 from slp2mp4.scoreboard import scoreboard
 
-
 DEFAULT_LOGO_PATH = importlib.resources.files(slp2mp4).joinpath("logo.svg")
 
 HEADER_HTML_STR = r"""
