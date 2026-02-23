@@ -12,7 +12,6 @@ import slp2mp4.util as util
 @dataclasses.dataclass(eq=True, frozen=True)
 class OutputComponent:
     slp: pathlib.Path
-    index: int
     context: GameContextInfo | None
 
 
@@ -30,7 +29,6 @@ class Output:
         self.components = [
             OutputComponent(
                 slp,
-                game_index,
                 GameContextInfo(context_path, game_index) if context_path else None,
             )
             for game_index, slp in enumerate(slps)
