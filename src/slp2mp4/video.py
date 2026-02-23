@@ -8,6 +8,7 @@ import slp2mp4.dolphin.runner as dolphin_runner
 from slp2mp4 import ffmpeg, output, replay, util
 
 
+
 # Returns True if the render succeeded, False otherwise
 # output_path must be a container that requires no reencoding, e.g. mkv
 def render(Ffmpeg, Dolphin, component: output.OutputComponent, output_path):

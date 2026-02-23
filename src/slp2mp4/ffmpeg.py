@@ -17,8 +17,7 @@ class FfmpegRunner:
         subprocess.run(
             ffmpeg_args,
             check=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
+            stdin=subprocess.DEVNULL,
         )
 
     # Audio reencoding has to be done separately - see "corrupt input packet"

@@ -82,6 +82,38 @@ mode:
     replay_manager      recursively convert all replay files in a zip to videos
 ```
 
+Each mode can accept several inputs simultaneously:
+
+```text
+usage: slp2mp4 single [-h] paths [paths ...]
+
+positional arguments:
+  paths       input file(s)
+
+options:
+  -h, --help  show this help message and exit
+```
+
+```
+usage: slp2mp4 directory [-h] paths [paths ...]
+
+positional arguments:
+  paths       input directory/directories
+
+options:
+  -h, --help  show this help message and exit
+```
+
+```
+usage: slp2mp4 zip [-h] paths [paths ...]
+
+positional arguments:
+  paths       replay manager zip/directory
+
+options:
+  -h, --help  show this help message and exit
+```
+
 ### Graphical User Interface
 
 The GUI has all the features that the CLI has. Change your settings in the
