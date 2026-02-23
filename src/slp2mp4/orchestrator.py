@@ -39,7 +39,7 @@ def concat(
         for index, component in enumerate(output.components):
             render = renders[index]
             component = output.components[index]
-            new_render = tempfile.NamedTemporaryFile(suffix="*.mp4", delete=False)
+            new_render = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False)
             new_render.close()
             new_render_path = pathlib.Path(new_render.name)
             Ffmpeg.add_scoreboard(render, component.context, new_render_path)
