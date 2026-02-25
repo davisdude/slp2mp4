@@ -114,7 +114,7 @@ class DolphinRunner:
                         print("Dolphin terminated early")
                     time.sleep(2)
                     proc.terminate()
-                    proc.wait(timeout=5)
+                    proc.communicate()  # Wait for process to die and flush stdout / stderr
 
                 except subprocess.CalledProcessError as e:
                     print(f"Dolphin failed with error ${e}")
