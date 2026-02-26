@@ -5,12 +5,10 @@
 - Add build that bundles ffmpeg with the install (thanks to @ianwal for contributing!)
 - Simplified `runtime.name_replacements` implementation
 - The "Stop" button in the GUI now actually works :)
-- Simplified multiprocessing logic - videos are now rendered "by set" instead of simultaneously
-    - This simplifies the implementation significantly, and also is necessary for the future
-      scoreboard functionality to work.
-    - The downside is that rendering will now take slightly longer.
 - Added quotes / apostrophes to the default replacement list
 - Allow changing gecko codes via the config
+- Fixed "File owned by another process" issue on windows that happened during high load
+- Fixed issue where `stdin` would get messed up when run from CLI
 
 ## 3.0.7
 
