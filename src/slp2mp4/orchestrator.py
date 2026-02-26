@@ -21,6 +21,13 @@ def render(conf: dict, component: pathlib.Path, kill_event: multiprocessing.Even
     tmp_path = pathlib.Path(tmp.name)
     video.render(ffmpeg_runner, dolphin_runner, component, tmp_path)
     tmp.close()
+    if component.context:
+        new_render = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False)
+        new_render.close()
+        new_render_path = pathlib.Path(new_render.name)
+        ffmpeg_runner.add_scoreboard(tmp_path, component.context, new_render_path)
+        tmp_path.unlink()
+        tmp_path = new_render_path
     return tmp_path
 
 
@@ -33,19 +40,9 @@ def concat(
     if kill_event.is_set():
         return
     renders = [future.result() for future in concurrent.futures.wait(renders).done]
-    Ffmpeg = FfmpegRunner(conf)
+    ffmpeg_runner = FfmpegRunner(conf)
     output.output.parent.mkdir(parents=True, exist_ok=True)
-    if output.context:
-        for index, component in enumerate(output.components):
-            render = renders[index]
-            component = output.components[index]
-            new_render = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False)
-            new_render.close()
-            new_render_path = pathlib.Path(new_render.name)
-            Ffmpeg.add_scoreboard(render, component.context, new_render_path)
-            render.unlink()
-            renders[index] = new_render_path
-    Ffmpeg.concat_videos(renders, output.output)
+    ffmpeg_runner.concat_videos(renders, output.output)
     for render in renders:
         render.unlink()
 
