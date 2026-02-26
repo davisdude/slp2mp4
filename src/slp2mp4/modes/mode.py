@@ -14,9 +14,11 @@ class Mode:
         self,
         paths: list[pathlib.Path],
         output_directory: pathlib.Path,
+        dry_run: bool,
     ):
         self.paths = paths
         self.output_directory = output_directory
+        self.dry_run = dry_run
         self.conf = None
 
     def iterator(self, location, path):
@@ -41,12 +43,12 @@ class Mode:
         return out
 
     @contextlib.contextmanager
-    def run(self, event: multiprocessing.Event, dry_run=False):
+    def run(self, event: multiprocessing.Event):
         self.conf = config.get_config()
         config.translate_and_validate_config(self.conf)
         products = self.get_outputs()
         with concurrent.futures.ThreadPoolExecutor(1) as executor:
-            if dry_run:
+            if self.dry_run:
                 future = executor.submit(self._get_output, products)
             else:
                 self.output_directory.mkdir(parents=True, exist_ok=True)

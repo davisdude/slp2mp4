@@ -43,11 +43,12 @@ def get_parser():
 
 def main():
     parser = get_parser()
-    args = parser.parse_args()
-    mode = args.run(args.paths, args.output_directory)
+    args = vars(parser.parse_args())
+    run = args.pop("run")
+    mode = run(**args)
     manager = multiprocessing.Manager()
     event = manager.Event()
-    with mode.run(event, args.dry_run) as (executor, future):
+    with mode.run(event) as (executor, future):
         result = future.result()
         if isinstance(result, str):
             print(result.rstrip())
