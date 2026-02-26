@@ -27,16 +27,20 @@ def render(conf: dict, slp_path: pathlib.Path, kill_event: multiprocessing.Event
 def concat(
     conf: dict,
     output_path: pathlib.Path,
-    renders: list[concurrent.futures.Future[pathlib.Path]],
+    renders: dict[concurrent.futures.Future[pathlib.Path], int],
     kill_event: multiprocessing.Event,
 ):
     if kill_event.is_set():
         return
-    renders = [future.result() for future in concurrent.futures.wait(renders).done]
-    Ffmpeg = FfmpegRunner(conf)
+    completed_renders = {
+        renders[future]: future.result()
+        for future in concurrent.futures.wait(renders.keys()).done
+    }
+    render_list = dict(sorted(completed_renders.items())).values()
+    ffmpeg_runner = FfmpegRunner(conf)
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    Ffmpeg.concat_videos(renders, output_path)
-    for render in renders:
+    ffmpeg_runner.concat_videos(render_list, output_path)
+    for render in render_list:
         render.unlink()
 
 
@@ -46,14 +50,12 @@ def run(kill_event: multiprocessing.Event, conf: dict, outputs: list[Output]):
     with concurrent.futures.ThreadPoolExecutor(max_workers=num_workers) as render_pool:
         with concurrent.futures.ThreadPoolExecutor() as concat_pool:
             for output in outputs:
-                render_futures = [
-                    render_pool.submit(render, conf, slp_path, kill_event)
-                    for slp_path in output.inputs
-                ]
-                concat_futures = concat_pool.submit(
-                    concat, conf, output.output, render_futures, kill_event
-                )
-                futures.extend(render_futures)
+                future_to_index = {
+                    render_pool.submit(render, conf, slp_path, kill_event): index
+                    for index, slp_path in enumerate(output.inputs)
+                }
+                concat_futures = concat_pool.submit(concat, conf, output.output, future_to_index, kill_event)
+                futures.extend(future_to_index.keys())
                 futures.append(concat_futures)
             concurrent.futures.wait(futures)
             for future in futures:
