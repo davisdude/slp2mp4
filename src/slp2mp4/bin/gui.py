@@ -231,9 +231,13 @@ class ConfigDialog(tk.Toplevel):
         # Preserve directory structure
         preserve_dir_frame = ttk.Frame(runtime_frame)
         preserve_dir_frame.pack(side="top", pady=5)
-        ttk.Label(preserve_dir_frame, text="Preserve directory structure?").pack(side="left", padx=5)
+        ttk.Label(preserve_dir_frame, text="Preserve directory structure?").pack(
+            side="left", padx=5
+        )
         self.preserve_dir_var = tk.BooleanVar()
-        preserve_dir_box = ttk.Checkbutton(preserve_dir_frame, variable=self.preserve_dir_var)
+        preserve_dir_box = ttk.Checkbutton(
+            preserve_dir_frame, variable=self.preserve_dir_var
+        )
         preserve_dir_box.pack(side="left", padx=5)
 
         # Youtubify names
@@ -254,7 +258,9 @@ class ConfigDialog(tk.Toplevel):
         # Name replacement
         name_replacements_frame = ttk.Frame(runtime_frame)
         name_replacements_frame.pack(side="top", pady=5)
-        ttk.Label(name_replacements_frame, text="Name replacement").pack(side="left", padx=5)
+        ttk.Label(name_replacements_frame, text="Name replacement").pack(
+            side="left", padx=5
+        )
         self.name_replacements_var = scrolledtext.ScrolledText(
             name_replacements_frame,
             height=8,
@@ -308,15 +314,21 @@ class ConfigDialog(tk.Toplevel):
         self.ffmpeg_args_var.insert(tk.END, str(self.config["ffmpeg"]["audio_args"]))
         self.parallel_var.set(int(self.config["runtime"]["parallel"]))
         self.prepend_var.set(bool(self.config["runtime"]["prepend_directory"]))
-        self.preserve_dir_var.set(bool(self.config["runtime"]["preserve_directory_structure"]))
+        self.preserve_dir_var.set(
+            bool(self.config["runtime"]["preserve_directory_structure"])
+        )
         self.youtubify_var.set(bool(self.config["runtime"]["youtubify_names"]))
         self.name_replacements_var.delete("1.0", tk.END)
-        self.name_replacements_var.insert(tk.END, pprint.pformat(self.config["runtime"]["name_replacements"]))
+        self.name_replacements_var.insert(
+            tk.END, pprint.pformat(self.config["runtime"]["name_replacements"])
+        )
 
     def save_config(self):
         """Save configuration and close dialog"""
         audio_args = self.ffmpeg_args_var.get("1.0", tk.END).replace("\n", "")
-        name_replacements_args = ast.literal_eval(self.name_replacements_var.get("1.0", tk.END).replace("\n", ""))
+        name_replacements_args = ast.literal_eval(
+            self.name_replacements_var.get("1.0", tk.END).replace("\n", "")
+        )
         self.result = {
             "paths": {
                 "ffmpeg": self.ffmpeg_var.get(),

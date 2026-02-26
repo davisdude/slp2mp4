@@ -5,6 +5,7 @@ import tempfile
 
 import slp2mp4.replay as replay
 
+
 # Returns True if the render succeeded, False otherwise
 # output_path must be a container that requires no reencoding, e.g. mkv
 def render(Ffmpeg, Dolphin, slp_path, output_path):

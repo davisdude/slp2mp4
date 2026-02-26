@@ -83,7 +83,10 @@ class DolphinRunner:
                 dolphin_args = util.flatten_arg_tuples(args)
                 try:
                     proc = subprocess.Popen(
-                        args=dolphin_args, stdout=subprocess.PIPE, text=True
+                        args=dolphin_args,
+                        stdin=subprocess.DEVNULL,
+                        stdout=subprocess.PIPE,
+                        text=True,
                     )
                     game_end_frame = -124
                     current_frame = -125
@@ -111,7 +114,7 @@ class DolphinRunner:
                         print("Dolphin terminated early")
                     time.sleep(2)
                     proc.terminate()
-                    proc.wait(timeout=5)
+                    proc.communicate()  # Wait for process to die and flush stdout / stderr
 
                 except subprocess.CalledProcessError as e:
                     print(f"Dolphin failed with error ${e}")

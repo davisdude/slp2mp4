@@ -16,7 +16,7 @@ class FfmpegRunner:
 
     def _run(self, args):
         ffmpeg_args = [self.ffmpeg_path] + util.flatten_arg_tuples(args)
-        subprocess.run(ffmpeg_args, check=True)
+        subprocess.run(ffmpeg_args, check=True, stdin=subprocess.DEVNULL)
 
     def reencode_audio(self, audio_file_path: pathlib.Path):
         reencoded_path = audio_file_path.parent / "fixed.out"
