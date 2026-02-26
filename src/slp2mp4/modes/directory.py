@@ -42,4 +42,5 @@ class Directory(Mode):
                 location.parent,
                 pathlib.Path(location.name),
                 context,
+                range(len(slps)),
             )

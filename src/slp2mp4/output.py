@@ -24,6 +24,7 @@ class Output:
         prefix: pathlib.Path,
         path: pathlib.Path,
         context_path: pathlib.Path | None,
+        game_indices: list[int],
     ):
         self.conf = conf
         self.components = [
@@ -31,9 +32,10 @@ class Output:
                 slp,
                 GameContextInfo(context_path, game_index) if context_path else None,
             )
-            for game_index, slp in enumerate(slps)
+            for game_index, slp in zip(game_indices, slps)
         ]
         self.context = context_path
+        self.game_indices = game_indices
         self.output = self._get_name(output_directory, prefix, path)
 
     def _get_name(self, output_directory, prefix, path):
@@ -55,14 +57,15 @@ class Output:
         return output_directory / sanitized
 
     def _get_name_context(self):
-        comp = self.components[
-            0
-        ].context  # Assumes this is representative enough of the set
+        # Assumes first index is representative of entire set
+        index = self.game_indices[0]
+        comp = self.components[0].context
         team_1 = ("/").join(comp.slot_data[0]["displayNames"])
         team_2 = ("/").join(comp.slot_data[1]["displayNames"])
         tournament = comp.tournament_name
         round_info = comp.bracket_round_text
-        return f"{team_1} vs {team_2} - {tournament} - {round_info}"
+        suffix = f" - Game {index + 1}" if len(self.game_indices) == 1 else ""
+        return f"{team_1} vs {team_2} - {tournament} - {round_info}{suffix}"
 
     def _get_name_no_context(self, prefix, path):
         name = path.name
