@@ -16,4 +16,6 @@ class Single(Mode):
             if context:
                 slps = list(sorted(path.parent.glob("*.slp"), key=util.natsort))
                 index = slps.index(path)
-            yield [path], util.get_parent_as_path(path), path.parent / path.stem, context, [index]
+            yield [path], util.get_parent_as_path(
+                path
+            ), path.parent / path.stem, context, [index]

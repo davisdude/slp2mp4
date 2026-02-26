@@ -26,9 +26,13 @@ class Mode:
 
     def get_outputs(self) -> list[Output]:
         return [
-            Output(self.conf, self.output_directory, slps, prefix, mp4, context, indices)
+            Output(
+                self.conf, self.output_directory, slps, prefix, mp4, context, indices
+            )
             for path in self.paths
-            for slps, prefix, mp4, context, indices in self.iterator(pathlib.Path("."), path)
+            for slps, prefix, mp4, context, indices in self.iterator(
+                pathlib.Path("."), path
+            )
         ]
 
     def _get_output(self, products):

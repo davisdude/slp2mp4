@@ -61,7 +61,9 @@ def run(kill_event: multiprocessing.Event, conf: dict, outputs: list[Output]):
                     render_pool.submit(render, conf, component, kill_event): index
                     for index, component in enumerate(output.components)
                 }
-                concat_futures = concat_pool.submit(concat, conf, output, future_to_index, kill_event)
+                concat_futures = concat_pool.submit(
+                    concat, conf, output, future_to_index, kill_event
+                )
                 futures.extend(future_to_index.keys())
                 futures.append(concat_futures)
             concurrent.futures.wait(futures)
