@@ -34,16 +34,20 @@ def render(conf: dict, component: pathlib.Path, kill_event: multiprocessing.Even
 def concat(
     conf: dict,
     output: Output,
-    renders: list[concurrent.futures.Future[pathlib.Path]],
+    renders: dict[concurrent.futures.Future[pathlib.Path], int],
     kill_event: multiprocessing.Event,
 ):
     if kill_event.is_set():
         return
-    renders = [future.result() for future in concurrent.futures.wait(renders).done]
+    completed_renders = {
+        renders[future]: future.result()
+        for future in concurrent.futures.wait(renders.keys()).done
+    }
+    render_list = dict(sorted(completed_renders.items())).values()
     ffmpeg_runner = FfmpegRunner(conf)
     output.output.parent.mkdir(parents=True, exist_ok=True)
-    ffmpeg_runner.concat_videos(renders, output.output)
-    for render in renders:
+    ffmpeg_runner.concat_videos(render_list, output.output)
+    for render in render_list:
         render.unlink()
 
 
@@ -53,12 +57,12 @@ def run(kill_event: multiprocessing.Event, conf: dict, outputs: list[Output]):
     with concurrent.futures.ThreadPoolExecutor(max_workers=num_workers) as render_pool:
         with concurrent.futures.ThreadPoolExecutor() as concat_pool:
             for output in outputs:
-                render_futures = [
-                    render_pool.submit(render, conf, component, kill_event)
-                    for component in output.components
-                ]
-                concat_futures = concat_pool.submit(concat, conf, output, render_futures, kill_event)
-                futures.extend(render_futures)
+                future_to_index = {
+                    render_pool.submit(render, conf, component, kill_event): index
+                    for index, component in enumerate(output.components)
+                }
+                concat_futures = concat_pool.submit(concat, conf, output, future_to_index, kill_event)
+                futures.extend(future_to_index.keys())
                 futures.append(concat_futures)
             concurrent.futures.wait(futures)
             for future in futures:
