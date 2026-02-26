@@ -46,8 +46,9 @@ def get_parser():
 
 def main():
     parser = get_parser()
-    args = parser.parse_args()
-    mode = args.run(args.paths, args.output_directory)
+    args = vars(parser.parse_args())
+    run = args.pop("run")
+    mode = run(**args)
     manager = multiprocessing.Manager()
     event = manager.Event()
     logger = log.update_logger()

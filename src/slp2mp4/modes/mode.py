@@ -14,9 +14,15 @@ import pathvalidate
 
 
 class Mode:
-    def __init__(self, paths: list[pathlib.Path], output_directory: pathlib.Path):
+    def __init__(
+        self,
+        paths: list[pathlib.Path],
+        output_directory: pathlib.Path,
+        dry_run: bool,
+    ):
         self.paths = paths
         self.output_directory = output_directory
+        self.dry_run = dry_run
         self.conf = None
         self.log = log.get_logger()
 
@@ -57,7 +63,7 @@ class Mode:
         ]
 
     @contextlib.contextmanager
-    def run(self, event: multiprocessing.Event, dry_run=False):
+    def run(self, event: multiprocessing.Event):
         self.conf = config.get_config()
         try:
             config.translate_and_validate_config(self.conf)
@@ -66,7 +72,7 @@ class Mode:
             yield None, None
             return
         products = self.get_outputs()
-        if dry_run:
+        if self.dry_run:
             outputs = self._get_output(products)
             for output in outputs:
                 self.log.info(output)
