@@ -61,7 +61,7 @@ def main():
 
     signal.signal(signal.SIGINT, _sigint_handler)
 
-    with mode.run(event, args.dry_run) as (executor, future):
+    with mode.run(event) as (executor, future):
         if executor is not None:
             future.result()
     mode.cleanup()

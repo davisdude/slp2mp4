@@ -658,11 +658,13 @@ class Slp2Mp4GUI:
             paths = [pathlib.Path(self.input_var.get())]
             output_directory = pathlib.Path(self.output_var.get())
             dry_run = self.dry_run_var.get()
-            mode = modes.MODES[self.mode_var.get()].mode(paths, output_directory)
+            mode = modes.MODES[self.mode_var.get()].mode(
+                paths, output_directory, dry_run
+            )
             manager = multiprocessing.Manager()
             event = manager.Event()
             self.log.info("Starting conversion")
-            with mode.run(event, dry_run) as (executor, future):
+            with mode.run(event) as (executor, future):
                 while executor is not None:
                     if self.stop:
                         event.set()
