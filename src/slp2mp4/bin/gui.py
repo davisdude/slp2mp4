@@ -438,7 +438,7 @@ class Slp2Mp4GUI:
         self.create_widgets()
 
         # Add log handler
-        log.add_tk_logger(self.log, self.log_text)
+        self.update_logger()
 
     def create_menu(self):
         menubar = tk.Menu(self.root)
@@ -512,6 +512,14 @@ class Slp2Mp4GUI:
         self.dry_run_var = tk.BooleanVar()
         ttk.Checkbutton(
             options_frame, text="Dry Run (preview only)", variable=self.dry_run_var
+        ).pack(anchor="w")
+
+        self.debug_var = tk.BooleanVar()
+        ttk.Checkbutton(
+            options_frame,
+            text="Debug",
+            variable=self.debug_var,
+            command=self.update_logger,
         ).pack(anchor="w")
 
         # Control buttons frame
@@ -691,6 +699,10 @@ class Slp2Mp4GUI:
             self.start_button.config(state="normal")
             self.stop_button.config(state="disabled")
             self.status_label.config(text="Ready")
+
+    def update_logger(self):
+        debug = self.debug_var.get()
+        self.log = log.update_logger(debug, self.log_text)
 
 
 def main():

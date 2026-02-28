@@ -57,10 +57,12 @@ class Mode:
         ]
 
     def _get_output(self, products):
-        return [
-            f"{output.output}:\n{('\n').join(f"\t{i}" for i in output.inputs)}"
-            for output in products
-        ]
+        text = []
+        for output in products:
+            text.append(f"{output.output}:")
+            for i in output.inputs:
+                text.append(f"\t{i}")
+        return text
 
     @contextlib.contextmanager
     def run(self, event: multiprocessing.Event):

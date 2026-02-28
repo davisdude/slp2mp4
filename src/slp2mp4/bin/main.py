@@ -25,6 +25,12 @@ def get_parser():
         help="show inputs and outputs and exit",
     )
     parser.add_argument(
+        "-d",
+        "--debug",
+        action="store_true",
+        help="log more info",
+    )
+    parser.add_argument(
         "-v",
         "--version",
         action="version",
@@ -48,10 +54,11 @@ def main():
     parser = get_parser()
     args = vars(parser.parse_args())
     run = args.pop("run")
+    debug = args.pop("debug")
     mode = run(**args)
     manager = multiprocessing.Manager()
     event = manager.Event()
-    logger = log.update_logger()
+    logger = log.update_logger(debug)
 
     def _sigint_handler(sig, frame):
         logger.info("Got interrupt - stopping")

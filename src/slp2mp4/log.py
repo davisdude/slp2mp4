@@ -16,25 +16,29 @@ class TkStream(io.StringIO):
 
 
 # Only call this from bin scripts
-def update_logger(debug=False):
+def update_logger(debug=False, tk_log_text=None):
     logger = logging.getLogger("slp2mp4")
+    logger.handlers.clear()
+
     level = logging.DEBUG if debug else logging.INFO
     logger.setLevel(level)
-    stream = logging.StreamHandler()
-    if debug:
-        formatter = logging.Formatter(
-            "%(asctime)s|%(filename)s.%(lineno)s|%(levelname)s: %(message)s"
-        )
-        stream.setFormatter(formatter)
-    logger.addHandler(stream)
+
+    debug_formatter = logging.Formatter(
+        "%(asctime)s|%(filename)s.%(lineno)s|%(levelname)s: %(message)s"
+    )
+    formatter = debug_formatter if debug else None
+
+    stdout_stream = logging.StreamHandler()
+    stdout_stream.setFormatter(formatter)
+    logger.addHandler(stdout_stream)
+
+    if tk_log_text:
+        tk_stream = logging.StreamHandler(TkStream(tk_log_text))
+        tk_stream.setFormatter(formatter)
+        logger.addHandler(tk_stream)
+
     return logger
 
 
 def get_logger():
     return logging.getLogger("slp2mp4")
-
-
-def add_tk_logger(logger, log_text):
-    stream = logging.StreamHandler(TkStream(log_text))
-    stream.setLevel(logger.getEffectiveLevel())
-    logger.addHandler(stream)
