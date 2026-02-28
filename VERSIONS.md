@@ -1,6 +1,6 @@
 # Version History
 
-## In-progress
+## 3.1.0
 
 - Add build that bundles ffmpeg with the install (thanks to @ianwal for contributing!)
 - Simplified `runtime.name_replacements` implementation
