@@ -119,7 +119,7 @@ class DolphinRunner:
                     proc.terminate()
                     # Wait for process to die and flush stdout / stderr
                     stdout, stderr = proc.communicate()
-                    self.log.debug(f"Dolphin finished: {stdout = } {stderr = }")
+                    self.log.debug(f"Dolphin finished:\n{stdout = }\n{stderr = }")
 
                 except subprocess.CalledProcessError as e:
                     self.log.error(f"Dolphin failed with error ${e}")

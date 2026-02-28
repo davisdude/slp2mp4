@@ -25,9 +25,9 @@ class FfmpegRunner:
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
         )
-        if proc.returncode != 0:
-            error = proc.stdout.decode(errors="backslashreplace")
-            self.log.error(f"Error while running ffmpeg {ffmpeg_args}: {error}")
+        self.log.debug(
+            f"{ffmpeg_args = }: {proc.stdout.decode(errors='backslashreplace')}"
+        )
         return proc.returncode == 0
 
     def reencode_audio(self, audio_file_path: pathlib.Path):
