@@ -268,7 +268,8 @@ parallel = 0
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the [license](LICENSE.md)
+file for details.
 
 
 [chrome-headless-shell]: https://googlechromelabs.github.io/chrome-for-testing/
