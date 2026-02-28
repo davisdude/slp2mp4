@@ -1,6 +1,8 @@
 import argparse
 import multiprocessing
 import pathlib
+import signal
+import sys
 
 import slp2mp4.modes as modes
 import slp2mp4.version as version
@@ -47,6 +49,15 @@ def main():
     mode = args.run(args.paths, args.output_directory)
     manager = multiprocessing.Manager()
     event = manager.Event()
+
+    def _sigint_handler(sig, frame):
+        print("Got interrupt - stopping")
+        event.set()
+        mode.cleanup()
+        sys.exit(0)
+
+    signal.signal(signal.SIGINT, _sigint_handler)
+
     with mode.run(event, args.dry_run) as (executor, future):
         result = future.result()
         if isinstance(result, str):
