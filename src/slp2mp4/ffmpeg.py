@@ -5,6 +5,7 @@ import tempfile
 import subprocess
 import shlex
 
+import slp2mp4.log as log
 import slp2mp4.util as util
 
 
@@ -13,10 +14,23 @@ class FfmpegRunner:
         self.conf = config
         self.ffmpeg_path = config["paths"]["ffmpeg"]
         self.audio_args = shlex.split(config["ffmpeg"]["audio_args"])
+        self.log = log.get_logger()
 
     def _run(self, args):
         ffmpeg_args = [self.ffmpeg_path] + util.flatten_arg_tuples(args)
-        subprocess.run(ffmpeg_args, check=True, stdin=subprocess.DEVNULL)
+        proc = subprocess.run(
+            ffmpeg_args,
+            check=False,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+        )
+        stdout = proc.stdout.decode(errors="backslashreplace")
+        if proc.returncode != 0:
+            self.log.error(f"{ffmpeg_args = }: {stdout}")
+        else:
+            self.log.debug(f"{ffmpeg_args = }: {stdout}")
+        return proc.returncode == 0
 
     def reencode_audio(self, audio_file_path: pathlib.Path):
         reencoded_path = audio_file_path.parent / "fixed.out"
@@ -33,8 +47,8 @@ class FfmpegRunner:
             ),
             (reencoded_path,),
         )
-        self._run(args)
-        return reencoded_path
+        if self._run(args):
+            return reencoded_path
 
     # Assumes output file can handle no reencoding for concat
     # Returns True if ffmpeg ran successfully, False otherwise
@@ -73,7 +87,7 @@ class FfmpegRunner:
             ("-xerror",),
             (output_file,),
         )
-        self._run(args)
+        return self._run(args)
 
     # Assumes all videos have the same encoding
     def concat_videos(self, videos: [pathlib.Path], output_file: pathlib.Path):
@@ -104,4 +118,4 @@ class FfmpegRunner:
                     ("-xerror",),
                     (output_file,),
                 )
-                self._run(args)
+                return self._run(args)
