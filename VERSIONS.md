@@ -3,7 +3,8 @@
 ## In-Progress
 
 - Changed the replacement chars for "." and "/" to "․" and  "⧸", respectively
-- Skip rendering partial framedumps on stop; handle sigint in CLI (#36)
+- Skip rendering partial framedumps on stop
+- Handle sigint in CLI + clean up temp files on stop (#36)
 
 ## 3.1.0
 
