@@ -18,6 +18,7 @@ class Mode:
         self.paths = paths
         self.output_directory = output_directory
         self.conf = None
+        self.log = log.get_logger()
 
     def iterator(self, location, path):
         raise NotImplementedError("Child must implement `iterator`")
@@ -50,31 +51,30 @@ class Mode:
         ]
 
     def _get_output(self, products):
-        out = ""
-        for output in products:
-            out += f"{output.output}\n"
-            for i in output.inputs:
-                out += f"\t{i}\n"
-            out += "\n"
-        return out
+        return [
+            f"{output.output}:\n{('\n').join(f"\t{i}" for i in output.inputs)}"
+            for output in products
+        ]
 
     @contextlib.contextmanager
     def run(self, event: multiprocessing.Event, dry_run=False):
-        logger = log.get_logger()
         self.conf = config.get_config()
         try:
             config.translate_and_validate_config(self.conf)
         except Exception as e:
-            logger.error(f"Error during config validation: {e}")
+            self.log.error(f"Error during config validation: {e}")
             yield None, None
             return
         products = self.get_outputs()
+        if dry_run:
+            outputs = self._get_output(products)
+            for output in outputs:
+                self.log.info(output)
+            yield None, None
+            return
         with concurrent.futures.ThreadPoolExecutor(1) as executor:
-            if dry_run:
-                future = executor.submit(self._get_output, products)
-            else:
-                self.output_directory.mkdir(parents=True, exist_ok=True)
-                future = executor.submit(orchestrator.run, event, self.conf, products)
+            self.output_directory.mkdir(parents=True, exist_ok=True)
+            future = executor.submit(orchestrator.run, event, self.conf, products)
             yield executor, future
 
     def cleanup(self):

@@ -62,11 +62,7 @@ def main():
 
     with mode.run(event, args.dry_run) as (executor, future):
         if executor is not None:
-            result = future.result()
-            if isinstance(result, str):
-                lines = result.rstrip().split("\n")
-                for line in lines:
-                    logger.info(line)
+            future.result()
     mode.cleanup()
 
 
