@@ -5,6 +5,7 @@ import tempfile
 import subprocess
 import shlex
 
+import slp2mp4.log as log
 import slp2mp4.util as util
 
 
@@ -13,10 +14,20 @@ class FfmpegRunner:
         self.conf = config
         self.ffmpeg_path = config["paths"]["ffmpeg"]
         self.audio_args = shlex.split(config["ffmpeg"]["audio_args"])
+        self.log = log.get_logger()
 
     def _run(self, args):
         ffmpeg_args = [self.ffmpeg_path] + util.flatten_arg_tuples(args)
-        subprocess.run(ffmpeg_args, check=True, stdin=subprocess.DEVNULL)
+        proc = subprocess.run(
+            ffmpeg_args,
+            check=False,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+        )
+        if proc.returncode != 0:
+            error = proc.stdout.decode(errors="backslashreplace")
+            self.log.error(f"Error while running ffmpeg {ffmpeg_args}: {error}")
 
     def reencode_audio(self, audio_file_path: pathlib.Path):
         reencoded_path = audio_file_path.parent / "fixed.out"
