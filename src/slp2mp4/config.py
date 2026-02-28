@@ -4,7 +4,6 @@ import importlib.resources
 import os
 import pathlib
 import shutil
-import sys
 import tomllib
 import typing
 
