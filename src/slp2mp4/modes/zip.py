@@ -11,7 +11,6 @@ from slp2mp4.output import Output
 import slp2mp4.util as util
 
 
-# TODO: Use context.json to get names?
 def _make_tmpdir():
     tmpdir = tempfile.mkdtemp()
     atexit.register(shutil.rmtree, tmpdir)
