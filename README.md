@@ -24,12 +24,9 @@ group of replays.
 Notes:
 
 - Adding scoreboards can be slow and CPU-intensive
-- Scoreboards are only generated for `directory` and `zip` run modes
-    - In `directory` mode, if `slp2mp4` finds a `context.json` file, it assumes
-      that all replays in the directory have a `context.json` entry. (I.e.
-      adding files to a folder reported by replay-manager is unsupported and
-      will break things).
-- Scoreboards will not be generated if a `context.json` file is not found
+- Scoreboards will not be generated if a `context.json` file is not found; the
+  program assumes the only slippi files in the directory correspond to the
+  reported set
 - Currently, only sets reported with startgg data are supported
 
 ## Requirements
