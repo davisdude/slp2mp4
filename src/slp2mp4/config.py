@@ -4,10 +4,12 @@ import importlib.resources
 import os
 import pathlib
 import shutil
+import sys
 import tomllib
 import typing
 
 import slp2mp4
+import slp2mp4.log as log
 import slp2mp4.util as util
 
 DEFAULT_CONFIG_FILE = importlib.resources.files(slp2mp4).joinpath("defaults.toml")
@@ -141,9 +143,9 @@ def _apply_constructors(conf: dict, constructors: dict, path=pathlib.Path(".")):
         new_path = path / k
         if isinstance(constructor, typing.Callable):
             success, value = constructor(conf[k])
-            assert (
-                success
-            ), f"Config: Invalid value for {('.').join(new_path.parts)}: '{conf[k]}'"
+            if not success:
+                name = (".").join(new_path.parts)
+                raise RuntimeError(f"Invalid value for {name}: '{conf[k]}'")
             conf[k] = value
         elif isinstance(constructor, dict):
             _apply_constructors(conf[k], constructor, new_path)
@@ -151,15 +153,16 @@ def _apply_constructors(conf: dict, constructors: dict, path=pathlib.Path(".")):
 
 def _load_configs(config_files: [pathlib.Path]) -> dict:
     conf = {}
+    logger = log.get_logger()
     for file in config_files:
         try:
             with open(file, "rb") as f:
                 data = tomllib.load(f)
                 util.update_dict(conf, data)
         except FileNotFoundError:
-            print(f"Could not find config file {file} - skipping")
+            logger.info(f"Could not find config file {file} - skipping")
         except tomllib.TOMLDecodeError:
-            print(f"Invalid toml in file {file} - skipping")
+            logger.error(f"Invalid toml in file {file} - skipping")
     return conf
 
 

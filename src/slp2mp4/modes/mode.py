@@ -7,6 +7,7 @@ import pathlib
 from slp2mp4.output import Output
 import slp2mp4.orchestrator as orchestrator
 import slp2mp4.config as config
+import slp2mp4.log as log
 import slp2mp4.util as util
 
 import pathvalidate
@@ -59,8 +60,14 @@ class Mode:
 
     @contextlib.contextmanager
     def run(self, event: multiprocessing.Event, dry_run=False):
+        logger = log.get_logger()
         self.conf = config.get_config()
-        config.translate_and_validate_config(self.conf)
+        try:
+            config.translate_and_validate_config(self.conf)
+        except Exception as e:
+            logger.error(f"Error during config validation: {e}")
+            yield None, None
+            return
         products = self.get_outputs()
         with concurrent.futures.ThreadPoolExecutor(1) as executor:
             if dry_run:

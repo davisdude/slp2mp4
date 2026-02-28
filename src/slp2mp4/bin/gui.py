@@ -665,9 +665,11 @@ class Slp2Mp4GUI:
             event = manager.Event()
             self.queue.put(("log", "Starting conversion..."))
             with mode.run(event, dry_run) as (executor, future):
-                while True:
+                while executor is not None:
                     if self.stop:
                         event.set()
+                        break
+                    elif event.is_set():
                         break
                     try:
                         result = future.result(1)
@@ -679,7 +681,8 @@ class Slp2Mp4GUI:
                     self.queue.put(("log", "\nConversion completed successfully!"))
                     self.stop = True
                     break
-                executor.shutdown(False, cancel_futures=True)
+                if executor is not None:
+                    executor.shutdown(False, cancel_futures=True)
             mode.cleanup()
         except Exception as e:
             import traceback

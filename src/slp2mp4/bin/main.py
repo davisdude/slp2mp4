@@ -61,11 +61,12 @@ def main():
     signal.signal(signal.SIGINT, _sigint_handler)
 
     with mode.run(event, args.dry_run) as (executor, future):
-        result = future.result()
-        if isinstance(result, str):
-            lines = result.rstrip().split("\n")
-            for line in lines:
-                logger.info(line)
+        if executor is not None:
+            result = future.result()
+            if isinstance(result, str):
+                lines = result.rstrip().split("\n")
+                for line in lines:
+                    logger.info(line)
     mode.cleanup()
 
 
