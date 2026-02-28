@@ -8,6 +8,7 @@ import subprocess
 import slp2mp4.replay as replay
 import slp2mp4.dolphin.comm as comm
 import slp2mp4.dolphin.ini as ini
+import slp2mp4.log as log
 import slp2mp4.util as util
 
 
@@ -42,6 +43,7 @@ class DolphinRunner:
                 if value is False
             },
         }
+        self.log = log.get_logger()
 
     def run_dolphin(self, replay: replay.ReplayFile, dump_dir: pathlib.Path):
         with tempfile.TemporaryDirectory() as userdir_str:
@@ -86,6 +88,7 @@ class DolphinRunner:
                         args=dolphin_args,
                         stdin=subprocess.DEVNULL,
                         stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
                         text=True,
                     )
                     game_end_frame = -124
@@ -111,13 +114,15 @@ class DolphinRunner:
 
                     # Kills dolphin (if need be) when finished dumping
                     if current_frame != game_end_frame:
-                        print("Dolphin terminated early")
+                        self.log.info("Dolphin terminated early")
                     time.sleep(2)
                     proc.terminate()
-                    proc.communicate()  # Wait for process to die and flush stdout / stderr
+                    # Wait for process to die and flush stdout / stderr
+                    stdout, stderr = proc.communicate()
+                    self.log.debug(f"Dolphin finished: {stdout = } {stderr = }")
 
                 except subprocess.CalledProcessError as e:
-                    print(f"Dolphin failed with error ${e}")
+                    self.log.error(f"Dolphin failed with error ${e}")
                     raise
 
         audio_file = dump_dir.joinpath("dspdump.wav")
