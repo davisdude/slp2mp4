@@ -7,19 +7,26 @@ import multiprocessing
 
 from slp2mp4.dolphin.runner import DolphinRunner
 from slp2mp4.ffmpeg import FfmpegRunner
-
-import slp2mp4.video as video
 from slp2mp4.output import Output
+
+import slp2mp4.log as log
+import slp2mp4.video as video
 
 
 def render(conf: dict, slp_path: pathlib.Path, kill_event: multiprocessing.Event):
+    logger = log.get_logger()
     if kill_event.is_set():
         return
     ffmpeg_runner = FfmpegRunner(conf)
     dolphin_runner = DolphinRunner(conf, kill_event)
     tmp = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False)
     tmp_path = pathlib.Path(tmp.name)
+    logger.info(f"Rendering '{slp_path}' to '{tmp_path}")
     success = video.render(ffmpeg_runner, dolphin_runner, slp_path, tmp_path)
+    if not success:
+        logger.error(f"Failed to render '{slp_path}'")
+    else:
+        logger.info(f"Done rendering '{slp_path}'")
     tmp.close()
     return tmp_path, success
 
@@ -30,13 +37,14 @@ def concat(
     renders: dict[tuple[concurrent.futures.Future[pathlib.Path], bool], int],
     kill_event: multiprocessing.Event,
 ):
+    logger = log.get_logger()
     completed_renders = {
         renders[future]: future.result()
         for future in concurrent.futures.wait(renders.keys()).done
     }
     render_outputs = dict(sorted(completed_renders.items())).values()
-    render_list, success = zip(*render_outputs)
-    error = False in success
+    render_list, sucesses = zip(*render_outputs)
+    error = False in sucesses
     if kill_event.is_set() or error:
         for render in render_list:
             if render is not None:
@@ -44,6 +52,8 @@ def concat(
         return
     ffmpeg_runner = FfmpegRunner(conf)
     output_path.parent.mkdir(parents=True, exist_ok=True)
+    render_str = (", ").join([f"'{r}'" for r in render_list])
+    logger.info(f"Combining {render_str} into '{output_path}'")
     ffmpeg_runner.concat_videos(render_list, output_path)
     for render in render_list:
         render.unlink()
