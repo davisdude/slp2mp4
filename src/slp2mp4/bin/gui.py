@@ -4,7 +4,6 @@ import ast
 import multiprocessing
 import pathlib
 import pprint
-import queue
 import re
 import sys
 import threading
@@ -12,6 +11,7 @@ import tkinter as tk
 
 import slp2mp4.config as config
 import slp2mp4.modes as modes
+import slp2mp4.log as log
 import slp2mp4.util as util
 import slp2mp4.version as version
 
@@ -422,13 +422,11 @@ class AboutDialog(tk.Toplevel):
 
 
 class Slp2Mp4GUI:
-    def __init__(self, root):
+    def __init__(self, root, logger):
         self.root = root
+        self.log = logger
         self.stop = False
         self.root.title("slp2mp4 GUI")
-
-        # Queue for thread communication
-        self.queue = queue.Queue()
 
         # Load configuration
         self.config = self.load_configuration()
@@ -439,8 +437,8 @@ class Slp2Mp4GUI:
         # Create main interface
         self.create_widgets()
 
-        # Start queue processing
-        self.root.after(100, self.process_queue)
+        # Add log handler
+        log.add_tk_logger(self.log, self.log_text)
 
     def create_menu(self):
         menubar = tk.Menu(self.root)
@@ -602,9 +600,9 @@ class Slp2Mp4GUI:
         try:
             with open(config_path, "wb") as f:
                 tomli_w.dump(unique_items, f)
-            self.log("Configuration saved successfully")
+            self.log.info("Configuration saved successfully")
         except Exception as e:
-            self.log(f"Error saving configuration: {e}")
+            self.log.error(f"Error saving configuration: {e}")
 
     def validate_inputs(self):
         """Validate user inputs before starting conversion"""
@@ -650,7 +648,7 @@ class Slp2Mp4GUI:
         self.conversion_thread.start()
 
     def stop_conversion(self):
-        self.log("Stopping conversion...")
+        self.log.info("Stopping conversion...")
         self.stop_button.config(state="disabled")
         self.stop = True
 
@@ -663,7 +661,7 @@ class Slp2Mp4GUI:
             mode = modes.MODES[self.mode_var.get()].mode(paths, output_directory)
             manager = multiprocessing.Manager()
             event = manager.Event()
-            self.queue.put(("log", "Starting conversion..."))
+            self.log.info("Starting conversion")
             with mode.run(event, dry_run) as (executor, future):
                 while executor is not None:
                     if self.stop:
@@ -675,10 +673,7 @@ class Slp2Mp4GUI:
                         result = future.result(1)
                     except TimeoutError:
                         continue
-                    if result:
-                        self.queue.put(("log", "Dry run results:"))
-                        self.queue.put(("log", result.rstrip()))
-                    self.queue.put(("log", "\nConversion completed successfully!"))
+                    self.log.info("Conversion completed successfully!")
                     self.stop = True
                     break
                 if executor is not None:
@@ -687,41 +682,13 @@ class Slp2Mp4GUI:
         except Exception as e:
             import traceback
 
-            self.queue.put(("error", str(e)))
-            self.queue.put(("log", f"Full traceback:\n{traceback.format_exc()}"))
+            self.log.error(f"Error during conversion: {e}")
+            self.log.debug(f"Full traceback:\n{traceback.format_exc()}")
         finally:
-            self.queue.put(("done", None))
-
-    def process_queue(self):
-        """Process messages from worker thread"""
-        try:
-            while True:
-                msg_type, msg_data = self.queue.get_nowait()
-
-                if msg_type == "log":
-                    self.log(msg_data)
-                elif msg_type == "error":
-                    self.log(f"ERROR: {msg_data}")
-                    messagebox.showerror("Conversion Error", msg_data)
-                elif msg_type == "done":
-                    self.progress_bar.stop()
-                    self.start_button.config(state="normal")
-                    self.stop_button.config(state="disabled")
-                    self.status_label.config(text="Ready")
-
-        except queue.Empty:
-            pass
-
-        # Schedule next check
-        self.root.after(100, self.process_queue)
-
-    def log(self, message):
-        """Add message to log output"""
-        self.log_text.insert(tk.END, message + "\n")
-        self.log_text.see(tk.END)
-        self.status_label.config(
-            text=message[:80] + "..." if len(message) > 80 else message
-        )
+            self.progress_bar.stop()
+            self.start_button.config(state="normal")
+            self.stop_button.config(state="disabled")
+            self.status_label.config(text="Ready")
 
 
 def main():
@@ -738,7 +705,8 @@ def main():
         # Fall back to default theme
         pass
 
-    app = Slp2Mp4GUI(root)
+    logger = log.update_logger()
+    app = Slp2Mp4GUI(root, logger)
     root.mainloop()
 
 
