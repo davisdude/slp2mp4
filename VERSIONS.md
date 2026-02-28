@@ -3,6 +3,7 @@
 ## In-Progress
 
 - Changed the replacement chars for "." and "/" to "․" and  "⧸", respectively
+- Only save non-default configs from the GUI (#35)
 
 ## 3.1.0
 
