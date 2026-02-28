@@ -422,9 +422,8 @@ class AboutDialog(tk.Toplevel):
 
 
 class Slp2Mp4GUI:
-    def __init__(self, root, logger):
+    def __init__(self, root):
         self.root = root
-        self.log = logger
         self.stop = False
         self.root.title("slp2mp4 GUI")
 
@@ -719,8 +718,7 @@ def main():
         # Fall back to default theme
         pass
 
-    logger = log.update_logger()
-    app = Slp2Mp4GUI(root, logger)
+    app = Slp2Mp4GUI(root)
     root.mainloop()
 
 
