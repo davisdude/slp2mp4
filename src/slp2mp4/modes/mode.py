@@ -70,6 +70,9 @@ class Mode:
                 future = executor.submit(orchestrator.run, event, self.conf, products)
             yield executor, future
 
+    def cleanup(self):
+        pass
+
 
 @dataclasses.dataclass
 class ModeContainer:

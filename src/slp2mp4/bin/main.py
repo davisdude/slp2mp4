@@ -51,6 +51,7 @@ def main():
         result = future.result()
         if isinstance(result, str):
             print(result.rstrip())
+    mode.cleanup()
 
 
 if __name__ == "__main__":
