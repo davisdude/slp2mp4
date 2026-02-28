@@ -6,6 +6,7 @@ import sys
 
 import slp2mp4.modes as modes
 import slp2mp4.version as version
+import slp2mp4.log as log
 
 
 def get_parser():
@@ -49,9 +50,10 @@ def main():
     mode = args.run(args.paths, args.output_directory)
     manager = multiprocessing.Manager()
     event = manager.Event()
+    logger = log.update_logger()
 
     def _sigint_handler(sig, frame):
-        print("Got interrupt - stopping")
+        logger.info("Got interrupt - stopping")
         event.set()
         mode.cleanup()
         sys.exit(0)
@@ -61,7 +63,9 @@ def main():
     with mode.run(event, args.dry_run) as (executor, future):
         result = future.result()
         if isinstance(result, str):
-            print(result.rstrip())
+            lines = result.rstrip().split("\n")
+            for line in lines:
+                logger.info(line)
     mode.cleanup()
 
 
