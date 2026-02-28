@@ -680,6 +680,7 @@ class Slp2Mp4GUI:
                     self.stop = True
                     break
                 executor.shutdown(False, cancel_futures=True)
+            mode.cleanup()
         except Exception as e:
             import traceback
 
