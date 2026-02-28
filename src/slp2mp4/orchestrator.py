@@ -19,25 +19,28 @@ def render(conf: dict, slp_path: pathlib.Path, kill_event: multiprocessing.Event
     dolphin_runner = DolphinRunner(conf, kill_event)
     tmp = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False)
     tmp_path = pathlib.Path(tmp.name)
-    video.render(ffmpeg_runner, dolphin_runner, slp_path, tmp_path)
+    success = video.render(ffmpeg_runner, dolphin_runner, slp_path, tmp_path)
     tmp.close()
-    return tmp_path
+    return tmp_path, success
 
 
 def concat(
     conf: dict,
     output_path: pathlib.Path,
-    renders: dict[concurrent.futures.Future[pathlib.Path], int],
+    renders: dict[tuple[concurrent.futures.Future[pathlib.Path], bool], int],
     kill_event: multiprocessing.Event,
 ):
     completed_renders = {
         renders[future]: future.result()
         for future in concurrent.futures.wait(renders.keys()).done
     }
-    render_list = dict(sorted(completed_renders.items())).values()
-    if kill_event.is_set():
+    render_outputs = dict(sorted(completed_renders.items())).values()
+    render_list, success = zip(*render_outputs)
+    error = False in success
+    if kill_event.is_set() or error:
         for render in render_list:
-            render.unlink(missing_ok=True)
+            if render is not None:
+                render.unlink(missing_ok=True)
         return
     ffmpeg_runner = FfmpegRunner(conf)
     output_path.parent.mkdir(parents=True, exist_ok=True)

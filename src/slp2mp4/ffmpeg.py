@@ -28,6 +28,7 @@ class FfmpegRunner:
         if proc.returncode != 0:
             error = proc.stdout.decode(errors="backslashreplace")
             self.log.error(f"Error while running ffmpeg {ffmpeg_args}: {error}")
+        return proc.returncode == 0
 
     def reencode_audio(self, audio_file_path: pathlib.Path):
         reencoded_path = audio_file_path.parent / "fixed.out"
@@ -44,8 +45,8 @@ class FfmpegRunner:
             ),
             (reencoded_path,),
         )
-        self._run(args)
-        return reencoded_path
+        if self._run(args):
+            return reencoded_path
 
     # Assumes output file can handle no reencoding for concat
     # Returns True if ffmpeg ran successfully, False otherwise
@@ -84,7 +85,7 @@ class FfmpegRunner:
             ("-xerror",),
             (output_file,),
         )
-        self._run(args)
+        return self._run(args)
 
     # Assumes all videos have the same encoding
     def concat_videos(self, videos: [pathlib.Path], output_file: pathlib.Path):
@@ -115,4 +116,4 @@ class FfmpegRunner:
                     ("-xerror",),
                     (output_file,),
                 )
-                self._run(args)
+                return self._run(args)
