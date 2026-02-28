@@ -127,6 +127,17 @@ The default settings can be found [here][default-settings].
 - `resolution`: Output resolution (`480p`, `720p`, `1080p`, `1440p`, `2160p`)
 - `bitrate`: Video bitrate in kbps
 
+##### Gecko Codes
+
+- `"$Optional: Show Player Names"`
+- `"$Optional: Game Music OFF"`
+- `"$Optional: Widescreen 16:9"`
+- `"$Optional: Disable Screen Shake"`
+- `"$Optional: Hide HUD"`
+- `"$Optional: Hide Waiting For Game"`
+- `"$Optional: Enable Develop Mode"`
+- `"$Optional: Lagless FoD"`
+
 #### FFmpeg Settings
 
 - `audio_args`: FFmpeg audio processing settings
