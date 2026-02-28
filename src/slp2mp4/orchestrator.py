@@ -30,13 +30,15 @@ def concat(
     renders: dict[concurrent.futures.Future[pathlib.Path], int],
     kill_event: multiprocessing.Event,
 ):
-    if kill_event.is_set():
-        return
     completed_renders = {
         renders[future]: future.result()
         for future in concurrent.futures.wait(renders.keys()).done
     }
     render_list = dict(sorted(completed_renders.items())).values()
+    if kill_event.is_set():
+        for render in render_list:
+            render.unlink(missing_ok=True)
+        return
     ffmpeg_runner = FfmpegRunner(conf)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     ffmpeg_runner.concat_videos(render_list, output_path)
