@@ -1,4 +1,3 @@
-import atexit
 import pathlib
 import shutil
 import tempfile
@@ -11,16 +10,15 @@ from slp2mp4.output import Output
 import slp2mp4.util as util
 
 
-def _make_tmpdir():
-    tmpdir = tempfile.mkdtemp()
-    atexit.register(shutil.rmtree, tmpdir)
-    return pathlib.Path(tmpdir)
-
-
 class Zip(Directory):
+    def __init__(self, *args, **kwargs):
+        self.tmpdirs = []
+        super().__init__(*args, **kwargs)
+
     def _recursive_find(self, location, path, fromzip=False):
         if zipfile.is_zipfile(path):
-            tmpdir = _make_tmpdir()
+            tmpdir = pathlib.Path(tempfile.mkdtemp())
+            self.tmpdirs.append(tmpdir)
             with zipfile.ZipFile(path, "r") as zfile:
                 zfile.extractall(path=tmpdir)
             name = location.name
@@ -42,3 +40,8 @@ class Zip(Directory):
         if not fromzip:
             return
         super()._add_slps(location, path)
+
+    def cleanup(self):
+        for tmpdir in self.tmpdirs:
+            shutil.rmtree(tmpdir)
+        self.tmpdirs = []
