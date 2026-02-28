@@ -5,20 +5,29 @@ import tempfile
 import subprocess
 import shlex
 
-from slp2mp4 import config, util
+from slp2mp4 import config, log, util
 
 
 class FfmpegRunner:
     def __init__(self, conf):
         self.conf = conf
+        self.log = log.get_logger()
 
     def run(self, args):
         ffmpeg_args = [self.conf["paths"]["ffmpeg"]] + util.flatten_arg_tuples(args)
-        subprocess.run(
+        proc = subprocess.run(
             ffmpeg_args,
-            check=True,
+            check=False,
             stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
         )
+        stdout = proc.stdout.decode(errors="backslashreplace")
+        if proc.returncode != 0:
+            self.log.error(f"{ffmpeg_args = }: {stdout}")
+        else:
+            self.log.debug(f"{ffmpeg_args = }: {stdout}")
+        return proc.returncode == 0
 
     # Audio reencoding has to be done separately - see "corrupt input packet"
     # complaints otherwise
@@ -37,8 +46,8 @@ class FfmpegRunner:
             ),
             (reencoded_path,),
         )
-        self.run(args)
-        return reencoded_path
+        if self.run(args):
+            return reencoded_path
 
     # Assumes output file can handle no reencoding for concat
     # Returns True if ffmpeg ran successfully, False otherwise
@@ -57,7 +66,7 @@ class FfmpegRunner:
             ("-xerror",),
             (output_file,),
         )
-        self.run(args)
+        return self.run(args)
 
     def add_scoreboard(self, replay: pathlib.Path, context, output_file: pathlib.Path):
         height = config.get_expected_height(self.conf)
@@ -79,7 +88,7 @@ class FfmpegRunner:
                 ("-codec:a", "copy"),
                 (output_file,),
             )
-            self.run(args)
+            return self.run(args)
 
     # Assumes all videos have the same encoding
     def concat_videos(self, videos: [pathlib.Path], output_file: pathlib.Path):
@@ -99,4 +108,4 @@ class FfmpegRunner:
                     ("-xerror",),
                     (output_file,),
                 )
-                self.run(args)
+                return self.run(args)

@@ -7,6 +7,8 @@ import pathlib
 from slp2mp4.output import Output
 import slp2mp4.orchestrator as orchestrator
 import slp2mp4.config as config
+import slp2mp4.log as log
+import slp2mp4.util as util
 
 
 class Mode:
@@ -20,6 +22,7 @@ class Mode:
         self.output_directory = output_directory
         self.dry_run = dry_run
         self.conf = None
+        self.log = log.get_logger()
 
     def iterator(self, location, path):
         raise NotImplementedError("Child must implement `iterator`")
@@ -36,27 +39,34 @@ class Mode:
         ]
 
     def _get_output(self, products):
-        out = ""
+        text = []
         for output in products:
-            out += f"{output.output}\n"
+            text.append(f"{output.output}:")
             for component in output.components:
-                out += f"\t{component.slp}\n"
+                text.append(f"\t{component.slp}")
             if output.context:
-                out += f"\tcontext: {output.context}\n"
-            out += "\n"
-        return out
+                text.append(f"\tcontext: {output.context}")
+        return text
 
     @contextlib.contextmanager
     def run(self, event: multiprocessing.Event):
         self.conf = config.get_config()
-        config.translate_and_validate_config(self.conf)
+        try:
+            config.translate_and_validate_config(self.conf)
+        except Exception as e:
+            self.log.error(f"Error during config validation: {e}")
+            yield None, None
+            return
         products = self.get_outputs()
+        if self.dry_run:
+            outputs = self._get_output(products)
+            for output in outputs:
+                self.log.info(output)
+            yield None, None
+            return
         with concurrent.futures.ThreadPoolExecutor(1) as executor:
-            if self.dry_run:
-                future = executor.submit(self._get_output, products)
-            else:
-                self.output_directory.mkdir(parents=True, exist_ok=True)
-                future = executor.submit(orchestrator.run, event, self.conf, products)
+            self.output_directory.mkdir(parents=True, exist_ok=True)
+            future = executor.submit(orchestrator.run, event, self.conf, products)
             yield executor, future
 
     def cleanup(self):

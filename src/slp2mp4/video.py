@@ -16,4 +16,6 @@ def render(Ffmpeg, Dolphin, component: output.OutputComponent, output_path):
         r = replay.ReplayFile(component.slp)
         tmp_audio_file, video_file = Dolphin.run_dolphin(r, tmpdir)
         audio_file = Ffmpeg.reencode_audio(tmp_audio_file)
-        Ffmpeg.combine_audio_and_video(audio_file, video_file, output_path)
+        if audio_file is None:
+            return False
+        return Ffmpeg.combine_audio_and_video(audio_file, video_file, output_path)

@@ -3,9 +3,10 @@
 ## In-Progress
 
 - Changed the replacement chars for "." and "/" to "․" and  "⧸", respectively
-- Only save non-default configs from the GUI (#35)
+- Only save non-default configs from the GUI ([#35](https://github.com/davisdude/slp2mp4/issues/35))
 - Skip rendering partial framedumps on stop
-- Handle sigint in CLI + clean up temp files on stop (#36)
+- Handle sigint in CLI + clean up temp files on stop ([#36](https://github.com/davisdude/slp2mp4/issues/36))
+- Improved logging and error handling ([#38](https://github.com/davisdude/slp2mp4/issues/38))
 
 ## 3.1.0
 
