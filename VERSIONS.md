@@ -3,6 +3,7 @@
 ## In-Progress
 
 - Changed the replacement chars for "." and "/" to "․" and  "⧸", respectively
+- Skip rendering partial framedumps on stop
 
 ## 3.1.0
 
