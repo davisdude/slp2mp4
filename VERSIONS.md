@@ -1,5 +1,9 @@
 # Version History
 
+## In-Progress
+
+- Changed the replacement chars for "." and "/" to "․" and  "⧸", respectively
+
 ## 3.1.0
 
 - Add build that bundles ffmpeg with the install (thanks to @ianwal for contributing!)
