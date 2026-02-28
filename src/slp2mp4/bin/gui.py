@@ -595,11 +595,13 @@ class Slp2Mp4GUI:
         return config.get_config()
 
     def save_configuration(self):
-        """Save configuration to user config file"""
+        """Save non-default configurations to user config file"""
         config_path = pathlib.Path(config.USER_CONFIG_FILE).expanduser()
+        defaults = config.get_default_config()
+        unique_items = util.get_unique_items(defaults, self.config)
         try:
             with open(config_path, "wb") as f:
-                tomli_w.dump(self.config, f)
+                tomli_w.dump(unique_items, f)
             self.log("Configuration saved successfully")
         except Exception as e:
             self.log(f"Error saving configuration: {e}")
