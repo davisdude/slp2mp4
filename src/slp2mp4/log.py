@@ -18,8 +18,8 @@ class TkStream(io.StringIO):
 # Only call this from bin scripts
 def update_logger(debug=False):
     logger = logging.getLogger("slp2mp4")
-    # TODO: Configurable log-level
-    logger.setLevel(logging.INFO)
+    level = logging.DEBUG if debug else logging.INFO
+    logger.setLevel(level)
     stream = logging.StreamHandler()
     if debug:
         formatter = logging.Formatter(
