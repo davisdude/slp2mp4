@@ -1,18 +1,28 @@
+from __future__ import annotations
+
 import io
 import logging
-import tkinter as tk
 
+__TK_FOUND = True
+try:
+    import tkinter as tk
+except (ImportError, ModuleNotFoundError):
+    __TK_FOUND = False
 
 class TkStream(io.StringIO):
-    def __init__(self, textobj: tk.Text, *args, **kwargs):
+    def __init__(self, textobj: "tk.Text", *args, **kwargs):
+        if not __TK_FOUND:
+            return
         super().__init__(*args, **kwargs)
         self.textobj = textobj
 
     def write(self, s):
+        if not __TK_FOUND:
+            return
         super().write(s)
         new_text = self.read()
-        self.textobj.insert(tk.END, s)
-        self.textobj.see(tk.END)
+        self.textobj.insert("tk.END", s)
+        self.textobj.see("tk.END")
 
 
 # Only call this from bin scripts
@@ -32,7 +42,7 @@ def update_logger(debug=False, tk_log_text=None):
     stdout_stream.setFormatter(formatter)
     logger.addHandler(stdout_stream)
 
-    if tk_log_text:
+    if tk_log_text and __TK_FOUND:
         tk_stream = logging.StreamHandler(TkStream(tk_log_text))
         tk_stream.setFormatter(formatter)
         logger.addHandler(tk_stream)
