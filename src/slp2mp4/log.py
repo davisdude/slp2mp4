@@ -21,8 +21,8 @@ class TkStream(io.StringIO):
             return
         super().write(s)
         new_text = self.read()
-        self.textobj.insert("tk.END", s)
-        self.textobj.see("tk.END")
+        self.textobj.insert("end", s)
+        self.textobj.see("end")
 
 
 # Only call this from bin scripts
