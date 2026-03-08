@@ -7,6 +7,7 @@
 - Skip rendering partial framedumps on stop
 - Handle sigint in CLI + clean up temp files on stop ([#36](https://github.com/davisdude/slp2mp4/issues/36))
 - Improved logging and error handling ([#38](https://github.com/davisdude/slp2mp4/issues/38))
+    - Made tkinter not required for headless runs ([#44](https://github.com/davisdude/slp2mp4/pull/44) - thanks to @DaltonSW for contributing!)
 
 ## 3.1.0
 
