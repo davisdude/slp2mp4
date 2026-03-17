@@ -12,6 +12,7 @@ class FfmpegRunner:
     def __init__(self, conf):
         self.conf = conf
         self.log = log.get_logger()
+        self.encoder = self._determine_encoder()
 
     def run(self, args):
         ffmpeg_args = [self.conf["paths"]["ffmpeg"]] + util.flatten_arg_tuples(args)
@@ -83,7 +84,7 @@ class FfmpegRunner:
                 *sb_inputs,
                 filter_args,
                 ("-map", "[v]"),
-                ("-codec:v", "h264"),
+                ("-codec:v", self.encoder),
                 ("-map", "0:a"),
                 ("-codec:a", "copy"),
                 (output_file,),
@@ -109,3 +110,29 @@ class FfmpegRunner:
                     (output_file,),
                 )
                 return self.run(args)
+
+    def _determine_encoder(self):
+        encoders = ("h264_nvenc", "h264_qsv", "h264_amf", "h264_videotoolbox", "h264")
+        for enc in encoders:
+            if self._test_encoder(enc):
+                return enc
+
+    def _test_encoder(self, encoder: str):
+        args = util.flatten_arg_tuples(
+            (
+                (self.conf["paths"]["ffmpeg"],),
+                ("-f", "lavfi"),
+                ("-i", "testsrc2"),
+                ("-frames:v", "1"),
+                ("-c:v", encoder),
+                ("-f", "null"),
+                ("-",),
+            ),
+        )
+        proc = subprocess.run(
+            args,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        return proc.returncode == 0
