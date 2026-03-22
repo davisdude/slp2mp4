@@ -67,7 +67,8 @@ def make_gfx_file(userdir: pathlib.Path, user_settings):
         "Settings": {
             "AspectRatio": "0",
             "InternalResolutionFrameDumps": "True",
-            # TODO: Try "DumpCodec": "H264"
+            "DumpCodec": "HEVC",
+            "BitrateKbps": "16000",  # TODO: Get from config
         },
     }
     util.update_dict(settings, user_settings)
