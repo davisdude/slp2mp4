@@ -44,7 +44,7 @@ class Output:
         name = (
             self._get_name_context()
             if self.context is not None
-            else self.get_name_no_context(prefix, path)
+            else self._get_name_no_context(prefix, path)
         )
         if self.conf["runtime"]["youtubify_names"]:
             name = util.translate(name, self.conf["runtime"]["name_replacements"])
