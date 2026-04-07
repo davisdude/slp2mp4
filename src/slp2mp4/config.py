@@ -138,6 +138,7 @@ _TRANSFORMERS = {
     "ffmpeg": {
         "audio_args": _parse_str,
         "volume": _parse_int,
+        "test_args": _parse_str,
     },
     "runtime": {
         "parallel": _parse_parallel,

@@ -22,6 +22,7 @@ bitrate = 16000
 [ffmpeg]
 audio_args = "-ar 48000 -c:a libopus -f opus -ac 2 -b:a 128k"
 volume = 25
+test_args = "-preset p7 -profile high -b:v 18M -tune hq"
 
 [runtime]
 parallel = 0

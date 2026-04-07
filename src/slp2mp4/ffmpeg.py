@@ -120,27 +120,24 @@ class FfmpegRunner:
 
     def _determine_encoder(self):
         # TODO: Be smarter about these. Hardware encoding needs different paramters.
+        test_args = self.conf["ffmpeg"]["test_args"].split()
+        test_args_tuples = ((test_args[i], test_args[i + 1]) for i in range(0, len(test_args), 2))
         encoders = (
             (
                 "h264_nvenc",
-                (
-                    ("-preset", "p7"),
-                    ("-profile", "high"),
-                    ("-b:v", "18M"),
-                    ("-tune", "hq"),
-                ),
+                (*test_args_tuples,),
             ),
             (
                 "h264_qsv",
-                (),
+                (*test_args_tuples,),
             ),
             (
                 "h264_amf",
-                (),
+                (*test_args_tuples,),
             ),
             (
                 "h264_videotoolbox",
-                (),
+                (*test_args_tuples,),
             ),
             (
                 "h264",
