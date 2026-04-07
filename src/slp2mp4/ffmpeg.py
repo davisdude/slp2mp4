@@ -12,7 +12,7 @@ class FfmpegRunner:
     def __init__(self, conf):
         self.conf = conf
         self.log = log.get_logger()
-        self.encoder = self._determine_encoder()
+        self.encoder, self.extra_args = self._determine_encoder()
 
     def run(self, args):
         ffmpeg_args = [self.conf["paths"]["ffmpeg"]] + util.flatten_arg_tuples(args)
@@ -89,6 +89,7 @@ class FfmpegRunner:
                 filter_args,
                 ("-map", "[v]"),
                 ("-codec:v", self.encoder),
+                *self.extra_args,
                 ("-map", "0:a"),
                 ("-codec:a", "copy"),
                 (output_file,),
@@ -118,10 +119,34 @@ class FfmpegRunner:
                 return self.run(args)
 
     def _determine_encoder(self):
-        encoders = ("h264_nvenc", "h264_qsv", "h264_amf", "h264_videotoolbox", "h264")
-        for enc in encoders:
+        # TODO: Be smarter about these. Hardware encoding needs different paramters.
+        encoders = (
+            (
+                "h264_nvenc",
+                (
+                    ("-preset", "p7"),
+                ),
+            ),
+            (
+                "h264_qsv",
+                (),
+            ),
+            (
+                "h264_amf",
+                (),
+            ),
+            (
+                "h264_videotoolbox",
+                (),
+            ),
+            (
+                "h264",
+                (),
+            ),
+        )
+        for enc, extra_args in encoders:
             if self._test_encoder(enc):
-                return enc
+                return enc, extra_args
 
     def _test_encoder(self, encoder: str):
         args = util.flatten_arg_tuples(
