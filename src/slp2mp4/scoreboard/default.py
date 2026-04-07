@@ -1,4 +1,4 @@
-import importlib
+import importlib.resources
 
 import slp2mp4
 from slp2mp4.scoreboard import scoreboard
