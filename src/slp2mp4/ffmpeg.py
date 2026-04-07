@@ -69,10 +69,14 @@ class FfmpegRunner:
         )
         return self.run(args)
 
-    def add_scoreboard(self, replay: pathlib.Path, context, output_file: pathlib.Path):
+    def add_scoreboard(self, video: pathlib.Path, context, output_file: pathlib.Path):
         height = config.get_expected_height(self.conf)
         sb = self.conf["scoreboard"]["type"](context, self.conf, height)
         with sb.get_args() as (inputs, video_filter):
+            # No video filter args -> just rename the file
+            if not video_filter:
+                video.rename(output_file)
+                return True
             sb_inputs = tuple(("-i", i) for i in inputs)
             filter_args = (
                 "-filter_complex",
@@ -80,7 +84,7 @@ class FfmpegRunner:
             )
             args = (
                 ("-y",),
-                ("-i", replay),
+                ("-i", video),
                 *sb_inputs,
                 filter_args,
                 ("-map", "[v]"),
@@ -89,7 +93,9 @@ class FfmpegRunner:
                 ("-codec:a", "copy"),
                 (output_file,),
             )
-            return self.run(args)
+            success = self.run(args)
+            video.unlink()
+            return success
 
     # Assumes all videos have the same encoding
     def concat_videos(self, videos: [pathlib.Path], output_file: pathlib.Path):

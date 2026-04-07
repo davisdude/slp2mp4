@@ -37,13 +37,14 @@ def render(conf: dict, component: pathlib.Path, kill_event: multiprocessing.Even
         new_render_path = pathlib.Path(new_render.name)
         logger.info(f"Adding scoreboard to '{tmp_path}' as '{new_render_path}'")
         success = ffmpeg_runner.add_scoreboard(
-            tmp_path, component.context, new_render_path
+            tmp_path,
+            component.context,
+            new_render_path,
         )
         if not success:
             logger.error(f"Failed to add scoreboard to '{new_render_path}'")
         else:
             logger.info(f"Finished scoreboard for '{new_render_path}'")
-        tmp_path.unlink()
         tmp_path = new_render_path
     return tmp_path, success
 
