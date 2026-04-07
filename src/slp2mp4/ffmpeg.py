@@ -125,6 +125,9 @@ class FfmpegRunner:
                 "h264_nvenc",
                 (
                     ("-preset", "p7"),
+                    ("-profile", "high"),
+                    ("-b:v", "18M"),
+                    ("-tune", "hq"),
                 ),
             ),
             (
