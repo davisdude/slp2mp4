@@ -75,7 +75,8 @@ class FfmpegRunner:
         with sb.get_args() as (inputs, video_filter):
             # No video filter args -> just rename the file
             if not video_filter:
-                video.rename(output_file)
+                if output_file != video:
+                    video.rename(output_file)
                 return True
             sb_inputs = tuple(("-i", i) for i in inputs)
             filter_args = (
