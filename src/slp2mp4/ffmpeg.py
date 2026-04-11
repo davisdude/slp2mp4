@@ -75,8 +75,10 @@ class FfmpegRunner:
         with sb.get_args() as (inputs, video_filter):
             # No video filter args -> just rename the file
             if not video_filter:
-                if output_file != video:
-                    video.rename(output_file)
+                # Orchestrator should always create `output_file`; delete it to keep Windows from
+                # complaining about files already existing
+                output_file.unlink()
+                video.rename(output_file)
                 return True
             sb_inputs = tuple(("-i", i) for i in inputs)
             filter_args = (
