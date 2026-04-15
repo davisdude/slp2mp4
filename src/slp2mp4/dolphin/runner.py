@@ -90,6 +90,7 @@ class DolphinRunner:
                         stdout=subprocess.PIPE,
                         stderr=subprocess.PIPE,
                         text=True,
+                        encoding="utf-8",
                     )
                     game_end_frame = -124
                     current_frame = -125
