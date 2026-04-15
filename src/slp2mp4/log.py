@@ -9,6 +9,7 @@ try:
 except (ImportError, ModuleNotFoundError):
     _TK_FOUND = False
 
+
 class TkStream(io.StringIO):
     def __init__(self, textobj: "tk.Text", *args, **kwargs):
         if not _TK_FOUND:

@@ -2,12 +2,15 @@
 
 ## In-Progress
 
+## 3.1.1
+
 - Changed the replacement chars for "." and "/" to "․" and  "⧸", respectively
 - Only save non-default configs from the GUI ([#35](https://github.com/davisdude/slp2mp4/issues/35))
 - Skip rendering partial framedumps on stop
 - Handle sigint in CLI + clean up temp files on stop ([#36](https://github.com/davisdude/slp2mp4/issues/36))
 - Improved logging and error handling ([#38](https://github.com/davisdude/slp2mp4/issues/38))
     - Made tkinter not required for headless runs ([#44](https://github.com/davisdude/slp2mp4/pull/44) - thanks to @DaltonSW for contributing!)
+- Fix handling of foreign character filenames on Windows ([#47](https://github.com/davisdude/slp2mp4/pull/47) - thanks to Vlerk for reporting!)
 
 ## 3.1.0
 
