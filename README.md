@@ -216,6 +216,17 @@ parallel = 0
 * Does not play nicely with WSL, since dolphin expects all paths to be relative
   to Windows.
 
+## Tests
+
+* `pytest` is required for running all tests
+* Unit tests can be run stand-alone
+* Integration tests require Dolphin, ffmpeg, a melee ISO, and `ffprobe`
+
+TODO:
+
+* Mode / config tests
+* Use default configs (as much as possible) for integration tests
+
 ## License
 
 This project is licensed under the MIT License - see the [license](LICENSE.md)

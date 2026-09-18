@@ -25,10 +25,13 @@ dynamic = [
     "version",
 ]
 
-# TODO: Checks for tkinter / tcl
 [project.optional-dependencies]
+# TODO: Checks for tkinter / tcl
 gui = [
     "tomli-w",
+]
+test = [
+    "pytest"
 ]
 
 [tool.hatch.build.targets.sdist]
