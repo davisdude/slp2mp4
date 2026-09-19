@@ -1,7 +1,6 @@
 import pathlib
 
 from slp2mp4.modes.mode import Mode
-from slp2mp4.output import Output
 import slp2mp4.util as util
 
 

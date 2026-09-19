@@ -1,12 +1,9 @@
-import pathlib
 import shutil
 import tempfile
 import zipfile
-
-import pathlib
+from pathlib import Path
 
 from slp2mp4.modes.directory import Directory
-from slp2mp4.output import Output
 import slp2mp4.util as util
 
 
@@ -18,7 +15,7 @@ class Zip(Directory):
 
     def _recursive_find(self, location, path, fromzip=False):
         if zipfile.is_zipfile(path):
-            tmpdir = pathlib.Path(tempfile.mkdtemp())
+            tmpdir = Path(tempfile.mkdtemp())
             self.tmpdirs.append(tmpdir)
             with zipfile.ZipFile(path, "r") as zfile:
                 zfile.extractall(path=tmpdir)
