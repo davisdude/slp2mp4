@@ -226,6 +226,7 @@ TODO:
 
 * Mode / config tests
 * Use default configs (as much as possible) for integration tests
+* Github action to run unit tests
 
 ## License
 

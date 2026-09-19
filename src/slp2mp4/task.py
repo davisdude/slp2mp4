@@ -1,16 +1,38 @@
 # Tasks are jobs that take artifacts as inputs and outputs
 
 import dataclasses
+from pathlib import Path
+from multiprocessing import Event
+from tempfile import TemporaryDirectory
 
-from slp2mp4 import artifact
+import slp2mp4.log as log
+from slp2mp4.artifact import Artifact, Mp4Artifact, SlippiArtifact
+from slp2mp4.dolphin.runner import DolphinRunner
+from slp2mp4.ffmpeg import FfmpegRunner
 
 
-def render_slp(slp: artifact.SlippiArtifact, mp4: artifact.Mp4Artifact):
-    print(f"Rendering {slp} to {mp4}")
-    with open(mp4.path, "w") as f:
-        f.write(str(slp))
+def render_slp(kill_event: Event, conf: dict, slp: SlippiArtifact, mp4: Mp4Artifact):
+    logger = log.get_logger()
+    ffmpeg = FfmpegRunner(conf)
+    dolphin = DolphinRunner(conf)
+    logger.info(f"Rendering '{slp.path}' to '{mp4.path}")
+    with TemporaryDirectory() as tmpdir_str:
+        tmpdir = Path(tmpdir_str)
+        audio_file, video_path = dolphin.run(slp.path, tmpdir, kill_event)
+        reencoded_audio_file = ffmpeg.reencode_audio(audio_file)
+        if reencoded_audio_file is None:
+            return False
+        return ffmpeg.merge_audio_and_video(
+            reencoded_audio_file,
+            video_path,
+            mp4.path,
+        )
+    if not success:
+        raise RuntimeError(f"Failed to render '{slp.path}'")
+    logger.info(f"Done rendering '{slp.path}'")
 
-def combine_mp4s(inputs: list[artifact.Mp4Artifact], output: artifact.Mp4Artifact):
+
+def combine_mp4s(kill_event: Event, inputs: list[Mp4Artifact], output: Mp4Artifact):
     print(f"Combining {inputs} to {output}")
     with open(output.path, "w") as f:
         f.write(str(inputs))
@@ -19,8 +41,8 @@ def combine_mp4s(inputs: list[artifact.Mp4Artifact], output: artifact.Mp4Artifac
 @dataclasses.dataclass(eq=False)
 class Task:
     name: str
-    inputs: list[artifact.Artifact]
-    outputs: list[artifact.Artifact]
+    inputs: list[Artifact]
+    outputs: list[Artifact]
 
     def __post_init__(self):
         pass
@@ -34,7 +56,7 @@ class Task:
             if not i.exists():
                 raise RuntimeError(f"Input {i} does not exist.")
 
-    def work(self):
+    def work(self, kill_event: Event):
         raise NotImplementedError
 
 
@@ -48,10 +70,12 @@ class RenderGameTask(Task):
     def resources(self):
         return {"cpu": 1.0}
 
-    def work(self):
+    def work(self, kill_event: Event, conf: dict):
+        if kill_event.is_set():
+            return
         self.check_inputs()
         for i, o in zip(self.inputs, self.outputs):
-            render_slp(i, o)
+            render_slp(kill_event, conf, i, o)
 
 
 @dataclasses.dataclass(eq=False)
@@ -68,6 +92,8 @@ class ConcatVideosTask(Task):
         #       preempted lower priorty tasks. It's quick enough that I think it's okay.
         return {"cpu": 1.0}
 
-    def work(self):
+    def work(self, kill_event: Event):
+        if kill_event.is_set():
+            return
         self.check_inputs()
-        combine_mp4s(self.inputs, self.outputs[0])
+        combine_mp4s(kill_event, self.inputs, self.outputs[0])

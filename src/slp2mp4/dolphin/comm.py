@@ -6,15 +6,14 @@ import tempfile
 import json
 import contextlib
 import os
-
-import slp2mp4.replay as replay
+from pathlib import Path
 
 
 @contextlib.contextmanager
-def make_temp_file(replay_file: replay.ReplayFile):
+def make_temp_file(path: Path):
     config = {
         "mode": "normal",
-        "replay": replay_file.get_slp_filename(),
+        "replay": str(path.absolute()),
         "isRealTimeMode": False,
         "commandId": str(uuid.uuid4()),
     }

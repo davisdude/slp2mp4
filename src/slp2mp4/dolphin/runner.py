@@ -2,10 +2,10 @@
 
 import tempfile
 import time
-import pathlib
 import subprocess
+from multiprocessing import Event
+from pathlib import Path
 
-import slp2mp4.replay as replay
 import slp2mp4.dolphin.comm as comm
 import slp2mp4.dolphin.ini as ini
 import slp2mp4.log as log
@@ -13,8 +13,7 @@ import slp2mp4.util as util
 
 
 class DolphinRunner:
-    def __init__(self, config, kill_event):
-        self.kill_event = kill_event
+    def __init__(self, config):
         self.slippi_playback = config["paths"]["slippi_playback"]
         self.ssbm_iso = config["paths"]["ssbm_iso"]
         self.video_backend = config["dolphin"]["backend"]
@@ -45,11 +44,11 @@ class DolphinRunner:
         }
         self.log = log.get_logger()
 
-    def run_dolphin(self, replay: replay.ReplayFile, dump_dir: pathlib.Path):
+    def run(self, path: Path, dump_dir: Path, kill_event: Event):
         with tempfile.TemporaryDirectory() as userdir_str:
-            userdir = pathlib.Path(userdir_str)
+            userdir = Path(userdir_str)
             with (
-                comm.make_temp_file(replay) as comm_file,
+                comm.make_temp_file(path) as comm_file,
                 ini.make_dolphin_file(userdir) as dolphin_file,
                 ini.make_gfx_file(userdir, self.user_gfx) as gfx_file,
                 ini.make_gal_file(userdir, self.user_gal) as gal_file,
@@ -95,7 +94,7 @@ class DolphinRunner:
                     game_end_frame = -124
                     current_frame = -125
 
-                    while (proc.poll() is None) and (not self.kill_event.is_set()):
+                    while (proc.poll() is None) and (not kill_event.is_set()):
                         line = proc.stdout.readline()
                         if not line:
                             break
