@@ -32,10 +32,15 @@ def render_slp(kill_event: Event, conf: dict, slp: SlippiArtifact, mp4: Mp4Artif
     logger.info(f"Done rendering '{slp.path}'")
 
 
-def combine_mp4s(kill_event: Event, inputs: list[Mp4Artifact], output: Mp4Artifact):
-    print(f"Combining {inputs} to {output}")
-    with open(output.path, "w") as f:
-        f.write(str(inputs))
+def combine_mp4s(kill_event: Event, conf: dict, inputs: list[Mp4Artifact], output: Mp4Artifact):
+    logger = log.get_logger()
+    input_paths = [i.path for i in inputs]
+    logger.info(f"Combining '{input_paths}' to '{output.path}")
+    ffmpeg = FfmpegRunner(conf)
+    success = ffmpeg.concat_videos(input_paths, output.path)
+    if not success:
+        raise RuntimeError(f"Failed to create '{output.path}'")
+    logger.info(f"Done combining '{output.path}")
 
 
 @dataclasses.dataclass(eq=False)
@@ -92,8 +97,8 @@ class ConcatVideosTask(Task):
         #       preempted lower priorty tasks. It's quick enough that I think it's okay.
         return {"cpu": 1.0}
 
-    def work(self, kill_event: Event):
+    def work(self, kill_event: Event, conf: dict):
         if kill_event.is_set():
             return
         self.check_inputs()
-        combine_mp4s(kill_event, self.inputs, self.outputs[0])
+        combine_mp4s(kill_event, conf, self.inputs, self.outputs[0])

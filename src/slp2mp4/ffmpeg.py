@@ -1,9 +1,9 @@
 # Logic for joining audio / video files
 
-import pathlib
 import tempfile
 import subprocess
 import shlex
+from pathlib import Path
 
 import slp2mp4.log as log
 import slp2mp4.util as util
@@ -16,6 +16,7 @@ class FfmpegRunner:
         self.audio_args = shlex.split(config["ffmpeg"]["audio_args"])
         self.log = log.get_logger()
 
+    # TODO: Pass kill_event
     def _run(self, args):
         ffmpeg_args = [self.ffmpeg_path] + util.flatten_arg_tuples(args)
         proc = subprocess.run(
@@ -32,7 +33,7 @@ class FfmpegRunner:
             self.log.debug(f"{ffmpeg_args = }: {stdout}")
         return proc.returncode == 0
 
-    def reencode_audio(self, audio_file_path: pathlib.Path):
+    def reencode_audio(self, audio_file_path: Path):
         reencoded_path = audio_file_path.parent / "fixed.out"
         args = (
             ("-y",),
@@ -54,9 +55,9 @@ class FfmpegRunner:
     # Returns True if ffmpeg ran successfully, False otherwise
     def merge_audio_and_video(
         self,
-        audio_file: pathlib.Path,
-        video_file: pathlib.Path,
-        output_file: pathlib.Path,
+        audio_file: Path,
+        video_file: Path,
+        output_file: Path,
     ):
         args = (
             ("-y",),
@@ -90,10 +91,10 @@ class FfmpegRunner:
         return self._run(args)
 
     # Assumes all videos have the same encoding
-    def concat_videos(self, videos: [pathlib.Path], output_file: pathlib.Path):
+    def concat_videos(self, videos: [Path], output_file: Path):
         # Make a temp directory because windows doesn't like NamedTemporaryFiles :(
         with tempfile.TemporaryDirectory() as tmpdir:
-            with open(pathlib.Path(tmpdir) / "concat.txt", "w") as concat_file:
+            with open(Path(tmpdir) / "concat.txt", "w") as concat_file:
                 files = ("\n").join(f"file '{video.resolve()}'" for video in videos)
                 concat_file.write(files)
                 concat_file.flush()

@@ -9,45 +9,38 @@ from slp2mp4.artifact import SlippiArtifact, Mp4Artifact
 from slp2mp4.task import RenderGameTask
 
 
-def test_render_full(make_file):
+def test_render_full(make_file, check_duration):
     expected_duration = 65.6165
     duration_tolerance = 0.1
 
-    out_file = make_file("out.mp4")
-    game = SlippiArtifact(Path("tests/integration/test.slp"))
-    out = Mp4Artifact(out_file.path)
-    task = RenderGameTask("render", [game], [out])
-    kill_event = Event()
+    test_slp_artifact = SlippiArtifact(Path("tests/integration/test.slp"))
+    test_mp4_file = make_file("test.mp4")
+    test_mp4_artifact = Mp4Artifact(test_mp4_file.path)
+    render_task = RenderGameTask("render", [test_slp_artifact], [test_mp4_artifact])
 
     # TODO: Don't rely on user config except for paths...
+    kill_event = Event()
     conf = config.get_config()
     config.translate_and_validate_config(conf)
 
-    task.work(kill_event, conf)
-
-    result = subprocess.run(
-        ["ffprobe", "-i", str(out_file.path), "-show_entries", "format=duration", "-v", "quiet", "-of", "csv=p=0"],
-        check=True,
-        capture_output=True,
-    )
-    duration = float(result.stdout)
-    assert abs(duration - expected_duration) <= duration_tolerance
+    render_task.work(kill_event, conf)
+    check_duration(test_mp4_file.path, expected_duration, duration_tolerance)
 
 
-def test_render_short(make_file):
+def test_render_short(make_file, check_duration):
     expected_duration = 10.0
 
     # duration_tolerance is so high because launching can be quite slow. Plus, test_render_full
     # validates time more precisely.
     duration_tolerance = 5.0
 
-    out_file = make_file("out.mp4")
-    game = SlippiArtifact(Path("tests/integration/test.slp"))
-    out = Mp4Artifact(out_file.path)
-    task = RenderGameTask("render", [game], [out])
-    kill_event = Event()
+    test_slp_artifact = SlippiArtifact(Path("tests/integration/test.slp"))
+    test_mp4_file = make_file("test.mp4")
+    test_mp4_artifact = Mp4Artifact(test_mp4_file.path)
+    render_task = RenderGameTask("render", [test_slp_artifact], [test_mp4_artifact])
 
     # TODO: Don't rely on user config except for paths...
+    kill_event = Event()
     conf = config.get_config()
     config.translate_and_validate_config(conf)
 
@@ -56,13 +49,7 @@ def test_render_short(make_file):
         kill_event.set()
 
     with ThreadPoolExecutor(2) as executor:
-        executor.submit(task.work, kill_event, conf)
+        executor.submit(render_task.work, kill_event, conf)
         executor.submit(_kill)
 
-    result = subprocess.run(
-        ["ffprobe", "-i", str(out_file.path), "-show_entries", "format=duration", "-v", "quiet", "-of", "csv=p=0"],
-        check=True,
-        capture_output=True,
-    )
-    duration = float(result.stdout)
-    assert abs(duration - expected_duration) <= duration_tolerance
+    check_duration(test_mp4_file.path, expected_duration, duration_tolerance)
