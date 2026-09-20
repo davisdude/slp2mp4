@@ -1,7 +1,8 @@
 # Collects files for rendering. Does NOT determine names, just inputs / outputs.
 
 import dataclasses
-from tempfile import NamedTemporaryFile, TemporaryDirectory
+import tempfile
+import zipfile
 from multiprocessing import Event
 from pathlib import Path
 
@@ -22,7 +23,7 @@ class Collector:
 
     def __post_init__(self):
         if self.workdir is None:
-            self.workdir = TemporaryDirectory()
+            self.workdir = tempfile.mkdtemp()
 
     def next(self):
         """Iterator that returns <input>, <collection root>, <collection>."""
@@ -31,17 +32,24 @@ class Collector:
             for path, slps in self._recurse(i, i):
                 yield i, path, Collection([SlippiArtifact(s) for s in slps])
 
-    def _recurse(self, key: Path, path: Path):
-        if path.is_file() and path.suffix == ".slp" and path not in self.yielded[key]:
-            self.yielded[key].add(path)
-            yield path, [path]
+    def _recurse(self, key: Path, path: Path, relative: Path | None=None):
+        if relative is None:
+            relative = path
+        if path.is_file():
+            if zipfile.is_zipfile(path):
+                tmpdir = Path(tempfile.mkdtemp(dir=self.workdir))
+                with zipfile.ZipFile(path, "r") as archive:
+                    archive.extractall(path=tmpdir)
+                yield from self._recurse(key, tmpdir, relative.parent / path.stem)
+            elif path.suffix == ".slp" and path not in self.yielded[key]:
+                self.yielded[key].add(path)
+                yield relative, [path]
         elif path.is_dir():
             slps = list(sorted(path.glob("*.slp"), key=util.natsort))
             if len(slps) > 0:
                 self.yielded[key].update(slps)
-                yield path, slps
+                yield relative, slps
             for p in path.iterdir():
-                yield from self._recurse(key, p)
+                yield from self._recurse(key, p, relative / p.name)
 
-# TODO: zip
 # TODO: monitor (snapshot on call + watchdog.observer)

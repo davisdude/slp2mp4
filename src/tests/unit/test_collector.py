@@ -1,8 +1,20 @@
-from pathlib import Path
 import shutil
+import zipfile
+from io import BytesIO
+from pathlib import Path
 
 from slp2mp4.artifact import SlippiArtifact
 from slp2mp4.collector import Collection, Collector
+
+def zip_bytes(entries: dict[str, dict | Path]) -> bytes:
+    output = BytesIO()
+    with zipfile.ZipFile(output, "w") as archive:
+        for name, data in entries.items():
+            if isinstance(data, Path):
+                archive.write(data, arcname=name)
+            else:
+                archive.writestr(name, zip_bytes(data))
+    return output.getvalue()
 
 def test_collector_single_file():
     test_path = Path("tests/integration/test.slp")
@@ -33,7 +45,7 @@ def test_collector_nested_simple_dir():
     assert items == [expected]
 
 def test_collector_nested_complex_dir(tmp_path):
-    # .
+    # tmp_path
     # ├── g1.slp
     # ├── g2.slp
     # ├── g3.slp
@@ -52,7 +64,6 @@ def test_collector_nested_complex_dir(tmp_path):
     test_slp = Path("tests/integration/test.slp")
     base_dir = tmp_path
     directories = [base_dir, base_dir / "single", base_dir / "double", base_dir / "double" / "nested"]
-
     for d in directories:
         d.mkdir(exist_ok=True)
         for i in range(1, 4):
@@ -68,3 +79,99 @@ def test_collector_nested_complex_dir(tmp_path):
         expected_collection = Collection([SlippiArtifact(d / f"g{i}.slp") for i in range(1, 4)])
         expected_base = (tmp_path, d, expected_collection)
         assert expected_base in items
+
+def test_collector_zip_simple(tmp_path):
+    # tmp_path/test.zip
+    # ├── g1.slp
+    # ├── g2.slp
+    # └── g3.slp
+    test_slp = Path("tests/integration/test.slp")
+    test_dir = tmp_path
+    slp_files = {f"g{i}.slp": test_slp for i in range(1, 4)}
+    archive_tree = slp_files
+    test_zip = test_dir / "test.zip"
+    test_zip.write_bytes(zip_bytes(archive_tree))
+
+    collector = Collector([test_zip])
+    items = list(collector.next())
+
+    assert len(items) == 1
+    item_input, collection_root, collection = items[0]
+
+    assert item_input == test_zip
+    assert collection_root == test_dir / "test"
+    assert [file.path.name for file in collection.inputs] == ["g1.slp", "g2.slp", "g3.slp"]
+
+def test_collector_zip_in_dir(tmp_path):
+    # tmp_path/foo/bar/baz/test.zip
+    # ├── g1.slp
+    # ├── g2.slp
+    # └── g3.slp
+    test_slp = Path("tests/integration/test.slp")
+    test_dir = tmp_path / "foo/bar/baz"
+    test_dir.mkdir(parents=True)
+    slp_files = {f"g{i}.slp": test_slp for i in range(1, 4)}
+    archive_tree = slp_files
+    test_zip = test_dir / "test.zip"
+    test_zip.write_bytes(zip_bytes(archive_tree))
+
+    collector = Collector([test_zip])
+    items = list(collector.next())
+
+    assert len(items) == 1
+    item_input, collection_root, collection = items[0]
+
+    assert item_input == test_zip
+    assert collection_root == tmp_path / "foo" / "bar" / "baz" / "test"
+    assert [file.path.name for file in collection.inputs] == ["g1.slp", "g2.slp", "g3.slp"]
+
+def test_collector_zip_complex(tmp_path):
+    # tmp_path/test.zip
+    # ├── g1.slp
+    # ├── g2.slp
+    # ├── g3.slp
+    # ├── single.zip
+    # │   ├── g1.slp
+    # │   ├── g2.slp
+    # │   └── g3.slp
+    # └── double.zip
+    #     ├── g1.slp
+    #     ├── g2.slp
+    #     ├── g3.slp
+    #     └── nested.zip
+    #         ├── g1.slp
+    #         ├── g2.slp
+    #         └── g3.slp
+    test_slp = Path("tests/integration/test.slp")
+    test_dir = tmp_path
+    slp_files = {f"g{i}.slp": test_slp for i in range(1, 4)}
+    archive_tree = {
+        **slp_files,
+        "single.zip": slp_files,
+        "double.zip": {
+            **slp_files,
+            "nested.zip": slp_files,
+        },
+    }
+    test_zip = test_dir / "test.zip"
+    test_zip.write_bytes(zip_bytes(archive_tree))
+
+    collector = Collector([test_zip])
+    items = list(collector.next())
+
+    assert len(items) == 4
+
+    expected_roots = {
+        tmp_path / "test",
+        tmp_path / "test" / "single",
+        tmp_path / "test" / "double",
+        tmp_path / "test" / "double" / "nested",
+    }
+    actual_roots = set()
+
+    for item_input, collection_root, collection in items:
+        assert item_input == test_zip
+        assert [file.path.name for file in collection.inputs] == ["g1.slp", "g2.slp", "g3.slp"]
+        actual_roots.add(collection_root)
+
+    assert expected_roots == actual_roots
