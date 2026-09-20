@@ -1,11 +1,11 @@
 # An artifact is any input or output in the pipeline, even temporary
 
-import dataclasses
-import pathlib
+from dataclasses import dataclass
+from pathlib import Path
 
-@dataclasses.dataclass(frozen=True)
+@dataclass(frozen=True)
 class Artifact:
-    path: pathlib.Path
+    path: Path
 
     def __post_init__(self):
         pass
@@ -17,7 +17,7 @@ class Artifact:
         return self.path.is_file()
 
 
-@dataclasses.dataclass(frozen=True)
+@dataclass(frozen=True)
 class ExistingFileArtifact(Artifact):
     def __post_init__(self):
         super().__post_init__()
@@ -25,7 +25,7 @@ class ExistingFileArtifact(Artifact):
             raise RuntimeError(f"'{self.path}' does not exist.")
 
 
-@dataclasses.dataclass(frozen=True)
+@dataclass(frozen=True)
 class SlippiArtifact(ExistingFileArtifact):
     def __post_init__(self):
         super().__post_init__()
@@ -33,7 +33,7 @@ class SlippiArtifact(ExistingFileArtifact):
             raise RuntimeError(f"'{self.path}' has invalid file extension for a slippi file.")
 
 
-@dataclasses.dataclass(frozen=True)
+@dataclass(frozen=True)
 class Mp4Artifact(Artifact):
     def __post_init__(self):
         super().__post_init__()

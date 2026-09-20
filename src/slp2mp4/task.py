@@ -1,6 +1,6 @@
 # Tasks are jobs that take artifacts as inputs and outputs
 
-import dataclasses
+from dataclasses import dataclass
 from pathlib import Path
 from multiprocessing import Event
 from tempfile import TemporaryDirectory
@@ -43,7 +43,7 @@ def combine_mp4s(kill_event: Event, conf: dict, inputs: list[Mp4Artifact], outpu
     logger.info(f"Done combining '{output.path}")
 
 
-@dataclasses.dataclass(eq=False)
+@dataclass(eq=False)
 class Task:
     name: str
     inputs: list[Artifact]
@@ -65,7 +65,7 @@ class Task:
         raise NotImplementedError
 
 
-@dataclasses.dataclass(eq=False)
+@dataclass(eq=False)
 class RenderGameTask(Task):
     def __post_init__(self):
         super().__post_init__()
@@ -83,7 +83,7 @@ class RenderGameTask(Task):
             render_slp(kill_event, conf, i, o)
 
 
-@dataclasses.dataclass(eq=False)
+@dataclass(eq=False)
 class ConcatVideosTask(Task):
     def __post_init__(self):
         super().__post_init__()
