@@ -3,7 +3,7 @@ import zipfile
 from io import BytesIO
 from pathlib import Path
 
-from slp2mp4.artifact import SlippiArtifact
+from slp2mp4.artifact import ContextArtifact, SlippiArtifact
 from slp2mp4.collector import Collection, Collector
 
 def zip_bytes(entries: dict[str, dict | Path]) -> bytes:
@@ -22,6 +22,29 @@ def test_collector_single_file():
     items = list(collector.next())
     expected = (test_path, test_path, Collection([SlippiArtifact(test_path)]))
     assert items == [expected]
+
+def test_collector_context(tmp_path):
+    # tmp_path
+    # ├── test.slp
+    # └── context.json
+    test_slp = Path("tests/integration/test.slp")
+    base_dir = tmp_path
+    shutil.copy(test_slp, tmp_path)
+    context = tmp_path / "context.json"
+    context.touch()
+
+    collector = Collector([tmp_path])
+    items = list(collector.next())
+
+    assert len(items) == 1
+    item_input, collection_root, collection = items[0]
+
+    assert item_input == tmp_path
+    assert collection_root == tmp_path
+    assert set(collection.inputs) == {
+        SlippiArtifact(tmp_path / "test.slp"),
+        ContextArtifact(tmp_path / "context.json"),
+    }
 
 def test_collector_multiple_files():
     test_path = Path("tests/integration/test.slp")

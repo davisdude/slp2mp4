@@ -32,6 +32,13 @@ class SlippiArtifact(ExistingFileArtifact):
         if self.path.suffix != ".slp":
             raise RuntimeError(f"'{self.path}' has invalid file extension for a slippi file.")
 
+@dataclass(frozen=True)
+class ContextArtifact(ExistingFileArtifact):
+    def __post_init__(self):
+        super().__post_init__()
+        if self.path.suffix != ".json":
+            raise RuntimeError(f"'{self.path}' has invalid file extension for a context file.")
+
 
 @dataclass(frozen=True)
 class Mp4Artifact(Artifact):

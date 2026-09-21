@@ -7,7 +7,7 @@ from multiprocessing import Event
 from pathlib import Path
 
 from slp2mp4 import util
-from slp2mp4.artifact import Artifact, SlippiArtifact
+from slp2mp4.artifact import Artifact, ContextArtifact, SlippiArtifact
 
 
 @dataclasses.dataclass
@@ -29,8 +29,8 @@ class Collector:
         """Iterator that returns <input>, <collection root>, <collection>."""
         for i in self.inputs:
             self.yielded[i] = set()
-            for path, slps in self._recurse(i, i):
-                yield i, path, Collection([SlippiArtifact(s) for s in slps])
+            for path, artifacts in self._recurse(i, i):
+                yield i, path, Collection(artifacts)
 
     def _recurse(self, key: Path, path: Path, relative: Path | None=None):
         if relative is None:
@@ -43,12 +43,17 @@ class Collector:
                 yield from self._recurse(key, tmpdir, relative.parent / path.stem)
             elif path.suffix == ".slp" and path not in self.yielded[key]:
                 self.yielded[key].add(path)
-                yield relative, [path]
+                yield relative, [SlippiArtifact(path)]
         elif path.is_dir():
             slps = list(sorted(path.glob("*.slp"), key=util.natsort))
+            self.yielded[key].update(slps)
+            artifacts = [SlippiArtifact(slp) for slp in slps]
             if len(slps) > 0:
-                self.yielded[key].update(slps)
-                yield relative, slps
+                context = path / "context.json"
+                if context.is_file():
+                    self.yielded[key].add(context)
+                    artifacts.append(ContextArtifact(context))
+                yield relative, artifacts
             for p in path.iterdir():
                 yield from self._recurse(key, p, relative / p.name)
 
