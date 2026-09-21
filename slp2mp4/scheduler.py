@@ -1,11 +1,10 @@
-# The scheduler resolves dependencies and avoids execution bottlenecks
-
-# scheduler.py
+# Simple scheduler that ensures inputs run before outputs
 
 import dataclasses
 from collections import deque
 
-from slp2mp4 import artifact, task
+from slp2mp4.artifact import ExistingFileArtifact
+from slp2mp4.task import Task
 
 
 @dataclasses.dataclass
@@ -14,21 +13,27 @@ class Scheduler:
 
     available_resources: dict[str, float]
 
-    ready_tasks: deque[task.Task] = dataclasses.field(default_factory=deque)
-    running_tasks: set[task.Task] = dataclasses.field(default_factory=set)
-    completed_tasks: set[task.Task] = dataclasses.field(default_factory=set)
+    ready_tasks: deque[Task] = dataclasses.field(default_factory=deque)
+    running_tasks: set[Task] = dataclasses.field(default_factory=set)
+    completed_tasks: set[Task] = dataclasses.field(default_factory=set)
 
-    waiting_on: dict[task.Task, set[task.Task]] = dataclasses.field(default_factory=dict)
-    dependents: dict[task.Task, set[task.Task]] = dataclasses.field(default_factory=dict)
+    waiting_on: dict[Task, set[Task]] = dataclasses.field(default_factory=dict)
+    dependents: dict[Task, set[Task]] = dataclasses.field(default_factory=dict)
 
-    def submit(self, tasks: list[task.Task]):
+    def submit(self, tasks: list[Task]):
         producer = {}
         for t in tasks:
             for resource in t.resources:
                 if resource not in self.available_resources:
-                    raise RuntimeError(f"Task '{t.name}' requires unknown resource '{resource}'.")
-                if (req := t.resources[resource]) > (avail := self.available_resources[resource]):
-                    raise RuntimeError(f"Task '{t.name}' will never satisfy '{resource}' requirement ({req} > {avail}).")
+                    raise RuntimeError(
+                        f"Task '{t.name}' requires unknown resource '{resource}'."
+                    )
+                if (req := t.resources[resource]) > (
+                    avail := self.available_resources[resource]
+                ):
+                    raise RuntimeError(
+                        f"Task '{t.name}' will never satisfy '{resource}' requirement ({req} > {avail})."
+                    )
 
             for output in t.outputs:
                 producer[output] = t
@@ -37,7 +42,7 @@ class Scheduler:
 
         for t in tasks:
             for i in t.inputs:
-                if isinstance(i, artifact.ExistingFileArtifact):
+                if isinstance(i, ExistingFileArtifact):
                     continue
                 upstream = producer.get(i)
                 if upstream is None:
@@ -62,7 +67,7 @@ class Scheduler:
         self.ready_tasks.extend(blocked)
         return None
 
-    def finish(self, t: task.Task):
+    def finish(self, t: Task):
         if t not in self.running_tasks:
             raise RuntimeError(f"Task '{t.name}' was not running.")
         for name, value in t.resources.items():
@@ -76,7 +81,7 @@ class Scheduler:
 
         # TODO: Cleanup non-ExistingFileArtifact files if no dependents?
 
-    def _resources_available(self, t: task.Task):
+    def _resources_available(self, t: Task):
         for name, amount in t.resources.items():
             if self.available_resources[name] < amount:
                 return False

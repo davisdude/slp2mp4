@@ -24,7 +24,6 @@ volume = 25
 
 [runtime]
 parallel = 0
-prepend_directory = true
 youtubify_names = true
 preserve_directory_structure = false
 

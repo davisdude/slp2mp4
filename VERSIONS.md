@@ -2,6 +2,9 @@
 
 ## In-Progress
 
+- Totally reworked all internals
+- Removed `prepend_directory` option
+
 ## 3.1.1
 
 - Changed the replacement chars for "." and "/" to "․" and  "⧸", respectively

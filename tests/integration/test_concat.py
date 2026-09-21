@@ -16,7 +16,9 @@ def test_concat(make_file, get_duration, check_duration):
     render_task = RenderGameTask("render", [test_slp_artifact], [test_mp4_artifact])
     concat_file = make_file("out.mp4")
     concat_mp4_artifact = Mp4Artifact(concat_file.path)
-    concat_task = ConcatVideosTask("concat", 3 * [test_mp4_artifact], [concat_mp4_artifact])
+    concat_task = ConcatVideosTask(
+        "concat", 3 * [test_mp4_artifact], [concat_mp4_artifact]
+    )
 
     # TODO: Don't rely on user config except for paths...
     kill_event = Event()

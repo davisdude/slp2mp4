@@ -27,7 +27,7 @@ class Collector:
             for path, artifacts in self._recurse(i, i):
                 yield i, path, artifacts
 
-    def _recurse(self, key: Path, path: Path, relative: Path | None=None):
+    def _recurse(self, key: Path, path: Path, relative: Path | None = None):
         if relative is None:
             relative = path
         if path.is_file():
@@ -51,5 +51,6 @@ class Collector:
                 yield relative, artifacts
             for p in path.iterdir():
                 yield from self._recurse(key, p, relative / p.name)
+
 
 # TODO: monitor (snapshot on call + watchdog.observer)

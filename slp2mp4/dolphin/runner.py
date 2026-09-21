@@ -115,6 +115,7 @@ class DolphinRunner:
                     # Kills dolphin (if need be) when finished dumping
                     if current_frame != game_end_frame:
                         self.log.info("Dolphin terminated early")
+                    # TODO: Try removing this sleep/terminate to see if it helps dolphin in heavy load
                     time.sleep(2)
                     proc.terminate()
                     # Wait for process to die and flush stdout / stderr

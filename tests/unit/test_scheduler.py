@@ -6,6 +6,7 @@ from slp2mp4.artifact import Artifact, SlippiArtifact, Mp4Artifact
 from slp2mp4.task import Task, ConcatVideosTask
 from slp2mp4.scheduler import Scheduler
 
+
 @dataclasses.dataclass
 class MagicTask(Task):
     magic_limit: float = dataclasses.field(default=1.0)
@@ -13,6 +14,7 @@ class MagicTask(Task):
     @property
     def resources(self):
         return {"magic": self.magic_limit}
+
 
 def test_graph_construction(make_pipeline):
     pipeline = make_pipeline(
@@ -42,21 +44,28 @@ def test_graph_construction(make_pipeline):
     assert pipeline.sched.dependents[concat1] == set()
     assert pipeline.sched.dependents[concat2] == set()
 
+
 def test_missing_producer():
     game1_mp4 = Mp4Artifact(Path("game1.mp4"))
     set_mp4 = Mp4Artifact(Path("set.mp4"))
     concat = ConcatVideosTask("concat", [game1_mp4], [set_mp4])
     sched = Scheduler({"cpu": 1})
-    with pytest.raises(RuntimeError, match=r"^No producer found for artifact 'game1.mp4'\.$"):
+    with pytest.raises(
+        RuntimeError, match=r"^No producer found for artifact 'game1.mp4'\.$"
+    ):
         sched.submit([concat])
+
 
 def test_invalid_resource():
     file = Artifact(Path("file.txt"))
     out = Artifact(Path("out.txt"))
     some_task = MagicTask("foo", [file], [out])
     sched = Scheduler({"cpu": 1})
-    with pytest.raises(RuntimeError, match=r"^Task 'foo' requires unknown resource 'magic'\.$"):
+    with pytest.raises(
+        RuntimeError, match=r"^Task 'foo' requires unknown resource 'magic'\.$"
+    ):
         sched.submit([some_task])
+
 
 def test_impossible_resource():
     file = Artifact(Path("file.txt"))
@@ -64,13 +73,18 @@ def test_impossible_resource():
     some_task = MagicTask("foo", [file], [out])
     some_task.magic_limit = 10
     sched = Scheduler({"magic": 1})
-    with pytest.raises(RuntimeError, match=r"^Task 'foo' will never satisfy 'magic' requirement \(10 > 1\)\.$"):
+    with pytest.raises(
+        RuntimeError,
+        match=r"^Task 'foo' will never satisfy 'magic' requirement \(10 > 1\)\.$",
+    ):
         sched.submit([some_task])
+
 
 def test_invalid_finish(make_pipeline):
     pipeline = make_pipeline([("set", ["game1", "game2", "game3"])])
     with pytest.raises(RuntimeError, match=r"^Task 'render_game1' was not running\.$"):
         pipeline.sched.finish(pipeline.render_tasks["set"][0])
+
 
 def test_double_finish(make_pipeline):
     pipeline = make_pipeline([("set", ["game1"])])
@@ -78,6 +92,7 @@ def test_double_finish(make_pipeline):
     pipeline.sched.finish(work)
     with pytest.raises(RuntimeError, match=r"^Task 'render_game1' was not running\.$"):
         pipeline.sched.finish(work)
+
 
 def test_dependencies_and_resources(make_pipeline):
     pipeline = make_pipeline([("set", ["game1", "game2", "game3"])])
@@ -95,6 +110,7 @@ def test_dependencies_and_resources(make_pipeline):
 
     work = pipeline.sched.get_work()
     assert work == pipeline.concat_tasks["set"]
+
 
 def test_two_cpus(make_pipeline):
     pipeline = make_pipeline([("set", ["game1", "game2", "game3"])], cpus=2.0)
@@ -129,6 +145,7 @@ def test_two_cpus(make_pipeline):
     assert t6 == pipeline.concat_tasks["set"]
     assert t6 not in completed
 
+
 def test_all_tasks_execute_once(make_pipeline):
     pipeline = make_pipeline(
         [
@@ -139,7 +156,7 @@ def test_all_tasks_execute_once(make_pipeline):
     )
     completed = set()
     expected = (
-          set(pipeline.render_tasks["set1"])
+        set(pipeline.render_tasks["set1"])
         | set(pipeline.render_tasks["set2"])
         | set(pipeline.concat_tasks.values())
     )

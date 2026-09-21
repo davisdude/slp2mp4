@@ -129,7 +129,6 @@ _TRANSFORMERS = {
     },
     "runtime": {
         "parallel": _parse_parallel,
-        "prepend_directory": _parse_bool,
         "preserve_directory_structure": _parse_bool,
         "youtubify_names": _parse_bool,
         "name_replacements": _parse_translation,

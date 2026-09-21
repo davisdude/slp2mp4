@@ -32,7 +32,9 @@ def render_slp(kill_event: Event, conf: dict, slp: SlippiArtifact, mp4: Mp4Artif
     logger.info(f"Done rendering '{slp.path}'")
 
 
-def combine_mp4s(kill_event: Event, conf: dict, inputs: list[Mp4Artifact], output: Mp4Artifact):
+def combine_mp4s(
+    kill_event: Event, conf: dict, inputs: list[Mp4Artifact], output: Mp4Artifact
+):
     logger = log.get_logger()
     input_paths = [i.path for i in inputs]
     logger.info(f"Combining '{input_paths}' to '{output.path}")
