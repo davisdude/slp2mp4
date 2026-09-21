@@ -36,15 +36,15 @@ test = [
 
 [tool.hatch.build.targets.sdist]
 include = [
-  "src/slp2mp4/*.py",
-  "src/slp2mp4/*.toml",
+  "slp2mp4/*.py",
+  "slp2mp4/*.toml",
 ]
 
 [tool.hatch.version]
 source = "vcs"
 
 [tool.hatch.build.hooks.vcs]
-version-file = "src/slp2mp4/version.py"
+version-file = "slp2mp4/version.py"
 
 [project.urls]
 Homepage = "https://github.com/davisdude/slp2mp4"
