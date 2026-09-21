@@ -11,11 +11,6 @@ from slp2mp4.artifact import Artifact, ContextArtifact, SlippiArtifact
 
 
 @dataclasses.dataclass
-class Collection:
-    inputs: list[Artifact]
-
-
-@dataclasses.dataclass
 class Collector:
     inputs: list[Path]
     workdir: Path | None = dataclasses.field(default=None)
@@ -30,7 +25,7 @@ class Collector:
         for i in self.inputs:
             self.yielded[i] = set()
             for path, artifacts in self._recurse(i, i):
-                yield i, path, Collection(artifacts)
+                yield i, path, artifacts
 
     def _recurse(self, key: Path, path: Path, relative: Path | None=None):
         if relative is None:

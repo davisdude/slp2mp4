@@ -4,7 +4,7 @@ from io import BytesIO
 from pathlib import Path
 
 from slp2mp4.artifact import ContextArtifact, SlippiArtifact
-from slp2mp4.collector import Collection, Collector
+from slp2mp4.collector import Collector
 
 def zip_bytes(entries: dict[str, dict | Path]) -> bytes:
     output = BytesIO()
@@ -20,7 +20,7 @@ def test_collector_single_file():
     test_path = Path("tests/integration/test.slp")
     collector = Collector([test_path])
     items = list(collector.next())
-    expected = (test_path, test_path, Collection([SlippiArtifact(test_path)]))
+    expected = (test_path, test_path, [SlippiArtifact(test_path)])
     assert items == [expected]
 
 def test_collector_context(tmp_path):
@@ -41,7 +41,7 @@ def test_collector_context(tmp_path):
 
     assert item_input == tmp_path
     assert collection_root == tmp_path
-    assert set(collection.inputs) == {
+    assert set(collection) == {
         SlippiArtifact(tmp_path / "test.slp"),
         ContextArtifact(tmp_path / "context.json"),
     }
@@ -50,21 +50,21 @@ def test_collector_multiple_files():
     test_path = Path("tests/integration/test.slp")
     collector = Collector([test_path, test_path])
     items = list(collector.next())
-    expected = (test_path, test_path, Collection([SlippiArtifact(test_path)]))
+    expected = (test_path, test_path, [SlippiArtifact(test_path)])
     assert items == [expected, expected]
 
 def test_collector_single_dir():
     test_path = Path("tests/integration/")
     collector = Collector([test_path])
     items = list(collector.next())
-    expected = (test_path, test_path, Collection([SlippiArtifact(test_path / "test.slp")]))
+    expected = (test_path, test_path, [SlippiArtifact(test_path / "test.slp")])
     assert items == [expected]
 
 def test_collector_nested_simple_dir():
     test_path = Path("tests/")
     collector = Collector([test_path])
     items = list(collector.next())
-    expected = (test_path, test_path / "integration", Collection([SlippiArtifact(test_path / "integration/test.slp")]))
+    expected = (test_path, test_path / "integration", [SlippiArtifact(test_path / "integration/test.slp")])
     assert items == [expected]
 
 def test_collector_nested_complex_dir(tmp_path):
@@ -99,7 +99,7 @@ def test_collector_nested_complex_dir(tmp_path):
     assert len(items) == 4
 
     for d in directories:
-        expected_collection = Collection([SlippiArtifact(d / f"g{i}.slp") for i in range(1, 4)])
+        expected_collection = [SlippiArtifact(d / f"g{i}.slp") for i in range(1, 4)]
         expected_base = (tmp_path, d, expected_collection)
         assert expected_base in items
 
@@ -123,7 +123,7 @@ def test_collector_zip_simple(tmp_path):
 
     assert item_input == test_zip
     assert collection_root == test_dir / "test"
-    assert [file.path.name for file in collection.inputs] == ["g1.slp", "g2.slp", "g3.slp"]
+    assert [file.path.name for file in collection] == ["g1.slp", "g2.slp", "g3.slp"]
 
 def test_collector_zip_in_dir(tmp_path):
     # tmp_path/foo/bar/baz/test.zip
@@ -146,7 +146,7 @@ def test_collector_zip_in_dir(tmp_path):
 
     assert item_input == test_zip
     assert collection_root == tmp_path / "foo" / "bar" / "baz" / "test"
-    assert [file.path.name for file in collection.inputs] == ["g1.slp", "g2.slp", "g3.slp"]
+    assert [file.path.name for file in collection] == ["g1.slp", "g2.slp", "g3.slp"]
 
 def test_collector_zip_complex(tmp_path):
     # tmp_path/test.zip
@@ -194,7 +194,7 @@ def test_collector_zip_complex(tmp_path):
 
     for item_input, collection_root, collection in items:
         assert item_input == test_zip
-        assert [file.path.name for file in collection.inputs] == ["g1.slp", "g2.slp", "g3.slp"]
+        assert [file.path.name for file in collection] == ["g1.slp", "g2.slp", "g3.slp"]
         actual_roots.add(collection_root)
 
     assert expected_roots == actual_roots
