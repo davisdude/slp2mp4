@@ -47,6 +47,7 @@ class Collector:
 
     def __post_init__(self):
         if self.workdir is None:
+            # TODO: Cleanup workdir
             self.workdir = Path(tempfile.mkdtemp())
 
     def next(self):

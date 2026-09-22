@@ -21,6 +21,7 @@ classifiers = [
 dependencies = [
     "pathvalidate",
     "watchdog",
+    "psutil",
 ]
 dynamic = [
     "version",
