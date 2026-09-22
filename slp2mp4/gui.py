@@ -170,6 +170,8 @@ class Application(tk.Tk):
         super().__init__()
         self.title(f"slp2mp4 {__version__}")
         self.create_menu()
+        self.make_input_selector()
+        self.inputs = []
 
     def create_menu(self):
         menubar = tk.Menu(self)
@@ -188,6 +190,47 @@ class Application(tk.Tk):
     def show_config_dialog(self):
         dialog = ConfigDialog(self)
         self.wait_window(dialog)
+
+    def make_input_selector(self):
+        frame = ttk.LabelFrame(self, text="Inputs")
+        frame.pack(fill="both", expand=True, padx=10, pady=10)
+
+        self.listbox = tk.Listbox(frame, selectmode=tk.EXTENDED, height=10)
+        self.listbox.pack(fill="both", expand=True)
+
+        buttons = ttk.Frame(frame)
+        buttons.pack(fill="x")
+
+        ttk.Button(buttons, text="Add Files", command=self.add_files).pack(side="left")
+        ttk.Button(buttons, text="Add Directory", command=self.add_directory).pack(side="left")
+        ttk.Button(buttons, text="Remove", command=self.remove_selected).pack(side="left")
+        ttk.Button(buttons, text="Clear All", command=self.clear_all).pack(side="left")
+
+    def add_files(self):
+        filenames = filedialog.askopenfilenames()
+        for filename in filenames:
+            path = Path(filename)
+            if path not in self.inputs:
+                self.inputs.append(path)
+                self.listbox.insert(tk.END, filename)
+
+    def add_directory(self):
+        directory = filedialog.askdirectory()
+        if directory:
+            path = Path(directory)
+            if path not in self.inputs:
+                self.inputs.append(path)
+                self.listbox.insert(tk.END, directory)
+
+    def remove_selected(self):
+        indices = reversed(self.listbox.curselection())
+        for index in indices:
+            del self.inputs[index]
+            self.listbox.delete(index)
+
+    def clear_all(self):
+        self.inputs.clear()
+        self.listbox.delete(0, tk.END)
 
 
 def main():
