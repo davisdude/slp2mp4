@@ -3,6 +3,7 @@
 import tempfile
 import subprocess
 import shlex
+import shutil
 from pathlib import Path
 
 import slp2mp4.log as log
@@ -11,9 +12,11 @@ import slp2mp4.util as util
 
 class FfmpegRunner:
     def __init__(self, config):
-        self.conf = config
-        self.ffmpeg_path = config["paths"]["ffmpeg"]
-        self.audio_args = shlex.split(config["ffmpeg"]["audio_args"])
+        self.config = config
+        self.ffmpeg_path = shutil.which(config.paths.ffmpeg)
+        if self.ffmpeg_path is None:
+            raise RuntimeError(f"Invalid ffmpeg path '{self.ffmpeg_path}'")
+        self.audio_args = shlex.split(config.ffmpeg.audio_args)
         self.log = log.get_logger()
 
     # TODO: Pass kill_event
@@ -44,7 +47,7 @@ class FfmpegRunner:
             self.audio_args,
             (
                 "-filter:a",
-                f"volume='{self.conf['ffmpeg']['volume']/100}'",
+                f"volume='{self.config.ffmpeg.volume / 100}'",
             ),
             (reencoded_path,),
         )

@@ -6,7 +6,7 @@ from multiprocessing import Event
 
 import slp2mp4.config as config
 from slp2mp4.artifact import SlippiArtifact, Mp4Artifact
-from slp2mp4.task import RenderGameTask, ConcatVideosTask
+from slp2mp4.task import RenderGameTask, ConcatVideosTask, Worker
 
 
 def test_concat(make_file, get_duration, check_duration):
@@ -20,23 +20,25 @@ def test_concat(make_file, get_duration, check_duration):
         "concat", 3 * [test_mp4_artifact], [concat_mp4_artifact]
     )
 
-    # TODO: Don't rely on user config except for paths...
-    kill_event = Event()
     conf = config.get_config()
-    config.translate_and_validate_config(conf)
+    default_conf = config.get_default_config()
+    default_conf.paths = conf.paths
+    kill_event = Event()
+
+    worker = Worker(default_conf, kill_event)
 
     def _kill():
         time.sleep(10)
         kill_event.set()
 
     with ThreadPoolExecutor(2) as executor:
-        executor.submit(render_task.work, kill_event, conf)
+        executor.submit(worker.submit, render_task)
         executor.submit(_kill)
 
     duration = get_duration(test_mp4_file.path)
     expected_duration = 3 * duration
     duration_tolerance = 0.1
 
-    kill_event = Event()
-    concat_task.work(kill_event, conf)
+    kill_event.clear()
+    worker.submit(concat_task)
     check_duration(concat_file.path, expected_duration, duration_tolerance)

@@ -6,7 +6,7 @@ from multiprocessing import Event
 
 import slp2mp4.config as config
 from slp2mp4.artifact import SlippiArtifact, Mp4Artifact
-from slp2mp4.task import RenderGameTask
+from slp2mp4.task import RenderGameTask, Worker
 
 
 def test_render_full(make_file, check_duration):
@@ -18,12 +18,13 @@ def test_render_full(make_file, check_duration):
     test_mp4_artifact = Mp4Artifact(test_mp4_file.path)
     render_task = RenderGameTask("render", [test_slp_artifact], [test_mp4_artifact])
 
-    # TODO: Don't rely on user config except for paths...
-    kill_event = Event()
     conf = config.get_config()
-    config.translate_and_validate_config(conf)
+    default_conf = config.get_default_config()
+    default_conf.paths = conf.paths
+    kill_event = Event()
 
-    render_task.work(kill_event, conf)
+    worker = Worker(default_conf, kill_event)
+    worker.submit(render_task)
     check_duration(test_mp4_file.path, expected_duration, duration_tolerance)
 
 
@@ -39,17 +40,19 @@ def test_render_short(make_file, check_duration):
     test_mp4_artifact = Mp4Artifact(test_mp4_file.path)
     render_task = RenderGameTask("render", [test_slp_artifact], [test_mp4_artifact])
 
-    # TODO: Don't rely on user config except for paths...
-    kill_event = Event()
     conf = config.get_config()
-    config.translate_and_validate_config(conf)
+    default_conf = config.get_default_config()
+    default_conf.paths = conf.paths
+    kill_event = Event()
+
+    worker = Worker(default_conf, kill_event)
 
     def _kill():
         time.sleep(expected_duration)
         kill_event.set()
 
     with ThreadPoolExecutor(2) as executor:
-        executor.submit(render_task.work, kill_event, conf)
+        executor.submit(worker.submit, render_task)
         executor.submit(_kill)
 
     check_duration(test_mp4_file.path, expected_duration, duration_tolerance)

@@ -31,9 +31,6 @@ class Task:
             if not i.exists():
                 raise RuntimeError(f"Input {i} does not exist.")
 
-    def work(self, kill_event: Event):
-        raise NotImplementedError
-
 
 @dataclasses.dataclass(eq=False)
 class RenderGameTask(Task):
@@ -44,11 +41,6 @@ class RenderGameTask(Task):
     @property
     def resources(self):
         return {"cpu": 1.0}
-
-    def work(self, kill_event: Event, conf: dict):
-        if kill_event.is_set():
-            return
-        self.check_inputs()
 
 
 @dataclasses.dataclass(eq=False)
@@ -64,12 +56,6 @@ class ConcatVideosTask(Task):
         #       require a smarter scheduler/some priority system, otherwise concats will be
         #       preempted lower priorty tasks. It's quick enough that I think it's okay.
         return {"cpu": 1.0}
-
-    def work(self, kill_event: Event, conf: dict):
-        if kill_event.is_set():
-            return
-        self.check_inputs()
-        combine_mp4s(kill_event, conf, self.inputs, self.outputs[0])
 
 
 @dataclasses.dataclass
@@ -102,7 +88,7 @@ class Worker:
 
     @_submit.register
     def _(self, task: ConcatVideosTask):
-        self.combine_mp4s(self.kill_event, self.conf, task.inputs, task.outputs[0])
+        self.combine_mp4s(task.inputs, task.outputs[0])
 
     def render_slp(self, slp: SlippiArtifact, mp4: Mp4Artifact):
         self.logger.info(f"Rendering '{slp.path}' to '{mp4.path}'")

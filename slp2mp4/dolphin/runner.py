@@ -14,31 +14,31 @@ import slp2mp4.util as util
 
 class DolphinRunner:
     def __init__(self, config):
-        self.slippi_playback = config["paths"]["slippi_playback"]
-        self.ssbm_iso = config["paths"]["ssbm_iso"]
-        self.video_backend = config["dolphin"]["backend"]
+        self.slippi_playback = config.paths.slippi_playback.expanduser()
+        self.ssbm_iso = config.paths.ssbm_iso.expanduser()
+        self.video_backend = config.dolphin.backend.value
         self.user_gfx = {
             "Settings": {
-                "EFBScale": config["dolphin"]["resolution"],
-                "BitrateKbps": str(config["dolphin"]["bitrate"]),
+                "EFBScale": config.dolphin.resolution.dolphin_value,
+                "BitrateKbps": str(config.dolphin.bitrate),
             },
         }
         # https://github.com/project-slippi/Ishiiruka/blob/3e5b185ae080e8dca5e939369572d94d20049fea/Data/Sys/GameSettings/GAL.ini#L21
         # Need to override this setting for non-integral scaling
         self.user_gal = {
             "Video_Settings": {
-                "EFBScale": config["dolphin"]["resolution"],
+                "EFBScale": config.dolphin.resolution.dolphin_value,
             },
         }
         self.user_gecko = {
             "Gecko_Enabled": {
                 key: None
-                for key, value in config["dolphin"]["gecko_codes"].items()
+                for key, value in config.dolphin.gecko_codes.items()
                 if value is True
             },
             "Gecko_Disabled": {
                 key: None
-                for key, value in config["dolphin"]["gecko_codes"].items()
+                for key, value in config.dolphin.gecko_codes.items()
                 if value is False
             },
         }
