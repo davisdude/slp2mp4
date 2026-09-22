@@ -95,7 +95,7 @@ class FfmpegConfig:
 
     @classmethod
     def from_dict(cls, data):
-        return cls(**data)
+        return cls(audio_args=data["audio_args"], volume=data["volume"])
 
     def validate(self):
         if not (0 <= self.volume <= 100):
@@ -111,7 +111,12 @@ class RuntimeConfig:
 
     @classmethod
     def from_dict(cls, data):
-        return cls(**data)
+        return cls(
+            parallel=data["parallel"],
+            preserve_directory_structure=data["preserve_directory_structure"],
+            youtubify_names=data["youtubify_names"],
+            name_replacements=data["name_replacements"],
+        )
 
     def validate(self):
         if self.parallel < 0:
