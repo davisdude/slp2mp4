@@ -44,6 +44,7 @@ def main():
 
     kill_event = Event()
     conf = config.get_config()
+    conf.validate()
     logger = log.update_logger(args.debug)
 
     signal.signal(signal.SIGINT, make_sigint_handler(logger, kill_event))

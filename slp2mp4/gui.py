@@ -337,6 +337,7 @@ class Application(tk.Tk):
 
         self.kill_event.clear()
         conf = config.get_config()
+        conf.validate()
         orchestrator = Orchestrator(
             inputs=self.inputs,
             conf=conf,
