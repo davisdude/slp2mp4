@@ -159,6 +159,7 @@ def _load_configs(config_files: list[Path]) -> Config:
             logger.info(f"Could not find config file '{file}' - skipping")
         except tomllib.TOMLDecodeError:
             logger.error(f"Invalid toml in file '{file}' - skipping")
+    # TODO: Config validation
     return Config.from_dict(conf)
 
 
