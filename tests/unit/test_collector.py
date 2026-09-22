@@ -1,4 +1,3 @@
-import shutil
 import zipfile
 from io import BytesIO
 from pathlib import Path
@@ -18,11 +17,12 @@ def zip_bytes(entries: dict[str, dict | Path]) -> bytes:
     return output.getvalue()
 
 
-def test_collector_single_file():
-    test_path = Path("tests/integration/test.slp")
-    collector = Collector([test_path])
+def test_collector_single_file(tmp_path):
+    test_slp = tmp_path / "g1.slp"
+    test_slp.touch()
+    collector = Collector([test_slp])
     items = list(collector.next())
-    expected = (test_path, test_path, [SlippiArtifact(test_path)])
+    expected = (test_slp, test_slp, [SlippiArtifact(test_slp)])
     assert items == [expected]
 
 
@@ -30,9 +30,8 @@ def test_collector_context(tmp_path):
     # tmp_path
     # ├── test.slp
     # └── context.json
-    test_slp = Path("tests/integration/test.slp")
-    base_dir = tmp_path
-    shutil.copy(test_slp, tmp_path)
+    test_slp = tmp_path / "g1.slp"
+    test_slp.touch()
     context = tmp_path / "context.json"
     context.touch()
 
@@ -44,37 +43,36 @@ def test_collector_context(tmp_path):
 
     assert item_input == tmp_path
     assert collection_root == tmp_path
-    assert set(collection) == {
-        SlippiArtifact(tmp_path / "test.slp"),
-        ContextArtifact(tmp_path / "context.json"),
-    }
+    assert set(collection) == {SlippiArtifact(test_slp), ContextArtifact(context)}
 
 
-def test_collector_multiple_files():
-    test_path = Path("tests/integration/test.slp")
-    collector = Collector([test_path, test_path])
+def test_collector_multiple_files(tmp_path):
+    test_slps = [tmp_path / f"{p}.slp" for p in ["g1", "g2"]]
+    for slp in test_slps:
+        slp.touch()
+    collector = Collector(test_slps)
     items = list(collector.next())
-    expected = (test_path, test_path, [SlippiArtifact(test_path)])
-    assert items == [expected, expected]
+    expected = [(slp, slp, [SlippiArtifact(slp)]) for slp in test_slps]
+    assert items == expected
 
 
-def test_collector_single_dir():
-    test_path = Path("tests/integration/")
-    collector = Collector([test_path])
+def test_collector_single_dir(tmp_path):
+    test_slp = tmp_path / "foo/bar/baz/g1.slp"
+    test_slp.parent.mkdir(parents=True)
+    test_slp.touch()
+    collector = Collector([test_slp])
     items = list(collector.next())
-    expected = (test_path, test_path, [SlippiArtifact(test_path / "test.slp")])
+    expected = (test_slp, test_slp, [SlippiArtifact(test_slp)])
     assert items == [expected]
 
 
-def test_collector_nested_simple_dir():
-    test_path = Path("tests/")
-    collector = Collector([test_path])
+def test_collector_nested_simple_dir(tmp_path):
+    test_slp = tmp_path / "foo/bar/baz/g1.slp"
+    test_slp.parent.mkdir(parents=True)
+    test_slp.touch()
+    collector = Collector([tmp_path])
     items = list(collector.next())
-    expected = (
-        test_path,
-        test_path / "integration",
-        [SlippiArtifact(test_path / "integration/test.slp")],
-    )
+    expected = (tmp_path, test_slp.parent, [SlippiArtifact(test_slp)])
     assert items == [expected]
 
 
@@ -95,7 +93,6 @@ def test_collector_nested_complex_dir(tmp_path):
     #         ├── g1.slp
     #         ├── g2.slp
     #         └── g3.slp
-    test_slp = Path("tests/integration/test.slp")
     base_dir = tmp_path
     directories = [
         base_dir,
@@ -104,9 +101,10 @@ def test_collector_nested_complex_dir(tmp_path):
         base_dir / "double" / "nested",
     ]
     for d in directories:
-        d.mkdir(exist_ok=True)
+        d.mkdir(exist_ok=True, parents=True)
         for i in range(1, 4):
-            shutil.copy(test_slp, d / f"g{i}.slp")
+            path = d / f"g{i}.slp"
+            path.touch()
 
     test_path = tmp_path
     collector = Collector([test_path])

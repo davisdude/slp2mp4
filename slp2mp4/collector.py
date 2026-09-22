@@ -32,7 +32,7 @@ def create_monitor_event_handler(collector, root: Path):
 @dataclasses.dataclass
 class Collector:
     inputs: list[Path]
-    kill_event: Event
+    kill_event: Event = dataclasses.field(default_factory=Event)
     monitor: bool = dataclasses.field(default=False)
     workdir: Path | None = dataclasses.field(default=None)
     yielded: dict[Path, set] = dataclasses.field(default_factory=dict)
