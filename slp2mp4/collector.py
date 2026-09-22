@@ -51,7 +51,7 @@ class Collector:
             self.workdir = Path(tempfile.mkdtemp())
 
     def next(self):
-        """Iterator that returns <input>, <collection root>, <collection>."""
+        """Iterator that returns <collection root>, <collection>."""
         # Set up monitoring
         for i in self.inputs:
             self.yielded[i] = set()

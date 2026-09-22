@@ -70,4 +70,4 @@ class Worker:
         success = self.ffmpeg.concat_videos(input_paths, output.path)
         if not success:
             raise RuntimeError(f"Failed to create '{output.path}'")
-        self.logger.info(f"Done combining '{output.path}")
+        self.logger.info(f"Done combining '{output.path}'")
