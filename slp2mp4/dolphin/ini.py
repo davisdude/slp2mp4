@@ -5,7 +5,7 @@ import configparser
 import contextlib
 import pathlib
 
-import slp2mp4.util as util
+from slp2mp4 import util
 
 
 @contextlib.contextmanager
@@ -22,7 +22,7 @@ def make_ini_file(filename: pathlib.Path, contents: dict):
                 ini_parser.set(section, opt_name, opt_val)
         ini_parser.write(ini_file)
         ini_file.flush()
-        yield filename, ini_file
+        yield filename
 
 
 @contextlib.contextmanager
@@ -53,7 +53,7 @@ def make_dolphin_file(userdir: pathlib.Path):
         },
     }
     filename = userdir.joinpath("Config", "Dolphin.ini")
-    with make_ini_file(filename, settings) as (name, handle):
+    with make_ini_file(filename, settings) as name:
         yield name
 
 
@@ -68,7 +68,7 @@ def make_gfx_file(userdir: pathlib.Path, user_settings):
     }
     util.update_dict(settings, user_settings)
     filename = userdir.joinpath("Config", "GFX.ini")
-    with make_ini_file(filename, settings) as (name, handle):
+    with make_ini_file(filename, settings) as name:
         yield name
 
 
@@ -77,7 +77,7 @@ def make_gal_file(userdir: pathlib.Path, user_settings):
     settings = {}
     util.update_dict(settings, user_settings)
     filename = userdir.joinpath("GameSettings", "GAL.ini")
-    with make_ini_file(filename, settings) as (name, handle):
+    with make_ini_file(filename, settings) as name:
         yield name
 
 
@@ -89,7 +89,7 @@ def make_hotkeys_file(userdir: pathlib.Path):
         }
     }
     filename = userdir.joinpath("Config", "Hotkeys.ini")
-    with make_ini_file(filename, settings) as (name, handle):
+    with make_ini_file(filename, settings) as name:
         yield name
 
 
@@ -98,5 +98,5 @@ def make_gecko_file(userdir: pathlib.Path, user_gecko):
     settings = {"Gecko": {}}
     util.update_dict(settings, user_gecko)
     filename = userdir.joinpath("GameSettings", "GALE01.ini")
-    with make_ini_file(filename, settings) as (name, handle):
+    with make_ini_file(filename, settings) as name:
         yield name

@@ -1,15 +1,13 @@
 # Wrapper for running dolphin
 
+import subprocess
 import tempfile
 import time
-import subprocess
 from multiprocessing import Event
 from pathlib import Path
 
-import slp2mp4.dolphin.comm as comm
-import slp2mp4.dolphin.ini as ini
-import slp2mp4.log as log
-import slp2mp4.util as util
+from slp2mp4 import log, util
+from slp2mp4.dolphin import comm, ini
 
 
 class DolphinRunner:
@@ -49,11 +47,11 @@ class DolphinRunner:
             userdir = Path(userdir_str)
             with (
                 comm.make_temp_file(path) as comm_file,
-                ini.make_dolphin_file(userdir) as dolphin_file,
-                ini.make_gfx_file(userdir, self.user_gfx) as gfx_file,
-                ini.make_gal_file(userdir, self.user_gal) as gal_file,
-                ini.make_hotkeys_file(userdir) as hotkeys_file,
-                ini.make_gecko_file(userdir, self.user_gecko) as gecko_file,
+                ini.make_dolphin_file(userdir) as _dolphin_file,
+                ini.make_gfx_file(userdir, self.user_gfx) as _gfx_file,
+                ini.make_gal_file(userdir, self.user_gal) as _gal_file,
+                ini.make_hotkeys_file(userdir) as _hotkeys_file,
+                ini.make_gecko_file(userdir, self.user_gecko) as _gecko_file,
             ):
                 args = (
                     (self.slippi_playback,),

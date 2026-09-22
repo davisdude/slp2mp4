@@ -2,12 +2,12 @@
 
 import dataclasses
 from functools import singledispatchmethod
-from pathlib import Path
 from logging import Logger
 from multiprocessing import Event
+from pathlib import Path
 from tempfile import TemporaryDirectory
 
-import slp2mp4.log as log
+from slp2mp4 import log
 from slp2mp4.artifact import Artifact, Mp4Artifact, SlippiArtifact
 from slp2mp4.dolphin.runner import DolphinRunner
 from slp2mp4.ffmpeg import FfmpegRunner

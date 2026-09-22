@@ -1,10 +1,11 @@
 import dataclasses
-import pytest
 from pathlib import Path
 
-from slp2mp4.artifact import Artifact, SlippiArtifact, Mp4Artifact
-from slp2mp4.task import Task, ConcatVideosTask
+import pytest
+
+from slp2mp4.artifact import Artifact, Mp4Artifact
 from slp2mp4.scheduler import Scheduler
+from slp2mp4.task import ConcatVideosTask, Task
 
 
 @dataclasses.dataclass

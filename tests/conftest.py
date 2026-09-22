@@ -2,8 +2,9 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
-from slp2mp4 import artifact, task, scheduler
 from pytest import fixture
+
+from slp2mp4 import artifact, scheduler, task
 
 
 @fixture

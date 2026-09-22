@@ -8,8 +8,7 @@ from enum import Enum
 from pathlib import Path
 
 import slp2mp4
-from slp2mp4 import log
-from slp2mp4 import util
+from slp2mp4 import log, util
 
 DEFAULT_CONFIG_PATH = importlib.resources.files(slp2mp4).joinpath("defaults.toml")
 USER_CONFIG_PATH = Path("~/.slp2mp4.toml").expanduser()

@@ -11,7 +11,7 @@ except (ImportError, ModuleNotFoundError):
 
 
 class TkStream(io.StringIO):
-    def __init__(self, textobj: "tk.Text", *args, **kwargs):
+    def __init__(self, textobj: tk.Text, *args, **kwargs):
         if not _TK_FOUND:
             return
         super().__init__(*args, **kwargs)
@@ -21,7 +21,7 @@ class TkStream(io.StringIO):
         if not _TK_FOUND:
             return
         super().write(s)
-        new_text = self.read()
+        _new_text = self.read()
         self.textobj.insert("end", s)
         self.textobj.see("end")
 

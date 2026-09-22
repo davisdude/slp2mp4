@@ -1,11 +1,10 @@
-import subprocess
 import time
 from concurrent.futures import ThreadPoolExecutor
-from pathlib import Path
 from multiprocessing import Event
+from pathlib import Path
 
-import slp2mp4.config as config
-from slp2mp4.artifact import SlippiArtifact, Mp4Artifact
+from slp2mp4 import config
+from slp2mp4.artifact import Mp4Artifact, SlippiArtifact
 from slp2mp4.task import RenderGameTask, Worker
 
 

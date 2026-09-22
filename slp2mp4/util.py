@@ -1,7 +1,6 @@
 # Misc. utilities
 
 import re
-from pathlib import Path
 
 
 def update_dict(d1: dict, d2: dict):
@@ -9,7 +8,7 @@ def update_dict(d1: dict, d2: dict):
         if isinstance(v, dict):
             if k not in d1:
                 d1[k] = {}
-            update_dict(d1[k], d2[k])
+            update_dict(d1[k], v)
         else:
             d1[k] = v
 

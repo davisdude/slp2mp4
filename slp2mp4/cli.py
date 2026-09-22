@@ -4,9 +4,7 @@ import pathlib
 import signal
 import sys
 
-import slp2mp4.modes as modes
-import slp2mp4.version as version
-import slp2mp4.log as log
+from slp2mp4 import log, modes, version
 
 
 def get_parser():

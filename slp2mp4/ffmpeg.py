@@ -1,13 +1,12 @@
 # Logic for joining audio / video files
 
-import tempfile
-import subprocess
 import shlex
 import shutil
+import subprocess
+import tempfile
 from pathlib import Path
 
-import slp2mp4.log as log
-import slp2mp4.util as util
+from slp2mp4 import log, util
 
 
 class FfmpegRunner:
@@ -96,30 +95,32 @@ class FfmpegRunner:
     # Assumes all videos have the same encoding
     def concat_videos(self, videos: list[Path], output_file: Path):
         # Make a temp directory because windows doesn't like NamedTemporaryFiles :(
-        with tempfile.TemporaryDirectory() as tmpdir:
-            with open(Path(tmpdir) / "concat.txt", "w") as concat_file:
-                files = ("\n").join(f"file '{video.resolve()}'" for video in videos)
-                concat_file.write(files)
-                concat_file.flush()
-                args = (
-                    ("-y",),
-                    (
-                        "-f",
-                        "concat",
-                    ),
-                    (
-                        "-safe",
-                        "0",
-                    ),
-                    (
-                        "-i",
-                        concat_file.name,
-                    ),
-                    (
-                        "-c",
-                        "copy",
-                    ),
-                    ("-xerror",),
-                    (output_file,),
-                )
-                return self._run(args)
+        with (
+            tempfile.TemporaryDirectory() as tmpdir,
+            open(Path(tmpdir) / "concat.txt", "w") as concat_file,
+        ):
+            files = ("\n").join(f"file '{video.resolve()}'" for video in videos)
+            concat_file.write(files)
+            concat_file.flush()
+            args = (
+                ("-y",),
+                (
+                    "-f",
+                    "concat",
+                ),
+                (
+                    "-safe",
+                    "0",
+                ),
+                (
+                    "-i",
+                    concat_file.name,
+                ),
+                (
+                    "-c",
+                    "copy",
+                ),
+                ("-xerror",),
+                (output_file,),
+            )
+            return self._run(args)

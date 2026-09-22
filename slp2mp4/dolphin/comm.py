@@ -1,11 +1,11 @@
 # Logic for dolphin comm configuration
 # https://github.com/project-slippi/slippi-wiki/blob/master/COMM_SPEC.md
 
-import uuid
-import tempfile
-import json
 import contextlib
+import json
 import os
+import tempfile
+import uuid
 from pathlib import Path
 
 

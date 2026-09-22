@@ -1,15 +1,14 @@
 # GUI frontend
 
 import dataclasses
-from enum import Enum
-from multiprocessing import Event
-from pathlib import Path
 import tkinter as tk
-from tkinter import ttk, filedialog
+from enum import Enum
+from pathlib import Path
+from tkinter import filedialog, ttk
 
 import tomli_w
-from slp2mp4 import config
-from slp2mp4 import util
+
+from slp2mp4 import config, util
 
 try:
     from slp2mp4 import version
@@ -135,12 +134,9 @@ class ConfigDialog(tk.Toplevel):
 
     def create_path_widget(self, parent, var):
         frame = ttk.Frame(parent)
-        entry = ttk.Entry(frame, textvariable=var).pack(
-            side="left", fill="x", expand=True
-        )
-        button = ttk.Button(
-            frame, text="Browse", command=lambda: self.browse_path(var)
-        ).pack(side="left")
+        ttk.Entry(frame, textvariable=var).pack(side="left", fill="x", expand=True)
+        button = ttk.Button(frame, text="Browse", command=lambda: self.browse_path(var))
+        button.pack(side="left")
         return frame
 
     def browse_path(self, var):

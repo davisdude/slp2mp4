@@ -8,10 +8,11 @@ from collections import deque
 from multiprocessing import Event
 from pathlib import Path
 
-from watchdog.observers import Observer
 from watchdog.events import FileSystemEvent, FileSystemEventHandler
+from watchdog.observers import Observer
+
 from slp2mp4 import util
-from slp2mp4.artifact import Artifact, ContextArtifact, SlippiArtifact
+from slp2mp4.artifact import ContextArtifact, SlippiArtifact
 
 
 def create_monitor_event_handler(collector, root: Path):
@@ -94,7 +95,7 @@ class Collector:
                 self.yielded[key].add(path)
                 yield relative, [SlippiArtifact(path)]
         elif path.is_dir():
-            slps = list(sorted(path.glob("*.slp"), key=util.natsort))
+            slps = sorted(path.glob("*.slp"), key=util.natsort)
             artifacts = [SlippiArtifact(slp) for slp in slps]
             if (len(slps) > 0) and (len(set(slps) & self.yielded[key]) != len(slps)):
                 # TODO: Collection class with `.slps` and `.context`
