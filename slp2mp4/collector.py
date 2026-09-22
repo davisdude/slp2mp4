@@ -46,14 +46,15 @@ class Collector:
     def next(self):
         """Iterator that returns <input>, <collection root>, <collection>."""
         # Set up monitoring
-        # TODO: Only start/stop monitor if actually monitoring
-        observer = Observer()
         for i in self.inputs:
             self.yielded[i] = set()
-            if i.is_dir():
-                handler = create_monitor_event_handler(self, i)
-                observer.schedule(handler, i, recursive=True)
-        observer.start()
+        if self.monitor:
+            observer = Observer()
+            for i in self.inputs:
+                if i.is_dir():
+                    handler = create_monitor_event_handler(self, i)
+                    observer.schedule(handler, i, recursive=True)
+            observer.start()
 
         # Iterate like normal to catch files that exist before monitoring
         for i in self.inputs:
@@ -69,8 +70,9 @@ class Collector:
             for i in batch:
                 for path, artifacts in self._recurse(i, i):
                     yield i, path, artifacts
-        observer.stop()
-        observer.join()
+        if self.monitor:
+            observer.stop()
+            observer.join()
 
     def _get_monitor_batch(self):
         inputs = set()
