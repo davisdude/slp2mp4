@@ -47,58 +47,26 @@ Both methods require having `git` and `pip` installed
 ### Command Line Interface
 
 ```text
-usage: slp2mp4 [-h] [-o OUTPUT_DIRECTORY] [-n] [-v] {single,directory,replay_manager} ...
+usage: slp2mp4 [-h] [-n] [-m] [-t TEMPORARY_DIRECTORY] [-o OUTPUT_DIRECTORY] [--debug] inputs [inputs ...]
+
+positional arguments:
+  inputs
 
 options:
   -h, --help            show this help message and exit
-  -o, --output-directory OUTPUT_DIRECTORY
-                        set path to output videos
-  -n, --dry-run         show inputs and outputs and exit
-  -v, --version         show program's version number and exit
-
-mode:
-  {single,directory,replay_manager}
-    single              convert single replay files to videos
-    directory           recursively convert all replay files in a directory to videos
-    replay_manager      recursively convert all replay files in a zip to videos
-```
-
-Each mode can accept several inputs simultaneously:
-
-```text
-usage: slp2mp4 single [-h] paths [paths ...]
-
-positional arguments:
-  paths       input file(s)
-
-options:
-  -h, --help  show this help message and exit
-```
-
-```
-usage: slp2mp4 directory [-h] paths [paths ...]
-
-positional arguments:
-  paths       input directory/directories
-
-options:
-  -h, --help  show this help message and exit
-```
-
-```
-usage: slp2mp4 zip [-h] paths [paths ...]
-
-positional arguments:
-  paths       replay manager zip/directory
-
-options:
-  -h, --help  show this help message and exit
+  -n, --dry-run         Don't actually render videos; useful for testing
+  -m, --monitor         Continuously watch input directories
+  -t TEMPORARY_DIRECTORY, --temporary-directory TEMPORARY_DIRECTORY
+                        Where to write temp videos; leave blank for system default
+  -o OUTPUT_DIRECTORY, --output-directory OUTPUT_DIRECTORY
+                        Where to write output videos
+  --debug
 ```
 
 ### Graphical User Interface
 
 The GUI has all the features that the CLI has. Change your settings in the
-menu, select your conversion type, set your directories, then click start.
+menu, set your input files and directories, then click start.
 
 To launch the GUI, run `slp2mp4_gui`.
 
@@ -117,6 +85,7 @@ The default settings can be found [here][default-settings].
 #### Paths
 
 - `ffmpeg`: Path to FFmpeg executable
+- `ffprobe`: Path to ffprobe executable; if blank, an attempt is made to find it
 - `slippi_playback`: Path to playback Slippi Dolphin executable
 - `ssbm_iso`: Path to your Melee ISO file
 
@@ -146,7 +115,6 @@ The default settings can be found [here][default-settings].
 #### Runtime Settings
 
 - `parallel`: Number of parallel processes (0 = auto-detect CPU cores)
-- `prepend_directory`: Prepend the parent directory info
 - `preserve_directory_structure`: Make video outputs match the input structure
   instead of being "flat"
 - `youtubify_names`: Enable `name_replacements` (below)
@@ -220,13 +188,7 @@ parallel = 0
 
 * `pytest` is required for running all tests
 * Unit tests can be run stand-alone
-* Integration tests require Dolphin, ffmpeg, a melee ISO, and `ffprobe`
-
-TODO:
-
-* Mode / config tests
-* Use default configs (as much as possible) for integration tests
-* Github action to run unit tests
+* Integration tests require Dolphin, `ffmpeg`, `ffprobe`, and a melee `.iso`.
 
 ## License
 

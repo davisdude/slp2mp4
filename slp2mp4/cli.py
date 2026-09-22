@@ -18,7 +18,7 @@ def make_sigint_handler(logger, event: Event):
 
 
 def main():
-    parser = ArgumentParser()
+    parser = ArgumentParser(prog="slp2mp4")
     parser.add_argument("inputs", type=Path, nargs="+")
     for field in dataclasses.fields(RuntimeOptions):
         field_type = field.type
