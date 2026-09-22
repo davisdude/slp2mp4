@@ -2,9 +2,11 @@
 
 import dataclasses
 import tkinter as tk
+import threading
 import typing
 import webbrowser
 from enum import Enum
+from multiprocessing import Event
 from pathlib import Path
 from tkinter import filedialog, ttk
 
@@ -12,6 +14,7 @@ import tomli_w
 
 from slp2mp4 import config, util
 from slp2mp4.config import DolphinBackend, DolphinResolution
+from slp2mp4.orchestrator import Orchestrator
 
 try:
     from slp2mp4 import version
@@ -235,9 +238,12 @@ class Application(tk.Tk):
         self.inputs = []
         self.variables: dict[str, tk.Variable] = {}
         self.runtime_options = config.RuntimeOptions()
+        self.kill_event = Event()
 
+        # TODO: Log window
         self.make_input_selector()
         self.make_runtime_options()
+        self.make_actions()
 
     def create_menu(self):
         menubar = tk.Menu(self)
@@ -277,6 +283,12 @@ class Application(tk.Tk):
         frame.pack(fill="both", expand=True, padx=10, pady=10)
         build_dataclass(self.variables, frame, self.runtime_options, prefix=())
 
+    def make_actions(self):
+        frame = ttk.LabelFrame(self, text="Actions")
+        frame.pack(fill="both", expand=True, padx=10, pady=10)
+        ttk.Button(frame, text="Run", command=self.run).pack(side="left")
+        ttk.Button(frame, text="Stop", command=self.stop).pack(side="left")
+
     def add_files(self):
         filenames = filedialog.askopenfilenames()
         for filename in filenames:
@@ -302,6 +314,23 @@ class Application(tk.Tk):
     def clear_all(self):
         self.inputs.clear()
         self.listbox.delete(0, tk.END)
+
+    def run(self):
+        # TODO: Dry run
+        # TODO: Output directory
+        self.kill_event.clear()
+        conf = config.get_config()
+        orchestrator = Orchestrator(
+            inputs=self.inputs,
+            conf=conf,
+            kill_event=self.kill_event,
+            monitor=self.variables[("monitor",)].get(),
+            workdir=self.variables[("temporary_directory",)].get(),
+        )
+        threading.Thread(target=orchestrator.run).start()
+
+    def stop(self):
+        self.kill_event.set()
 
 
 def main():
