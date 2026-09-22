@@ -42,8 +42,9 @@ class Collector:
     kill_event: Event = dataclasses.field(default_factory=Event)
     monitor: bool = dataclasses.field(default=False)
     workdir: Path | None = dataclasses.field(default=None)
-    yielded: dict[Path, set] = dataclasses.field(default_factory=dict)
-    raw_monitor_inputs: deque = dataclasses.field(default_factory=deque)
+    yielded: dict[Path, set] = dataclasses.field(default_factory=dict, init=False)
+    raw_monitor_inputs: deque = dataclasses.field(default_factory=deque, init=False)
+    done: bool = dataclasses.field(default=False, init=False)
 
     def __post_init__(self):
         if self.workdir is None:
@@ -80,6 +81,7 @@ class Collector:
         if self.monitor:
             observer.stop()
             observer.join()
+        self.done = True
 
     def _get_monitor_batch(self):
         inputs = set()

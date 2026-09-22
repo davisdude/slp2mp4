@@ -75,7 +75,6 @@ class Orchestrator:
             self.scheduler.submit(tasks)
 
     def do_work(self):
-        # TODO: in non-monitor mode, set kill event when finished?
         while not self.kill_event.is_set():
             task = self.scheduler.get_work()
             if task is not None:
@@ -84,6 +83,8 @@ class Orchestrator:
                 finally:
                     self.scheduler.finish(task)
             else:
+                if self.collector.done:
+                    break
                 time.sleep(1)
 
     def run(self):
