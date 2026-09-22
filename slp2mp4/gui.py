@@ -148,6 +148,7 @@ class ConfigDialog(tk.Toplevel):
         self.title("slp2mp4 configuration")
         self.config_data = config.get_config()
         self.variables: dict[str, tk.Variable] = {}
+        self.log = log.get_logger()
 
         # Make dialog modal
         self.transient(parent)
@@ -192,9 +193,11 @@ class ConfigDialog(tk.Toplevel):
         config_path = Path(config.USER_CONFIG_PATH).expanduser()
         defaults = config.get_default_config().to_dict()
         unique_items = util.get_unique_items(defaults, data)
-        # TODO: Exception catching / logging
-        with open(config_path, "wb") as f:
-            tomli_w.dump(unique_items, f)
+        try:
+            with open(config_path, "wb") as f:
+                tomli_w.dump(unique_items, f)
+        except Exception as e:  # noqa: BLE001
+            self.log.error(f"Error saving TOML: {e}")
         self.destroy()
 
     def reset(self):
