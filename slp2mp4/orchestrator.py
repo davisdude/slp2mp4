@@ -4,19 +4,19 @@ import dataclasses
 import tempfile
 import time
 from concurrent.futures import ThreadPoolExecutor
+from logging import Logger
 from multiprocessing import Event
 from pathlib import Path
-from logging import Logger
 
 import psutil
 
+from slp2mp4 import log
 from slp2mp4.artifact import Mp4Artifact
 from slp2mp4.collector import Collection, Collector
 from slp2mp4.config import Config
 from slp2mp4.scheduler import Scheduler
 from slp2mp4.task import ConcatVideosTask, RenderGameTask
 from slp2mp4.worker import Worker
-from slp2mp4 import log
 
 
 @dataclasses.dataclass
@@ -35,7 +35,7 @@ class Orchestrator:
 
     def __post_init__(self):
         if self.num_procs is None:
-            self.num_procs  = self.conf.runtime.parallel
+            self.num_procs = self.conf.runtime.parallel
         if self.num_procs == 0:
             self.num_procs = psutil.cpu_count(logical=False) or 1
         if self.workdir is None:

@@ -6,7 +6,6 @@ import shutil
 import tomllib
 from enum import Enum
 from pathlib import Path
-from typing import Optional
 
 import slp2mp4
 from slp2mp4 import log, util
@@ -56,7 +55,7 @@ class PathsConfig:
     ffmpeg: Path
     slippi_playback: Path
     ssbm_iso: Path
-    ffprobe: Optional[Path] = dataclasses.field(default=None)
+    ffprobe: Path | None = dataclasses.field(default=None)
 
     @classmethod
     def from_dict(cls, data):
@@ -88,7 +87,7 @@ class PathsConfig:
         ffprobe = shutil.which("ffprobe")
         if ffprobe is not None:
             return Path(ffprobe)
-        raise RuntimeError(f"Could not find ffprobe.")
+        raise RuntimeError("Could not find ffprobe.")
 
 
 @dataclasses.dataclass
@@ -194,7 +193,7 @@ class RuntimeOptions:
         default=False,
         metadata={"help": "Continuously watch input directories"},
     )
-    temporary_directory: Optional[Path] = dataclasses.field(
+    temporary_directory: Path | None = dataclasses.field(
         default=None,
         metadata={"help": "Where to write temp videos; leave blank for system default"},
     )

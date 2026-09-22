@@ -1,21 +1,20 @@
 # GUI frontend
 
 import dataclasses
-import tkinter as tk
 import threading
+import tkinter as tk
 import typing
 import webbrowser
 from enum import Enum
 from multiprocessing import Event
 from pathlib import Path
-from tkinter import filedialog, ttk, scrolledtext
+from tkinter import filedialog, scrolledtext, ttk
 
 import tomli_w
 
-from slp2mp4 import config, util
+from slp2mp4 import config, log, util
 from slp2mp4.config import DolphinBackend, DolphinResolution
 from slp2mp4.orchestrator import Orchestrator
-from slp2mp4 import log
 
 try:
     from slp2mp4 import version
@@ -46,22 +45,25 @@ def build_dataclass(variables, parent, obj, prefix=None):
             row=row, column=0, sticky="w"
         )
         widget = build_widget(
-            variables=variables, parent=parent, key=key, value=value, field_type=field.type
+            variables=variables,
+            parent=parent,
+            key=key,
+            value=value,
+            field_type=field.type,
         )
         widget.grid(row=row, column=1, sticky="ew")
         row += 1
 
-        if (metadata := getattr(field, "metadata")):
-            if (help_text := metadata.get("help")):
-                label = ttk.Label(parent, text=help_text, foreground="gray40")
-                label.grid(row=row, column=0, columnspan=2, sticky="w")
-                row += 1
+        if (metadata := field.metadata) and (help_text := metadata.get("help")):
+            label = ttk.Label(parent, text=help_text, foreground="gray40")
+            label.grid(row=row, column=0, columnspan=2, sticky="w")
+            row += 1
 
 
 def get_optional_type(field_type):
     # Assumes Unions are [X, None]
     args = typing.get_args(field_type)
-    return list(filter(lambda x: x is not None, args))[0]
+    return next(filter(lambda x: x is not None, args))
 
 
 def is_dict_of_type(d, t):
@@ -83,7 +85,9 @@ def build_widget(variables, parent, key, value, field_type):
         enum_type = type(value)
         options = enum_display_values(enum_type)
         var = tk.StringVar(value=enum_to_display(value))
-        widget = ttk.Combobox(parent, textvariable=var, values=options, state="readonly")
+        widget = ttk.Combobox(
+            parent, textvariable=var, values=options, state="readonly"
+        )
     elif field_type is int:
         # TODO: Spinners for some with min/max
         var = tk.IntVar(value=value)
@@ -115,6 +119,7 @@ def browse_path(var):
     if filename:
         var.set(filename)
 
+
 def create_bool_dict_widget(variables, parent, prefix, values):
     frame = ttk.Frame(parent)
     for row, (name, enabled) in enumerate(values.items()):
@@ -125,6 +130,7 @@ def create_bool_dict_widget(variables, parent, prefix, values):
         key = (prefix or ()) + (name,)
         variables[key] = var
     return frame
+
 
 def create_str_dict_widget(variables, parent, prefix, values):
     frame = ttk.Frame(parent)
@@ -177,7 +183,9 @@ class ConfigDialog(tk.Toplevel):
         backend = data["dolphin"]["backend"]
         data["dolphin"]["backend"] = DolphinBackend(backend).value
         res = data["dolphin"]["resolution"]
-        data["dolphin"]["resolution"] = DolphinResolution.from_display_name(res).display_name
+        data["dolphin"]["resolution"] = DolphinResolution.from_display_name(
+            res
+        ).display_name
         if data["paths"]["ffprobe"].strip() == "":
             data["paths"]["ffprobe"] = None
 
@@ -217,7 +225,7 @@ class AboutDialog(tk.Toplevel):
         frame = ttk.LabelFrame(self, text="About")
         frame.pack(fill="both", expand=True, padx=10, pady=10)
 
-        ttk.Label(frame, text=f"Version").grid(row=0, column=0, sticky="w")
+        ttk.Label(frame, text="Version").grid(row=0, column=0, sticky="w")
         ttk.Label(frame, text=__version__).grid(row=0, column=1, sticky="w")
 
         ttk.Label(frame, text="Hopepage").grid(row=1, column=0, sticky="w")
@@ -234,7 +242,7 @@ class AboutDialog(tk.Toplevel):
 class Application(tk.Tk):
     def __init__(self, logger=None):
         super().__init__()
-        self.title(f"slp2mp4")
+        self.title("slp2mp4")
         self.create_menu()
         self.inputs = []
         self.variables: dict[str, tk.Variable] = {}
@@ -276,8 +284,12 @@ class Application(tk.Tk):
         buttons.pack(fill="x")
 
         ttk.Button(buttons, text="Add Files", command=self.add_files).pack(side="left")
-        ttk.Button(buttons, text="Add Directory", command=self.add_directory).pack(side="left")
-        ttk.Button(buttons, text="Remove", command=self.remove_selected).pack(side="left")
+        ttk.Button(buttons, text="Add Directory", command=self.add_directory).pack(
+            side="left"
+        )
+        ttk.Button(buttons, text="Remove", command=self.remove_selected).pack(
+            side="left"
+        )
         ttk.Button(buttons, text="Clear All", command=self.clear_all).pack(side="left")
 
     def make_runtime_options(self):
