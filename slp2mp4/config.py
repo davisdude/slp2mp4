@@ -98,6 +98,9 @@ class DolphinConfig:
             gecko_codes=data["gecko_codes"],
         )
 
+    def validate(self):
+        pass
+
 
 @dataclasses.dataclass
 class FfmpegConfig:
@@ -157,6 +160,11 @@ class Config:
         for k, v in data["paths"].items():
             data["paths"][k] = str(v)
         return data
+
+    def validate(self):
+        for field in dataclasses.fields(self):
+            attr = getattr(self, field.name)
+            attr.validate()
 
 
 def _load_configs(config_files: list[Path]) -> Config:
