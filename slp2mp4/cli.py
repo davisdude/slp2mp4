@@ -8,6 +8,13 @@ from slp2mp4 import config, log
 from slp2mp4.config import RuntimeOptions
 from slp2mp4.orchestrator import Orchestrator
 
+try:
+    from slp2mp4 import version
+
+    __version__ = version.version
+except ImportError:
+    __version__ = "0.0.0+dev"
+
 
 def make_sigint_handler(logger, event: Event):
     def func(_sig, _frame):
@@ -20,6 +27,7 @@ def make_sigint_handler(logger, event: Event):
 def main():
     parser = ArgumentParser(prog="slp2mp4")
     parser.add_argument("inputs", type=Path, nargs="+")
+    parser.add_argument("-v", "--version", action="version", version=__version__)
     for field in dataclasses.fields(RuntimeOptions):
         field_type = field.type
         kwargs = {}
