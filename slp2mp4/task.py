@@ -1,7 +1,9 @@
 # Tasks are jobs that take artifacts as inputs and outputs
 
-from dataclasses import dataclass
+import dataclasses
+from functools import singledispatchmethod
 from pathlib import Path
+from logging import Logger
 from multiprocessing import Event
 from tempfile import TemporaryDirectory
 
@@ -11,41 +13,7 @@ from slp2mp4.dolphin.runner import DolphinRunner
 from slp2mp4.ffmpeg import FfmpegRunner
 
 
-def render_slp(kill_event: Event, conf: dict, slp: SlippiArtifact, mp4: Mp4Artifact):
-    logger = log.get_logger()
-    ffmpeg = FfmpegRunner(conf)
-    dolphin = DolphinRunner(conf)
-    logger.info(f"Rendering '{slp.path}' to '{mp4.path}'")
-    with TemporaryDirectory() as tmpdir_str:
-        tmpdir = Path(tmpdir_str)
-        audio_file, video_path = dolphin.run(slp.path, tmpdir, kill_event)
-        reencoded_audio_file = ffmpeg.reencode_audio(audio_file)
-        if reencoded_audio_file is None:
-            return False
-        success = ffmpeg.merge_audio_and_video(
-            reencoded_audio_file,
-            video_path,
-            mp4.path,
-        )
-        if not success:
-            raise RuntimeError(f"Failed to render '{slp.path}'")
-        logger.info(f"Done rendering '{slp.path}'")
-
-
-def combine_mp4s(
-    kill_event: Event, conf: dict, inputs: list[Mp4Artifact], output: Mp4Artifact
-):
-    logger = log.get_logger()
-    input_paths = [i.path for i in inputs]
-    logger.info(f"Combining '{input_paths}' to '{output.path}'")
-    ffmpeg = FfmpegRunner(conf)
-    success = ffmpeg.concat_videos(input_paths, output.path)
-    if not success:
-        raise RuntimeError(f"Failed to create '{output.path}'")
-    logger.info(f"Done combining '{output.path}")
-
-
-@dataclass(eq=False)
+@dataclasses.dataclass(eq=False)
 class Task:
     name: str
     inputs: list[Artifact]
@@ -67,7 +35,7 @@ class Task:
         raise NotImplementedError
 
 
-@dataclass(eq=False)
+@dataclasses.dataclass(eq=False)
 class RenderGameTask(Task):
     def __post_init__(self):
         super().__post_init__()
@@ -81,11 +49,9 @@ class RenderGameTask(Task):
         if kill_event.is_set():
             return
         self.check_inputs()
-        for i, o in zip(self.inputs, self.outputs):
-            render_slp(kill_event, conf, i, o)
 
 
-@dataclass(eq=False)
+@dataclasses.dataclass(eq=False)
 class ConcatVideosTask(Task):
     def __post_init__(self):
         super().__post_init__()
@@ -104,3 +70,61 @@ class ConcatVideosTask(Task):
             return
         self.check_inputs()
         combine_mp4s(kill_event, conf, self.inputs, self.outputs[0])
+
+
+@dataclasses.dataclass
+class Worker:
+    conf: dict
+    kill_event: Event
+    logger: Logger = dataclasses.field(default=None, init=False)
+    ffmpeg: FfmpegRunner = dataclasses.field(default=None, init=False)
+    dolphin: DolphinRunner = dataclasses.field(default=None, init=False)
+
+    def __post_init__(self):
+        self.logger = log.get_logger()
+        self.ffmpeg = FfmpegRunner(self.conf)
+        self.dolphin = DolphinRunner(self.conf)
+
+    def submit(self, task: Task):
+        if self.kill_event.is_set():
+            return
+        task.check_inputs()
+        self._submit(task)
+
+    @singledispatchmethod
+    def _submit(self, task: Task):
+        raise TypeError(f"Unsupported task type '{type(task)}'")
+
+    @_submit.register
+    def _(self, task: RenderGameTask):
+        for i, o in zip(task.inputs, task.outputs):
+            self.render_slp(i, o)
+
+    @_submit.register
+    def _(self, task: ConcatVideosTask):
+        self.combine_mp4s(self.kill_event, self.conf, task.inputs, task.outputs[0])
+
+    def render_slp(self, slp: SlippiArtifact, mp4: Mp4Artifact):
+        self.logger.info(f"Rendering '{slp.path}' to '{mp4.path}'")
+        with TemporaryDirectory() as tmpdir_str:
+            tmpdir = Path(tmpdir_str)
+            audio_file, video_path = self.dolphin.run(slp.path, tmpdir, self.kill_event)
+            reencoded_audio_file = self.ffmpeg.reencode_audio(audio_file)
+            if reencoded_audio_file is None:
+                return False
+            success = self.ffmpeg.merge_audio_and_video(
+                reencoded_audio_file,
+                video_path,
+                mp4.path,
+            )
+            if not success:
+                raise RuntimeError(f"Failed to render '{slp.path}'")
+            self.logger.info(f"Done rendering '{slp.path}'")
+
+    def combine_mp4s(self, inputs: list[Mp4Artifact], output: Mp4Artifact):
+        input_paths = [i.path for i in inputs]
+        self.logger.info(f"Combining '{input_paths}' to '{output.path}'")
+        success = self.ffmpeg.concat_videos(input_paths, output.path)
+        if not success:
+            raise RuntimeError(f"Failed to create '{output.path}'")
+        self.logger.info(f"Done combining '{output.path}")
