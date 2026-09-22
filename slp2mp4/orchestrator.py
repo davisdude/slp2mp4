@@ -79,8 +79,10 @@ class Orchestrator:
         while not self.kill_event.is_set():
             task = self.scheduler.get_work()
             if task is not None:
-                self.worker.submit(task)
-                self.scheduler.finish(task)
+                try:
+                    self.worker.submit(task)
+                finally:
+                    self.scheduler.finish(task)
             else:
                 time.sleep(1)
 
