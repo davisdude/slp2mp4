@@ -1,6 +1,7 @@
 # Collects files for rendering. Does NOT determine names, just inputs / outputs.
 
 import dataclasses
+import shutil
 import tempfile
 import time
 import zipfile
@@ -45,17 +46,22 @@ class Collector:
     yielded: dict[Path, set] = dataclasses.field(default_factory=dict, init=False)
     raw_monitor_inputs: deque = dataclasses.field(default_factory=deque, init=False)
     done: bool = dataclasses.field(default=False, init=False)
+    made_workdir: bool = dataclasses.field(default=False, init=False)
 
     def __post_init__(self):
         if self.workdir is None:
-            # TODO: Cleanup workdir
             self.workdir = Path(tempfile.mkdtemp())
+            self.made_workdir = True
 
     def next(self):
         try:
             yield from self._next()
         finally:
             self.done = True
+
+    def cleanup(self):
+        if self.made_workdir:
+            shutil.rmtree(self.workdir)
 
     def _next(self):
         """Iterator that returns <collection root>, <collection>."""

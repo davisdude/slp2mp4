@@ -2,6 +2,7 @@
 
 import concurrent.futures
 import dataclasses
+import shutil
 import tempfile
 import time
 import traceback
@@ -34,6 +35,7 @@ class Orchestrator:
     worker: Worker | None = dataclasses.field(default=None)
     scheduler: Scheduler | None = dataclasses.field(default=None)
     log: Logger | None = dataclasses.field(default=None)
+    made_workdir: bool = dataclasses.field(default=False, init=False)
 
     def __post_init__(self):
         if self.num_procs is None:
@@ -42,6 +44,7 @@ class Orchestrator:
             self.num_procs = psutil.cpu_count(logical=False) or 1
         if self.workdir is None:
             self.workdir = Path(tempfile.mkdtemp())
+            self.made_workdir = True
         if self.collector is None:
             self.collector = Collector(
                 self.inputs, self.kill_event, self.monitor, self.workdir
@@ -115,3 +118,10 @@ class Orchestrator:
                     self.log.error(
                         f"Orchestrator encountered exception: {traceback.format_exc()}"
                     )
+
+        self.collector.cleanup()
+        self.cleanup()
+
+    def cleanup(self):
+        if self.made_workdir:
+            shutil.rmtree(self.workdir)
