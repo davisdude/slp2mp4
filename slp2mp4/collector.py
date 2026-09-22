@@ -59,7 +59,7 @@ class Collector:
         # Iterate like normal to catch files that exist before monitoring
         for i in self.inputs:
             for path, artifacts in self._recurse(i, i):
-                yield i, path, artifacts
+                yield path, artifacts
 
         # Monitor files
         while self.monitor and not self.kill_event.is_set():
@@ -69,7 +69,7 @@ class Collector:
                 continue
             for i in batch:
                 for path, artifacts in self._recurse(i, i):
-                    yield i, path, artifacts
+                    yield path, artifacts
         if self.monitor:
             observer.stop()
             observer.join()
