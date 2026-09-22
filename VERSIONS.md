@@ -4,6 +4,8 @@
 
 - Totally reworked all internals
 - Removed `prepend_directory` option
+- Removed concept of different modes
+- Added `monitor` option
 
 ## 3.1.1
 

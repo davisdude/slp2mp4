@@ -91,7 +91,7 @@ class FfmpegRunner:
         return self._run(args)
 
     # Assumes all videos have the same encoding
-    def concat_videos(self, videos: [Path], output_file: Path):
+    def concat_videos(self, videos: list[Path], output_file: Path):
         # Make a temp directory because windows doesn't like NamedTemporaryFiles :(
         with tempfile.TemporaryDirectory() as tmpdir:
             with open(Path(tmpdir) / "concat.txt", "w") as concat_file:

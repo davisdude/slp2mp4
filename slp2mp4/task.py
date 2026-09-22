@@ -15,21 +15,21 @@ def render_slp(kill_event: Event, conf: dict, slp: SlippiArtifact, mp4: Mp4Artif
     logger = log.get_logger()
     ffmpeg = FfmpegRunner(conf)
     dolphin = DolphinRunner(conf)
-    logger.info(f"Rendering '{slp.path}' to '{mp4.path}")
+    logger.info(f"Rendering '{slp.path}' to '{mp4.path}'")
     with TemporaryDirectory() as tmpdir_str:
         tmpdir = Path(tmpdir_str)
         audio_file, video_path = dolphin.run(slp.path, tmpdir, kill_event)
         reencoded_audio_file = ffmpeg.reencode_audio(audio_file)
         if reencoded_audio_file is None:
             return False
-        return ffmpeg.merge_audio_and_video(
+        success = ffmpeg.merge_audio_and_video(
             reencoded_audio_file,
             video_path,
             mp4.path,
         )
-    if not success:
-        raise RuntimeError(f"Failed to render '{slp.path}'")
-    logger.info(f"Done rendering '{slp.path}'")
+        if not success:
+            raise RuntimeError(f"Failed to render '{slp.path}'")
+        logger.info(f"Done rendering '{slp.path}'")
 
 
 def combine_mp4s(
@@ -37,7 +37,7 @@ def combine_mp4s(
 ):
     logger = log.get_logger()
     input_paths = [i.path for i in inputs]
-    logger.info(f"Combining '{input_paths}' to '{output.path}")
+    logger.info(f"Combining '{input_paths}' to '{output.path}'")
     ffmpeg = FfmpegRunner(conf)
     success = ffmpeg.concat_videos(input_paths, output.path)
     if not success:

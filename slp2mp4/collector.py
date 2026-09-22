@@ -40,11 +40,12 @@ class Collector:
 
     def __post_init__(self):
         if self.workdir is None:
-            self.workdir = tempfile.mkdtemp()
+            self.workdir = Path(tempfile.mkdtemp())
 
     def next(self):
         """Iterator that returns <input>, <collection root>, <collection>."""
         # Set up monitoring
+        # TODO: Only start/stop monitor if actually monitoring
         observer = Observer()
         for i in self.inputs:
             self.yielded[i] = set()
