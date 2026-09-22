@@ -62,7 +62,7 @@ class Scheduler:
                     self.dependents[upstream].add(t)
 
             for t, deps in self.waiting_on.items():
-                if len(deps) == 0:
+                if (len(deps) == 0) and (t not in self.ready_tasks):
                     self.ready_tasks.append(t)
 
     def get_work(self):
@@ -74,6 +74,7 @@ class Scheduler:
                     for name, value in t.resources.items():
                         self.available_resources[name] -= value
                     self.running_tasks.add(t)
+                    self.ready_tasks.extend(blocked)
                     return t
                 blocked.append(t)
             self.ready_tasks.extend(blocked)
