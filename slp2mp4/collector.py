@@ -31,6 +31,12 @@ def create_monitor_event_handler(collector, root: Path):
 
 
 @dataclasses.dataclass
+class Collection:
+    slps: list[SlippiArtifact]
+    context: ContextArtifact | None = dataclasses.field(default=None)
+
+
+@dataclasses.dataclass
 class Collector:
     inputs: list[Path]
     kill_event: Event = dataclasses.field(default_factory=Event)
@@ -95,17 +101,17 @@ class Collector:
                 yield from self._recurse(key, tmpdir, relative.parent / path.stem)
             elif path.suffix == ".slp" and path not in self.yielded[key]:
                 self.yielded[key].add(path)
-                yield relative, [SlippiArtifact(path)]
+                yield relative, Collection([SlippiArtifact(path)])
         elif path.is_dir():
             slps = sorted(path.glob("*.slp"), key=util.natsort)
-            artifacts = [SlippiArtifact(slp) for slp in slps]
+            slp_artifacts = [SlippiArtifact(slp) for slp in slps]
             if (len(slps) > 0) and (len(set(slps) & self.yielded[key]) != len(slps)):
-                # TODO: Collection class with `.slps` and `.context`
                 self.yielded[key].update(slps)
                 context = path / "context.json"
+                context_artifact = None
                 if context.is_file():
                     self.yielded[key].add(context)
-                    artifacts.append(ContextArtifact(context))
-                yield relative, artifacts
+                    context_artifact = ContextArtifact(context)
+                yield relative, Collection(slp_artifacts, context_artifact)
             for p in path.iterdir():
                 yield from self._recurse(key, p, relative / p.name)
