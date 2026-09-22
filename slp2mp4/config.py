@@ -14,6 +14,7 @@ from slp2mp4 import util
 DEFAULT_CONFIG_PATH = importlib.resources.files(slp2mp4).joinpath("defaults.toml")
 USER_CONFIG_PATH = Path("~/.slp2mp4.toml").expanduser()
 
+
 # From https://github.com/project-slippi/Ishiiruka/tree/slippi/Source/Core/VideoBackends
 class DolphinBackend(Enum):
     D3D12 = "D3D12"

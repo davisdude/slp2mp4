@@ -13,6 +13,7 @@ from slp2mp4 import util
 
 try:
     from slp2mp4 import version
+
     __version__ = version.version
 except ImportError:
     __version__ = "0.0.0+dev"
@@ -64,8 +65,12 @@ class ConfigDialog(tk.Toplevel):
                 current = current[part]
             current[key[-1]] = var.get()
 
-        data["dolphin"]["backend"] = config.DolphinBackend(data["dolphin"]["backend"]).value
-        data["dolphin"]["resolution"] = config.DolphinResolution.from_display_name(data["dolphin"]["resolution"]).display_name
+        data["dolphin"]["backend"] = config.DolphinBackend(
+            data["dolphin"]["backend"]
+        ).value
+        data["dolphin"]["resolution"] = config.DolphinResolution.from_display_name(
+            data["dolphin"]["resolution"]
+        ).display_name
 
         config_path = Path(config.USER_CONFIG_PATH).expanduser()
         defaults = config.get_default_config().to_dict()
@@ -88,8 +93,12 @@ class ConfigDialog(tk.Toplevel):
         for row, field in enumerate(dataclasses.fields(obj)):
             value = getattr(obj, field.name)
             key = (prefix or ()) + (field.name,)
-            ttk.Label(parent, text=field.name.replace("_", " ")).grid(row=row, column=0, sticky="w")
-            widget = self.build_widget(parent=parent, key=key, value=value, field_type=field.type)
+            ttk.Label(parent, text=field.name.replace("_", " ")).grid(
+                row=row, column=0, sticky="w"
+            )
+            widget = self.build_widget(
+                parent=parent, key=key, value=value, field_type=field.type
+            )
             widget.grid(row=row, column=1, sticky="ew")
 
     def build_widget(self, parent, key, value, field_type):
@@ -100,7 +109,9 @@ class ConfigDialog(tk.Toplevel):
             enum_type = type(value)
             options = enum_display_values(enum_type)
             var = tk.StringVar(value=enum_to_display(value))
-            widget = ttk.Combobox(parent, textvariable=var, values=options, state="readonly")
+            widget = ttk.Combobox(
+                parent, textvariable=var, values=options, state="readonly"
+            )
         elif field_type is int:
             # TODO: Spinners for some with min/max
             var = tk.IntVar(value=value)
@@ -108,9 +119,13 @@ class ConfigDialog(tk.Toplevel):
         elif field_type is Path:
             var = tk.StringVar(value=str(value))
             widget = self.create_path_widget(parent, var)
-        elif isinstance(value, dict) and all(isinstance(v, bool) for v in value.values()):
+        elif isinstance(value, dict) and all(
+            isinstance(v, bool) for v in value.values()
+        ):
             return self.create_bool_dict_widget(parent, key, value)
-        elif isinstance(value, dict) and all(isinstance(v, str) for v in value.values()):
+        elif isinstance(value, dict) and all(
+            isinstance(v, str) for v in value.values()
+        ):
             return self.create_str_dict_widget(parent, key, value)
         else:
             var = tk.StringVar(value=str(value))
@@ -120,8 +135,12 @@ class ConfigDialog(tk.Toplevel):
 
     def create_path_widget(self, parent, var):
         frame = ttk.Frame(parent)
-        entry = ttk.Entry(frame, textvariable=var).pack(side="left", fill="x", expand=True)
-        button = ttk.Button(frame, text="Browse", command=lambda: self.browse_path(var)).pack(side="left")
+        entry = ttk.Entry(frame, textvariable=var).pack(
+            side="left", fill="x", expand=True
+        )
+        button = ttk.Button(
+            frame, text="Browse", command=lambda: self.browse_path(var)
+        ).pack(side="left")
         return frame
 
     def browse_path(self, var):
@@ -133,7 +152,9 @@ class ConfigDialog(tk.Toplevel):
         frame = ttk.Frame(parent)
         for row, (name, enabled) in enumerate(values.items()):
             var = tk.BooleanVar(value=enabled)
-            ttk.Checkbutton(frame, text=name, variable=var).grid(row=row, column=0, sticky="w")
+            ttk.Checkbutton(frame, text=name, variable=var).grid(
+                row=row, column=0, sticky="w"
+            )
             key = (prefix or ()) + (name,)
             self.variables[key] = var
         return frame
