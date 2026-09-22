@@ -102,15 +102,16 @@ class Collector:
         if relative is None:
             relative = path
         if path.is_file():
-            # TODO: Don't re-parse files
-            if zipfile.is_zipfile(path):
-                tmpdir = Path(tempfile.mkdtemp(dir=self.workdir))
-                with zipfile.ZipFile(path, "r") as archive:
-                    archive.extractall(path=tmpdir)
-                yield from self._recurse(key, tmpdir, relative.parent / path.stem)
-            elif path.suffix == ".slp" and path not in self.yielded[key]:
-                self.yielded[key].add(path)
-                yield relative, Collection([SlippiArtifact(path)])
+            if path not in self.yielded[key]:
+                if zipfile.is_zipfile(path):
+                    self.yielded[key].add(path)
+                    tmpdir = Path(tempfile.mkdtemp(dir=self.workdir))
+                    with zipfile.ZipFile(path, "r") as archive:
+                        archive.extractall(path=tmpdir)
+                    yield from self._recurse(key, tmpdir, relative.parent / path.stem)
+                elif path.suffix == ".slp":
+                    self.yielded[key].add(path)
+                    yield relative, Collection([SlippiArtifact(path)])
         elif path.is_dir():
             slps = sorted(path.glob("*.slp"), key=util.natsort)
             slp_artifacts = [SlippiArtifact(slp) for slp in slps]
