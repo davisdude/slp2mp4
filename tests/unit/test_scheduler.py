@@ -167,6 +167,8 @@ def test_all_tasks_execute_once(make_pipeline):
         if work is None:
             break
         assert work not in completed
+        for i in work.inputs:
+            i.path.touch(exist_ok=True)
         pipeline.sched.finish(work)
         completed.add(work)
 
