@@ -1,8 +1,10 @@
 # Takes collections and creates tasks / schedules them
 
+import concurrent.futures
 import dataclasses
 import tempfile
 import time
+import traceback
 from concurrent.futures import ThreadPoolExecutor
 from logging import Logger
 from multiprocessing import Event
@@ -103,6 +105,13 @@ class Orchestrator:
     def run(self):
         # 1 do_work per num_proc, + 1 for collect_tasks
         with ThreadPoolExecutor(self.num_procs + 1) as executor:
-            executor.submit(self.collect_tasks)
+            futures = [executor.submit(self.collect_tasks)]
             for _ in range(self.num_procs):
-                executor.submit(self.do_work)
+                futures.append(executor.submit(self.do_work))
+            for future in concurrent.futures.as_completed(futures):
+                try:
+                    future.result()
+                except Exception:  # noqa: BLE001
+                    self.log.error(
+                        f"Orchestrator encountered exception: {traceback.format_exc()}"
+                    )

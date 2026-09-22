@@ -3,7 +3,6 @@
 import dataclasses
 import threading
 import tkinter as tk
-import typing
 import webbrowser
 from enum import Enum
 from multiprocessing import Event
@@ -60,19 +59,13 @@ def build_dataclass(variables, parent, obj, prefix=None):
             row += 1
 
 
-def get_optional_type(field_type):
-    # Assumes Unions are [X, None]
-    args = typing.get_args(field_type)
-    return next(filter(lambda x: x is not None, args))
-
-
 def is_dict_of_type(d, t):
     return isinstance(d, dict) and all(isinstance(v, t) for v in d.values())
 
 
 def build_widget(variables, parent, key, value, field_type):
-    if typing.get_origin(field_type) is typing.Union:
-        field_type = get_optional_type(field_type)
+    if config.is_optional_type(field_type):
+        field_type = config.get_optional_type(field_type)
         default_value = None
         if (field_type is Path) or (field_type is str):
             default_value = ""

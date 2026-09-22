@@ -1,5 +1,6 @@
 # Simple scheduler that ensures inputs run before outputs
 
+import copy
 import dataclasses
 from collections import deque
 from threading import Lock
@@ -20,7 +21,14 @@ class Scheduler:
 
     waiting_on: dict[Task, set[Task]] = dataclasses.field(default_factory=dict)
     dependents: dict[Task, set[Task]] = dataclasses.field(default_factory=dict)
+
     lock: Lock = dataclasses.field(default_factory=Lock, init=False)
+    full_resources: dict[str, float] = dataclasses.field(
+        default_factory=dict, init=False
+    )
+
+    def __post_init__(self):
+        self.full_resources = copy.deepcopy(self.available_resources)
 
     def submit(self, tasks: list[Task]):
         with self.lock:
@@ -32,7 +40,7 @@ class Scheduler:
                             f"Task '{t.name}' requires unknown resource '{resource}'."
                         )
                     if (req := t.resources[resource]) > (
-                        avail := self.available_resources[resource]
+                        avail := self.full_resources[resource]
                     ):
                         raise RuntimeError(
                             f"Task '{t.name}' will never satisfy '{resource}' requirement ({req} > {avail})."

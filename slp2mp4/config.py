@@ -4,8 +4,10 @@ import dataclasses
 import importlib.resources
 import shutil
 import tomllib
+import typing
 from enum import Enum
 from pathlib import Path
+from types import UnionType
 
 import slp2mp4
 from slp2mp4 import log, util
@@ -187,19 +189,28 @@ class Config:
 class RuntimeOptions:
     dry_run: bool = dataclasses.field(
         default=False,
-        metadata={"help": "Don't actually render videos; useful for testing"},
+        metadata={
+            "short": "n",
+            "help": "Don't actually render videos; useful for testing",
+        },
     )
     monitor: bool = dataclasses.field(
         default=False,
-        metadata={"help": "Continuously watch input directories"},
+        metadata={"short": "m", "help": "Continuously watch input directories"},
     )
     temporary_directory: Path | None = dataclasses.field(
         default=None,
-        metadata={"help": "Where to write temp videos; leave blank for system default"},
+        metadata={
+            "short": "t",
+            "help": "Where to write temp videos; leave blank for system default",
+        },
     )
     output_directory: Path = dataclasses.field(
         default=Path("."),
-        metadata={"help": "Where to write output videos"},
+        metadata={
+            "short": "o",
+            "help": "Where to write output videos",
+        },
     )
     debug: bool = dataclasses.field(default=False)
 
@@ -228,3 +239,14 @@ def get_config(config_files: list[Path] | None = None):
     if config_files is None:
         config_files = [DEFAULT_CONFIG_PATH, USER_CONFIG_PATH]
     return _load_configs(config_files)
+
+
+def is_optional_type(field_type):
+    t = typing.get_origin(field_type)
+    return t in [typing.Union, UnionType]
+
+
+def get_optional_type(field_type):
+    # Assumes Unions are [X, None]
+    args = typing.get_args(field_type)
+    return next(filter(lambda x: x is not None, args))

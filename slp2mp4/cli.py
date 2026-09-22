@@ -1,75 +1,62 @@
-import argparse
-import multiprocessing
-import pathlib
+import dataclasses
 import signal
-import sys
+from argparse import ArgumentParser
+from multiprocessing import Event
+from pathlib import Path
 
-from slp2mp4 import log, modes, version
+from slp2mp4 import config, log
+from slp2mp4.config import RuntimeOptions
+from slp2mp4.orchestrator import Orchestrator
 
 
-def get_parser():
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-o",
-        "--output-directory",
-        type=pathlib.Path,
-        default=".",
-        help="set path to output videos",
-    )
-    parser.add_argument(
-        "-n",
-        "--dry-run",
-        action="store_true",
-        help="show inputs and outputs and exit",
-    )
-    parser.add_argument(
-        "-d",
-        "--debug",
-        action="store_true",
-        help="log more info",
-    )
-    parser.add_argument(
-        "-v",
-        "--version",
-        action="version",
-        version=version.version,
-    )
-    subparser = parser.add_subparsers(title="mode", required=True)
-    for mode_name, mode in modes.MODES.items():
-        mode_parser = subparser.add_parser(mode_name, help=mode.help)
-        mode_parser.add_argument(
-            "paths",
-            nargs="+",
-            help=mode.description,
-            type=pathlib.Path,
-        )
-        mode_parser.set_defaults(run=mode.mode)
+def make_sigint_handler(logger, event: Event):
+    def func(_sig, _frame):
+        logger.info("Got sigint - stopping")
+        event.set()
 
-    return parser
+    return func
 
 
 def main():
-    parser = get_parser()
-    args = vars(parser.parse_args())
-    run = args.pop("run")
-    debug = args.pop("debug")
-    mode = run(**args)
-    manager = multiprocessing.Manager()
-    event = manager.Event()
-    logger = log.update_logger(debug)
+    parser = ArgumentParser()
+    parser.add_argument("inputs", type=Path, nargs="+")
+    for field in dataclasses.fields(RuntimeOptions):
+        field_type = field.type
+        kwargs = {}
+        metadata = getattr(field, "metadata", {})
+        if default := field.default:
+            kwargs["default"] = default
+        if help_text := metadata.get("help"):
+            kwargs["help"] = help_text
+        if config.is_optional_type(field_type):
+            field_type = config.get_optional_type(field_type)
+        if (field_type is bool) and (default is not None):
+            kwargs["action"] = "store_false" if default else "store_true"
+        else:
+            kwargs["type"] = field_type
+        name = field.name.replace("_", "-")
+        args = []
+        if short := metadata.get("short"):
+            args.append(f"-{short}")
+        args.append(f"--{name}")
+        parser.add_argument(*args, **kwargs)
+    args = parser.parse_args()
 
-    def _sigint_handler(sig, frame):
-        logger.info("Got interrupt - stopping")
-        event.set()
-        mode.cleanup()
-        sys.exit(0)
+    kill_event = Event()
+    conf = config.get_config()
+    logger = log.update_logger(args.debug)
 
-    signal.signal(signal.SIGINT, _sigint_handler)
+    signal.signal(signal.SIGINT, make_sigint_handler(logger, kill_event))
 
-    with mode.run(event) as (executor, future):
-        if executor is not None:
-            future.result()
-    mode.cleanup()
+    orchestrator = Orchestrator(
+        inputs=args.inputs,
+        conf=conf,
+        kill_event=kill_event,
+        monitor=args.monitor,
+        dry_run=args.dry_run,
+        workdir=args.temporary_directory,
+    )
+    orchestrator.run()
 
 
 if __name__ == "__main__":

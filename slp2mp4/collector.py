@@ -52,6 +52,12 @@ class Collector:
             self.workdir = Path(tempfile.mkdtemp())
 
     def next(self):
+        try:
+            yield from self._next()
+        finally:
+            self.done = True
+
+    def _next(self):
         """Iterator that returns <collection root>, <collection>."""
         # Set up monitoring
         for i in self.inputs:
@@ -118,3 +124,5 @@ class Collector:
                 yield relative, Collection(slp_artifacts, context_artifact)
             for p in path.iterdir():
                 yield from self._recurse(key, p, relative / p.name)
+        else:
+            raise RuntimeError(f"Input '{path}' does not exist!")
