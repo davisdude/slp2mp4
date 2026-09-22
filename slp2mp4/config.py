@@ -202,6 +202,7 @@ class RuntimeOptions:
         default=Path("."),
         metadata={"help": "Where to write output videos"},
     )
+    debug: bool = dataclasses.field(default=False)
 
 
 def _load_configs(config_files: list[Path]) -> Config:

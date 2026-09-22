@@ -8,13 +8,14 @@ import webbrowser
 from enum import Enum
 from multiprocessing import Event
 from pathlib import Path
-from tkinter import filedialog, ttk
+from tkinter import filedialog, ttk, scrolledtext
 
 import tomli_w
 
 from slp2mp4 import config, util
 from slp2mp4.config import DolphinBackend, DolphinResolution
 from slp2mp4.orchestrator import Orchestrator
+from slp2mp4 import log
 
 try:
     from slp2mp4 import version
@@ -231,7 +232,7 @@ class AboutDialog(tk.Toplevel):
 
 
 class Application(tk.Tk):
-    def __init__(self):
+    def __init__(self, logger=None):
         super().__init__()
         self.title(f"slp2mp4")
         self.create_menu()
@@ -240,10 +241,11 @@ class Application(tk.Tk):
         self.runtime_options = config.RuntimeOptions()
         self.kill_event = Event()
 
-        # TODO: Log window
         self.make_input_selector()
         self.make_runtime_options()
         self.make_actions()
+        self.make_log_text()
+        self.log = logger or log.update_logger(False, self.log_text)
 
     def create_menu(self):
         menubar = tk.Menu(self)
@@ -289,6 +291,10 @@ class Application(tk.Tk):
         ttk.Button(frame, text="Run", command=self.run).pack(side="left")
         ttk.Button(frame, text="Stop", command=self.stop).pack(side="left")
 
+    def make_log_text(self):
+        self.log_text = scrolledtext.ScrolledText(self, height=10, wrap=tk.WORD)
+        self.log_text.pack(fill="both", expand=True)
+
     def add_files(self):
         filenames = filedialog.askopenfilenames()
         for filename in filenames:
@@ -316,8 +322,11 @@ class Application(tk.Tk):
         self.listbox.delete(0, tk.END)
 
     def run(self):
-        # TODO: Dry run
         # TODO: Output directory
+        debug = self.variables[("debug",)].get()
+        self.log = log.update_logger(debug, self.log_text)
+        self.log.debug("Debug")
+
         self.kill_event.clear()
         conf = config.get_config()
         orchestrator = Orchestrator(
@@ -325,6 +334,7 @@ class Application(tk.Tk):
             conf=conf,
             kill_event=self.kill_event,
             monitor=self.variables[("monitor",)].get(),
+            dry_run=self.variables[("dry_run",)].get(),
             workdir=self.variables[("temporary_directory",)].get(),
         )
         threading.Thread(target=orchestrator.run).start()

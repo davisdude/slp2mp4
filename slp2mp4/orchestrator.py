@@ -6,6 +6,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import Event
 from pathlib import Path
+from logging import Logger
 
 import psutil
 
@@ -15,6 +16,7 @@ from slp2mp4.config import Config
 from slp2mp4.scheduler import Scheduler
 from slp2mp4.task import ConcatVideosTask, RenderGameTask
 from slp2mp4.worker import Worker
+from slp2mp4 import log
 
 
 @dataclasses.dataclass
@@ -23,13 +25,19 @@ class Orchestrator:
     conf: Config
     kill_event: Event = dataclasses.field(default_factory=Event)
     monitor: bool = dataclasses.field(default=False)
+    dry_run: bool = dataclasses.field(default=False)
+    num_procs: int | None = dataclasses.field(default=None)
     workdir: Path | None = dataclasses.field(default=None)
     collector: Collector | None = dataclasses.field(default=None)
     worker: Worker | None = dataclasses.field(default=None)
     scheduler: Scheduler | None = dataclasses.field(default=None)
-    num_procs: int | None = dataclasses.field(default=None)
+    log: Logger | None = dataclasses.field(default=None)
 
     def __post_init__(self):
+        if self.num_procs is None:
+            self.num_procs  = self.conf.runtime.parallel
+        if self.num_procs == 0:
+            self.num_procs = psutil.cpu_count(logical=False) or 1
         if self.workdir is None:
             self.workdir = Path(tempfile.mkdtemp())
         if self.collector is None:
@@ -39,10 +47,9 @@ class Orchestrator:
         if self.worker is None:
             self.worker = Worker(self.conf, self.kill_event)
         if self.scheduler is None:
-            if (num_procs := self.conf.runtime.parallel) == 0:
-                num_procs = psutil.cpu_count(logical=False) or 1
-            self.num_procs = num_procs
-            self.scheduler = Scheduler({"cpu": num_procs})
+            self.scheduler = Scheduler({"cpu": self.num_procs})
+        if self.log is None:
+            self.log = log.get_logger()
 
     def format_output_name(self, path: Path):
         # TODO: pathvalidate
@@ -74,12 +81,18 @@ class Orchestrator:
             tasks = render_tasks + [concat_task]
             self.scheduler.submit(tasks)
 
+            if self.dry_run:
+                self.log.info(output_artifact.path)
+                for slp in collection.slps:
+                    self.log.info(f"\t{slp.path}")
+
     def do_work(self):
         while not self.kill_event.is_set():
             task = self.scheduler.get_work()
             if task is not None:
                 try:
-                    self.worker.submit(task)
+                    if not self.dry_run:
+                        self.worker.submit(task)
                 finally:
                     self.scheduler.finish(task)
             else:
