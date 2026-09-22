@@ -3,6 +3,7 @@
 import dataclasses
 import tkinter as tk
 import typing
+import webbrowser
 from enum import Enum
 from pathlib import Path
 from tkinter import filedialog, ttk
@@ -18,6 +19,10 @@ try:
     __version__ = version.version
 except ImportError:
     __version__ = "0.0.0+dev"
+
+
+HOME_PAGE = "https://github.com/davisdude/slp2mp4"
+LICENSE_PAGE = f"{HOME_PAGE}/blob/master/LICENSE.md"
 
 
 def enum_display_values(enum_type):
@@ -193,10 +198,39 @@ class ConfigDialog(tk.Toplevel):
                 var.set(current)
 
 
+class AboutDialog(tk.Toplevel):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.title("slp2mp4 info")
+
+        # Make dialog modal
+        self.transient(parent)
+        self.grab_set()
+
+        self.create_widgets()
+
+    def create_widgets(self):
+        frame = ttk.LabelFrame(self, text="About")
+        frame.pack(fill="both", expand=True, padx=10, pady=10)
+
+        ttk.Label(frame, text=f"Version").grid(row=0, column=0, sticky="w")
+        ttk.Label(frame, text=__version__).grid(row=0, column=1, sticky="w")
+
+        ttk.Label(frame, text="Hopepage").grid(row=1, column=0, sticky="w")
+        link = ttk.Label(frame, text=HOME_PAGE, foreground="blue", cursor="hand2")
+        link.grid(row=1, column=1, sticky="w")
+        link.bind("<Button-1>", lambda _: webbrowser.open(HOME_PAGE))
+
+        ttk.Label(frame, text="License").grid(row=2, column=0, sticky="w")
+        link = ttk.Label(frame, text=LICENSE_PAGE, foreground="blue", cursor="hand2")
+        link.grid(row=2, column=1, sticky="w")
+        link.bind("<Button-1>", lambda _: webbrowser.open(LICENSE_PAGE))
+
+
 class Application(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title(f"slp2mp4 {__version__}")
+        self.title(f"slp2mp4")
         self.create_menu()
         self.inputs = []
         self.variables: dict[str, tk.Variable] = {}
@@ -209,18 +243,18 @@ class Application(tk.Tk):
         menubar = tk.Menu(self)
         self.config(menu=menubar)
 
-        # File
         file_menu = tk.Menu(menubar, tearoff=False)
+        menubar.add_cascade(label="Menu", menu=file_menu)
+        file_menu.add_command(label="Configure", command=self.show_config_dialog)
+        file_menu.add_command(label="About", command=self.show_about_dialog)
         file_menu.add_command(label="Exit", command=self.destroy)
-        menubar.add_cascade(label="File", menu=file_menu)
-
-        # Settings
-        settings_menu = tk.Menu(menubar, tearoff=False)
-        settings_menu.add_command(label="Settings", command=self.show_config_dialog)
-        menubar.add_cascade(label="Configure", menu=settings_menu)
 
     def show_config_dialog(self):
         dialog = ConfigDialog(self)
+        self.wait_window(dialog)
+
+    def show_about_dialog(self):
+        dialog = AboutDialog(self)
         self.wait_window(dialog)
 
     def make_input_selector(self):
