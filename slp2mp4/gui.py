@@ -273,7 +273,7 @@ class Application(tk.Tk):
         frame = ttk.LabelFrame(self, text="Inputs")
         frame.pack(fill="both", expand=True, padx=10, pady=10)
 
-        self.listbox = tk.Listbox(frame, selectmode=tk.EXTENDED, height=10)
+        self.listbox = tk.Listbox(frame, selectmode=tk.EXTENDED, height=5)
         self.listbox.pack(fill="both", expand=True)
 
         buttons = ttk.Frame(frame)
@@ -338,13 +338,18 @@ class Application(tk.Tk):
         self.kill_event.clear()
         conf = config.get_config()
         conf.validate()
+        workdir = self.variables[("temporary_directory",)].get()
+        if workdir.strip() != "":
+            workdir = Path(workdir)
+        else:
+            workdir = None
         orchestrator = Orchestrator(
             inputs=self.inputs,
             conf=conf,
             kill_event=self.kill_event,
             monitor=self.variables[("monitor",)].get(),
             dry_run=self.variables[("dry_run",)].get(),
-            workdir=self.variables[("temporary_directory",)].get(),
+            workdir=workdir,
         )
         threading.Thread(target=orchestrator.run).start()
 
