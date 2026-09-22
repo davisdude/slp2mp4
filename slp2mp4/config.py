@@ -69,6 +69,18 @@ class PathsConfig:
         assert self.slippi_playback.expanduser().is_file()
         assert self.ssbm_iso.expanduser().is_file()
 
+    def get_ffprobe(self):
+        # Assume it's relative to ffmpeg
+        suffix = self.ffmpeg.suffix
+        ffprobe = self.ffmpeg.parent / f"ffprobe{suffix}"
+        if ffprobe.is_file():
+            return ffprobe
+        # Try to find in path
+        ffprobe = shutil.which("ffprobe")
+        if ffprobe is not None:
+            return Path(ffprobe)
+        raise RuntimeError(f"Could not find ffprobe.")
+
 
 @dataclasses.dataclass
 class DolphinConfig:
