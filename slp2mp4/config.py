@@ -127,10 +127,18 @@ class FfmpegConfig:
 
 @dataclasses.dataclass
 class RuntimeConfig:
-    parallel: int
-    preserve_directory_structure: bool
-    youtubify_names: bool
-    name_replacements: dict[str, str]
+    parallel: int = dataclasses.field(
+        metadata={"help": "Max # of slippi instances; 0 = # of logical CPU cores"}
+    )
+    preserve_directory_structure: bool = dataclasses.field(
+        metadata={"help": "Recreate input directory structure instead of being 'flat'"}
+    )
+    youtubify_names: bool = dataclasses.field(
+        metadata={"help": "Enable name replacements"}
+    )
+    name_replacements: dict[str, str] = dataclasses.field(
+        metadata={"help": "Mapping of characters to replace in video titles"}
+    )
 
     @classmethod
     def from_dict(cls, data):
@@ -178,10 +186,22 @@ class Config:
 
 @dataclasses.dataclass
 class RuntimeOptions:
-    dry_run: bool = dataclasses.field(default=False)
-    monitor: bool = dataclasses.field(default=False)
-    output_directory: Optional[Path] = dataclasses.field(default=None)
-    temporary_directory: Optional[Path] = dataclasses.field(default=None)
+    dry_run: bool = dataclasses.field(
+        default=False,
+        metadata={"help": "Don't actually render videos; useful for testing"},
+    )
+    monitor: bool = dataclasses.field(
+        default=False,
+        metadata={"help": "Continuously watch input directories"},
+    )
+    temporary_directory: Optional[Path] = dataclasses.field(
+        default=None,
+        metadata={"help": "Where to write temp videos; leave blank for system default"},
+    )
+    output_directory: Path = dataclasses.field(
+        default=Path("."),
+        metadata={"help": "Where to write output videos"},
+    )
 
 
 def _load_configs(config_files: list[Path]) -> Config:

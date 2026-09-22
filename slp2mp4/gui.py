@@ -29,16 +29,24 @@ def enum_to_display(enum_value):
 
 
 def build_dataclass(variables, parent, obj, prefix=None):
-    for row, field in enumerate(dataclasses.fields(obj)):
+    row = 0
+    for field in dataclasses.fields(obj):
         value = getattr(obj, field.name)
         key = (prefix or ()) + (field.name,)
-        ttk.Label(parent, text=field.name.replace("_", " ")).grid(
+        ttk.Label(parent, text=field.name.replace("_", " ").title()).grid(
             row=row, column=0, sticky="w"
         )
         widget = build_widget(
             variables=variables, parent=parent, key=key, value=value, field_type=field.type
         )
         widget.grid(row=row, column=1, sticky="ew")
+        row += 1
+
+        if (metadata := getattr(field, "metadata")):
+            if (help_text := metadata.get("help")):
+                label = ttk.Label(parent, text=help_text, foreground="gray40")
+                label.grid(row=row, column=0, columnspan=2, sticky="w")
+                row += 1
 
 
 def get_optional_type(field_type):
@@ -55,7 +63,7 @@ def build_widget(variables, parent, key, value, field_type):
     if typing.get_origin(field_type) is typing.Union:
         field_type = get_optional_type(field_type)
         default_value = None
-        if field_type is str:
+        if (field_type is Path) or (field_type is str):
             default_value = ""
         value = value if (value is not None) else default_value
         return build_widget(variables, parent, key, value, field_type)
