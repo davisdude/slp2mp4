@@ -94,6 +94,8 @@ class Orchestrator:
                 self.log.info(output_artifact.path)
                 for slp in collection.slps:
                     self.log.info(f"\t{slp.path}")
+                if collection.context:
+                    self.log.info(f"\t{collection.context.path}")
 
     def do_work(self):
         while not self.kill_event.is_set():
