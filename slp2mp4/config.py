@@ -6,6 +6,7 @@ import shutil
 import tomllib
 from enum import Enum
 from pathlib import Path
+from typing import Optional
 
 import slp2mp4
 from slp2mp4 import log, util
@@ -55,6 +56,7 @@ class PathsConfig:
     ffmpeg: Path
     slippi_playback: Path
     ssbm_iso: Path
+    ffprobe: Optional[Path] = dataclasses.field(default=None)
 
     @classmethod
     def from_dict(cls, data):
@@ -62,7 +64,12 @@ class PathsConfig:
             ffmpeg=Path(data["ffmpeg"]),
             slippi_playback=Path(data["slippi_playback"]),
             ssbm_iso=Path(data["ssbm_iso"]),
+            ffprobe=data.get("ffprobe"),
         )
+
+    def __post_init__(self):
+        if self.ffprobe is not None:
+            self.ffprobe = Path(self.ffprobe)
 
     def validate(self):
         assert shutil.which(self.ffmpeg) is not None
@@ -70,6 +77,8 @@ class PathsConfig:
         assert self.ssbm_iso.expanduser().is_file()
 
     def get_ffprobe(self):
+        if self.ffprobe is not None:
+            return self.ffprobe
         # Assume it's relative to ffmpeg
         suffix = self.ffmpeg.suffix
         ffprobe = self.ffmpeg.parent / f"ffprobe{suffix}"
@@ -158,13 +167,21 @@ class Config:
         data["dolphin"]["backend"] = data["dolphin"]["backend"].value
         data["dolphin"]["resolution"] = data["dolphin"]["resolution"].display_name
         for k, v in data["paths"].items():
-            data["paths"][k] = str(v)
+            data["paths"][k] = str(v) if (v is not None) else None
         return data
 
     def validate(self):
         for field in dataclasses.fields(self):
             attr = getattr(self, field.name)
             attr.validate()
+
+
+@dataclasses.dataclass
+class RuntimeOptions:
+    dry_run: bool = dataclasses.field(default=False)
+    monitor: bool = dataclasses.field(default=False)
+    output_directory: Optional[Path] = dataclasses.field(default=None)
+    temporary_directory: Optional[Path] = dataclasses.field(default=None)
 
 
 def _load_configs(config_files: list[Path]) -> Config:
