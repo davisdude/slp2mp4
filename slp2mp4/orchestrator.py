@@ -66,7 +66,11 @@ class Orchestrator:
         # TODO: Rename using context.json
         if path.is_file():
             return self.format_output_name(path.with_suffix(".mp4"))
-        parent = path.parent
+        if path != Path("."):
+            parent = path.parent
+        else:
+            parent = Path("..")
+            path = path.expanduser().absolute()
         return self.format_output_name(parent / (path.name + ".mp4"))
 
     def collect_tasks(self):
