@@ -5,7 +5,8 @@ from pathlib import Path
 
 from slp2mp4 import config
 from slp2mp4.artifact import Mp4Artifact, SlippiArtifact
-from slp2mp4.task import RenderGameTask, Worker
+from slp2mp4.task import RenderGameTask
+from slp2mp4.worker import Worker
 
 
 def test_render_full(make_file, check_duration):

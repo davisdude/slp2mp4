@@ -5,7 +5,8 @@ from pathlib import Path
 
 from slp2mp4 import config
 from slp2mp4.artifact import Mp4Artifact, SlippiArtifact
-from slp2mp4.task import ConcatVideosTask, RenderGameTask, Worker
+from slp2mp4.task import ConcatVideosTask, RenderGameTask
+from slp2mp4.worker import Worker
 
 
 def test_concat(make_file, get_duration, check_duration):
