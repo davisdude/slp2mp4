@@ -17,6 +17,9 @@ class Artifact:
     def exists(self):
         return self.path.is_file()
 
+    def cleanup(self):
+        self.path.unlink()
+
 
 @dataclass(frozen=True)
 class ExistingFileArtifact(Artifact):
@@ -24,6 +27,9 @@ class ExistingFileArtifact(Artifact):
         super().__post_init__()
         if not self.exists():
             raise RuntimeError(f"'{self.path}' does not exist.")
+
+    def cleanup(self):
+        pass
 
 
 @dataclass(frozen=True)

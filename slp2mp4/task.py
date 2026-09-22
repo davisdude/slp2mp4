@@ -23,6 +23,10 @@ class Task:
             if not i.exists():
                 raise RuntimeError(f"Input {i} does not exist.")
 
+    def cleanup(self):
+        for i in self.inputs:
+            i.cleanup()
+
 
 @dataclasses.dataclass(eq=False)
 class RenderGameTask(Task):

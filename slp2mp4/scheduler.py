@@ -91,8 +91,7 @@ class Scheduler:
                     self.ready_tasks.append(dependent)
             self.running_tasks.remove(t)
             self.completed_tasks.add(t)
-
-            # TODO: Cleanup non-ExistingFileArtifact files if no dependents?
+            t.cleanup()
 
     def _resources_available(self, t: Task):
         for name, amount in t.resources.items():
