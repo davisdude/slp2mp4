@@ -2,7 +2,7 @@
 
 import dataclasses
 
-from slp2mp4.artifact import Artifact
+from slp2mp4.artifact import Artifact, Mp4Artifact, TimestampArtifact
 
 
 @dataclasses.dataclass(eq=False)
@@ -41,9 +41,17 @@ class RenderGameTask(Task):
 
 @dataclasses.dataclass(eq=False)
 class ConcatVideosTask(Task):
+    video: Mp4Artifact = dataclasses.field(init=False)
+    timestamp: TimestampArtifact | None = dataclasses.field(init=False)
+
     def __post_init__(self):
-        super().__post_init__()
-        assert len(self.outputs) == 1
+        videos = [o for o in self.outputs if isinstance(o, Mp4Artifact)]
+        timestamps = [o for o in self.outputs if isinstance(o, Mp4Artifact)]
+        assert len(videos) == 1
+        assert len(timestamps) <= 1
+        self.video = videos[0]
+        if timestamps:
+            self.timestamp = timestamps[0]
 
     @property
     def resources(self):
