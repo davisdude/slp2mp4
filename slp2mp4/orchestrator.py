@@ -17,7 +17,7 @@ import psutil
 from slp2mp4 import log
 from slp2mp4.artifact import Artifact, Mp4Artifact, TimestampArtifact
 from slp2mp4.collector import Collection, Collector
-from slp2mp4.config import Config
+from slp2mp4.config import CombineMode, Config
 from slp2mp4.scheduler import Scheduler
 from slp2mp4.task import ConcatVideosTask, RenderGameTask, Task
 from slp2mp4.worker import Worker
@@ -76,9 +76,10 @@ class Orchestrator:
         return self.format_output_name(parent / (path.name + ".mp4"))
 
     def next(self):
-        """Iterator that returns <input>, <task>."""
-        tasks = []
+        """Iterator that returns <task>."""
+        tasks_by_input: dict[Path, list[Task]] = defaultdict(list)
         for input_item, path, collection in self.collector.next():
+            tasks = []
             tmp_vids = []
             for index, slp in enumerate(collection.slps):
                 _handle, tmp = tempfile.mkstemp(suffix=".mp4", dir=self.workdir)
@@ -89,36 +90,52 @@ class Orchestrator:
                 if collection.context is not None:
                     inputs.append(collection.context)
                 tasks.append(RenderGameTask(f"render {slp.path}", inputs, [vid], index))
-            _handle, tmp = tempfile.mkstemp(suffix=".mp4", dir=self.workdir)
-            vid_path = Path(tmp)
-            vid = Mp4Artifact(vid_path)
-            timestamps = TimestampArtifact(vid_path.with_suffix(".txt"))
-            self.tmp_artifacts.extend([vid, timestamps])
-            tasks.append(
-                ConcatVideosTask(f"concat {vid.path}", tmp_vids, [vid, timestamps])
-            )
-            yield input_item, tasks
 
-        # TODO: yield more concats based on config.combine_mode
-        # leaves = self.scheduler.get_leaves()
+            _handle, tmp_mp4 = tempfile.mkstemp(suffix=".mp4", dir=self.workdir)
+            vid = Mp4Artifact(Path(tmp_mp4))
+            _handle, tmp_txt = tempfile.mkstemp(suffix=".txt", dir=self.workdir)
+            txt = TimestampArtifact(Path(tmp_txt))
+            outputs = [vid, txt]
+
+            self.tmp_artifacts.extend(outputs)
+            tasks.append(ConcatVideosTask(f"concat {vid.path}", tmp_vids, outputs))
+            tasks_by_input[input_item].extend(tasks)
+            yield tasks
+
+        leaves = self.scheduler.get_leaves()
+        if self.conf.runtime.combine_mode == CombineMode.ALL:
+            # TODO: Sorting
+            all_vids = [task.video for task in leaves]
+
+            _handle, tmp_mp4 = tempfile.mkstemp(suffix=".mp4", dir=self.workdir)
+            vid = Mp4Artifact(Path(tmp_mp4))
+            _handle, tmp_txt = tempfile.mkstemp(suffix=".txt", dir=self.workdir)
+            txt = TimestampArtifact(Path(tmp_txt))
+            outputs = [vid, txt]
+
+            self.tmp_artifacts.extend(outputs)
+            yield [ConcatVideosTask("concat all", all_vids, outputs)]
+        elif self.conf.runtime.combine_mode == CombineMode.BY_INPUT:
+            for tasks in tasks_by_input.values():
+                pass
+                # TODO: Sorting
+        # TODO: BY_PHASE
 
         # TODO: Move final tmp files to real names
 
     def _print_leaf(self, leaf: Task, indent_level=0):
         indent = "\t"
-        outputs = (", ").join(o.path.name for o in leaf.outputs)
+        outputs = (", ").join(str(o.path) for o in leaf.outputs)
         self.log.info(f"{indent * indent_level}{outputs}")
         for i in leaf.inputs:
             task = self.scheduler.get_producer(i)
             if task:
                 self._print_leaf(task, indent_level + 1)
             else:
-                self.log.info(f"{indent * (indent_level + 1)}{i.path.name}")
+                self.log.info(f"{indent * (indent_level + 1)}{i.path}")
 
     def collect_tasks(self):
-        tasks_by_input: dict[Path, list[Task]] = defaultdict(list)
-        for input_item, tasks in self.next():
-            tasks_by_input[input_item].extend(tasks)
+        for tasks in self.next():
             self.scheduler.submit(tasks)
 
         leaves = self.scheduler.get_leaves()

@@ -21,6 +21,7 @@ class Scheduler:
 
     waiting_on: dict[Task, set[Task]] = dataclasses.field(default_factory=dict)
     dependents: dict[Task, set[Task]] = dataclasses.field(default_factory=dict)
+    producers: dict[Artifact, Task] = dataclasses.field(default_factory=dict)
 
     lock: Lock = dataclasses.field(default_factory=Lock, init=False)
     full_resources: dict[str, float] = dataclasses.field(
@@ -32,7 +33,6 @@ class Scheduler:
 
     def submit(self, tasks: list[Task]):
         with self.lock:
-            producer = {}
             for t in tasks:
                 for resource in t.resources:
                     if resource not in self.available_resources:
@@ -47,7 +47,7 @@ class Scheduler:
                         )
 
                 for output in t.outputs:
-                    producer[output] = t
+                    self.producers[output] = t
                 self.waiting_on[t] = set()
                 self.dependents[t] = set()
 
@@ -55,7 +55,7 @@ class Scheduler:
                 for i in t.inputs:
                     if isinstance(i, ExistingFileArtifact):
                         continue
-                    upstream = producer.get(i)
+                    upstream = self.producers.get(i)
                     if upstream is None:
                         raise RuntimeError(f"No producer found for artifact '{i}'.")
                     self.waiting_on[t].add(upstream)
@@ -104,13 +104,7 @@ class Scheduler:
             ]
 
     def get_producer(self, artifact: Artifact):
-        with self.lock:
-            for task in self.running_tasks | self.completed_tasks:
-                if artifact in task.outputs:
-                    return task
-            for task in self.ready_tasks:
-                if artifact in task.outputs:
-                    return task
+        return self.producers.get(artifact)
 
     def _resources_available(self, t: Task):
         for name, amount in t.resources.items():
