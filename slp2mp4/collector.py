@@ -111,6 +111,7 @@ class Collector:
             if path not in self.yielded[key]:
                 if zipfile.is_zipfile(path):
                     self.yielded[key].add(path)
+                    # TODO: Clear these directories as well
                     tmpdir = Path(tempfile.mkdtemp(dir=self.workdir))
                     with zipfile.ZipFile(path, "r") as archive:
                         archive.extractall(path=tmpdir)

@@ -74,7 +74,7 @@ class Scheduler:
                     for name, value in t.resources.items():
                         self.available_resources[name] -= value
                     self.running_tasks.add(t)
-                    self.ready_tasks.extend(blocked)
+                    self.ready_tasks.extendleft(blocked)
                     return t
                 blocked.append(t)
             self.ready_tasks.extend(blocked)
@@ -88,8 +88,9 @@ class Scheduler:
                 self.available_resources[name] += value
             for dependent in self.dependents[t]:
                 self.waiting_on[dependent].remove(t)
+                # Prioritize tasks hogging temp file space
                 if len(self.waiting_on[dependent]) == 0:
-                    self.ready_tasks.append(dependent)
+                    self.ready_tasks.appendleft(dependent)
             self.running_tasks.remove(t)
             self.completed_tasks.add(t)
             t.cleanup()
