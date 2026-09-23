@@ -6,7 +6,7 @@ import time
 from multiprocessing import Event
 from pathlib import Path
 
-from slp2mp4 import log, util
+from slp2mp4 import log
 from slp2mp4.dolphin import comm, ini
 
 
@@ -69,10 +69,9 @@ class DolphinRunner:
                     userdir,
                     "--cout",
                 )
-                dolphin_args = util.flatten_arg_tuples(args)
                 try:
                     proc = subprocess.Popen(
-                        args=dolphin_args,
+                        args=args,
                         stdin=subprocess.DEVNULL,
                         stdout=subprocess.PIPE,
                         stderr=subprocess.PIPE,

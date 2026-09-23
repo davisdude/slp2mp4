@@ -24,12 +24,6 @@ from slp2mp4.worker import Worker
 
 
 @dataclasses.dataclass
-class PathContainer:
-    path: Path
-    context: Path | None = dataclasses.field(default=None)
-
-
-@dataclasses.dataclass
 class Orchestrator:
     inputs: list[Path]
     conf: Config
@@ -70,49 +64,43 @@ class Orchestrator:
         # TODO: Preserve directory structure
         return path
 
-    def get_output_name(self, container: PathContainer):
-        if container.context is None:
-            if container.path.is_file():
-                name = container.path.with_suffix(".mp4")
-            else:
-                path = container.path
-                if container.path != Path("."):
-                    parent = path.parent
-                else:
-                    parent = Path("..")
-                    path = path.expanduser().absolute()
-                name = parent / path.with_suffix(".mp4")
+    def get_output_path(self, path: Path):
+        if path.is_file():
+            name = path.with_suffix(".mp4")
         else:
-            name = Path("asdf.mp4")
+            if path != Path("."):
+                parent = path.parent
+            else:
+                parent = Path("..")
+                path = path.expanduser().absolute()
+            name = parent / path.with_suffix(".mp4")
         return self.format_output_name(name)
 
     def next(self):
         """Iterator that returns <task>."""
         input_by_task: dict[Task, Path] = {}
-        paths_by_task: dict[Task, PathContainer] = {}
-        for input_item, path, collection in self.collector.next():
+        paths_by_task: dict[Task, Path] = {}
+        for input_item, path, artifacts in self.collector.next():
             tasks = []
             tmp_vids = []
-            for index, slp in enumerate(collection.slps):
+            for slp in artifacts:
                 _handle, tmp = tempfile.mkstemp(suffix=".mp4", dir=self.workdir)
                 vid = Mp4Artifact(Path(tmp))
                 tmp_vids.append(vid)
                 self.tmp_artifacts.append(vid)
                 inputs = [slp]
-                if collection.context is not None:
-                    inputs.append(collection.context)
-                render_task = RenderGameTask(f"render {slp.path}", inputs, [vid], index)
-                paths_by_task[render_task] = PathContainer(path, collection.context)
+                render_task = RenderGameTask(f"render {slp}", inputs, [vid])
+                paths_by_task[render_task] = slp.path
                 tasks.append(render_task)
 
             if len(tmp_vids) > 1:
                 _handle, tmp_mp4 = tempfile.mkstemp(suffix=".mp4", dir=self.workdir)
                 vid = Mp4Artifact(Path(tmp_mp4))
                 self.tmp_artifacts.append(vid)
-                concat_task = ConcatVideosTask(f"concat {vid.path}", tmp_vids, [vid])
+                concat_task = ConcatVideosTask(f"concat {vid}", tmp_vids, [vid])
                 tasks.append(concat_task)
                 input_by_task[concat_task] = input_item
-                paths_by_task[concat_task] = PathContainer(path, collection.context)
+                paths_by_task[concat_task] = path
 
             yield tasks
 
@@ -125,7 +113,7 @@ class Orchestrator:
                 vid = Mp4Artifact(Path(tmp_mp4))
                 self.tmp_artifacts.append(vid)
                 concat_task = ConcatVideosTask("concat all", all_vids, [vid])
-                paths_by_task[concat_task] = PathContainer("all.mp4")
+                paths_by_task[concat_task] = Path("all.mp4")
                 yield [concat_task]
         elif self.conf.runtime.combine_mode == CombineMode.BY_INPUT:
             # TODO: Sorting
@@ -140,31 +128,38 @@ class Orchestrator:
                 _handle, tmp_mp4 = tempfile.mkstemp(suffix=".mp4", dir=self.workdir)
                 vid = Mp4Artifact(Path(tmp_mp4))
                 self.tmp_artifacts.append(vid)
-                concat_task = ConcatVideosTask(f"concat {vid.path}", all_vids, [vid])
-                paths_by_task[concat_task] = PathContainer(input_item, None)
+                concat_task = ConcatVideosTask(f"concat {vid}", all_vids, [vid])
+                paths_by_task[concat_task] = Path(input_item)
                 new_tasks.append(concat_task)
             yield new_tasks
-        # TODO: BY_PHASE
 
         leaves = self.scheduler.get_leaves()
         tasks = []
         for task in leaves:
-            container = paths_by_task[task]
-            new_name = self.get_output_name(container)
-            new = Mp4Artifact(new_name)
-            tasks.append(MoveFileTask(f"move {new.path}", [task.video], [new]))
+            path = paths_by_task[task]
+            new_path = self.get_output_path(path)
+            new_artifact = Mp4Artifact(new_path)
+            tasks.append(MoveFileTask(f"move {new_path}", [task.video], [new_artifact]))
         yield tasks
+        # TODO: Timestamps
 
     def _print_leaf(self, leaf: Task, indent_level=0):
         indent = "\t"
-        outputs = (", ").join(str(o.path) for o in leaf.outputs)
+        outputs = (", ").join(
+            str(o.path) if indent_level == 0 else str(o) for o in leaf.outputs
+        )
         self.log.info(f"{indent * indent_level}{outputs} ({leaf.short_name})")
         for i in leaf.inputs:
             task = self.scheduler.get_producer(i)
             if task:
                 self._print_leaf(task, indent_level + 1)
             else:
-                self.log.info(f"{indent * (indent_level + 1)}{i.path}")
+                self.log.info(f"{indent * (indent_level + 1)}{i}")
+                if context := getattr(i, "context", ""):
+                    index = i.index
+                    self.log.info(
+                        f"{indent * (indent_level + 1)}{context} ({index + 1})"
+                    )
 
     def collect_tasks(self):
         for tasks in self.next():

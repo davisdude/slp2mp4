@@ -41,7 +41,6 @@ class VideoTask(Task):
 class RenderGameTask(VideoTask):
     slp: SlippiArtifact = dataclasses.field(init=False)
 
-
     def __post_init__(self):
         super().__post_init__()
         slps = [i for i in self.inputs if isinstance(i, SlippiArtifact)]

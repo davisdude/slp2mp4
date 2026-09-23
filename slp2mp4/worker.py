@@ -51,7 +51,7 @@ class Worker:
     @_submit.register
     def _(self, task: MoveFileTask):
         for i, o in zip(task.inputs, task.outputs):
-            i.move(o)
+            i.path.move(o.path)
 
     def render_slp(self, slp: SlippiArtifact, mp4: Mp4Artifact):
         self.logger.info(f"Rendering '{slp.path}' to '{mp4.path}'")
