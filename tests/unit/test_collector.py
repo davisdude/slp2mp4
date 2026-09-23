@@ -3,7 +3,7 @@ from io import BytesIO
 from pathlib import Path
 
 from slp2mp4.artifact import ContextArtifact, SlippiArtifact
-from slp2mp4.collector import Collection, Collector
+from slp2mp4.collector import Collector
 
 
 def zip_bytes(entries: dict[str, dict | Path]) -> bytes:
@@ -24,30 +24,26 @@ def test_collector_single_file(tmp_path):
     test_slp.touch()
     collector = Collector([test_slp])
     items = list(collector.next())
-    expected = (test_slp, test_slp, Collection([SlippiArtifact(test_slp)]))
+    expected = (test_slp, test_slp, [SlippiArtifact(test_slp)])
     assert items == [expected]
 
 
 def test_collector_context(tmp_path):
-    # tmp_path
-    # ├── test.slp
-    # └── context.json
-    test_slp = tmp_path / "g1.slp"
-    test_slp.touch()
+    test_slps = [tmp_path / f"{p}.slp" for p in ["g1", "g2"]]
+    for slp in test_slps:
+        slp.touch()
+    test_slp = test_slps[1]
     context = tmp_path / "context.json"
     context.touch()
-
-    collector = Collector([tmp_path])
+    collector = Collector([test_slp])
     items = list(collector.next())
 
     assert len(items) == 1
     item_input, collection_root, collection = items[0]
 
-    assert item_input == tmp_path
-    assert collection_root == tmp_path
-    assert collection == Collection(
-        [SlippiArtifact(test_slp)], ContextArtifact(context)
-    )
+    assert item_input == test_slp
+    assert collection_root == test_slp
+    assert collection == [SlippiArtifact(test_slp, 1, ContextArtifact(context))]
 
 
 def test_collector_multiple_files(tmp_path):
@@ -56,7 +52,7 @@ def test_collector_multiple_files(tmp_path):
         slp.touch()
     collector = Collector(test_slps)
     items = list(collector.next())
-    expected = [(slp, slp, Collection([SlippiArtifact(slp)])) for slp in test_slps]
+    expected = [(slp, slp, [SlippiArtifact(slp)]) for slp in test_slps]
     assert items == expected
 
 
@@ -66,7 +62,7 @@ def test_collector_single_dir(tmp_path):
     test_slp.touch()
     collector = Collector([test_slp])
     items = list(collector.next())
-    expected = (test_slp, test_slp, Collection([SlippiArtifact(test_slp)]))
+    expected = (test_slp, test_slp, [SlippiArtifact(test_slp)])
     assert items == [expected]
 
 
@@ -76,7 +72,7 @@ def test_collector_nested_simple_dir(tmp_path):
     test_slp.touch()
     collector = Collector([tmp_path])
     items = list(collector.next())
-    expected = (tmp_path, test_slp.parent, Collection([SlippiArtifact(test_slp)]))
+    expected = (tmp_path, test_slp.parent, [SlippiArtifact(test_slp)])
     assert items == [expected]
 
 
@@ -117,9 +113,9 @@ def test_collector_nested_complex_dir(tmp_path):
     assert len(items) == 4
 
     for d in directories:
-        expected_collection = Collection(
-            [SlippiArtifact(d / f"g{i}.slp") for i in range(1, 4)]
-        )
+        expected_collection = [
+            SlippiArtifact(d / f"g{i}.slp", i - 1) for i in range(1, 4)
+        ]
         expected_base = (tmp_path, d, expected_collection)
         assert expected_base in items
 
@@ -143,12 +139,11 @@ def test_collector_zip_simple(tmp_path):
 
     assert item_input == test_zip
     assert collection_root == test_dir / "test"
-    assert [file.path.name for file in collection.slps] == [
+    assert [file.path.name for file in collection] == [
         "g1.slp",
         "g2.slp",
         "g3.slp",
     ]
-    assert collection.context is None
 
 
 def test_collector_zip_in_dir(tmp_path):
@@ -171,12 +166,11 @@ def test_collector_zip_in_dir(tmp_path):
 
     assert item_input == tmp_path
     assert collection_root == test_dir / "test"
-    assert [file.path.name for file in collection.slps] == [
+    assert [file.path.name for file in collection] == [
         "g1.slp",
         "g2.slp",
         "g3.slp",
     ]
-    assert collection.context is None
 
 
 def test_collector_zip_complex(tmp_path):
@@ -224,12 +218,11 @@ def test_collector_zip_complex(tmp_path):
 
     for item_input, collection_root, collection in items:
         assert item_input == test_zip
-        assert [file.path.name for file in collection.slps] == [
+        assert [file.path.name for file in collection] == [
             "g1.slp",
             "g2.slp",
             "g3.slp",
         ]
-        assert collection.context is None
         actual_roots.add(collection_root)
 
     assert expected_roots == actual_roots

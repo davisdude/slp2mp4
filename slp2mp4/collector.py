@@ -32,12 +32,6 @@ def create_monitor_event_handler(collector, root: Path):
 
 
 @dataclasses.dataclass
-class Collection:
-    slps: list[SlippiArtifact]
-    context: ContextArtifact | None = dataclasses.field(default=None)
-
-
-@dataclasses.dataclass
 class Collector:
     inputs: list[Path]
     kill_event: Event = dataclasses.field(default_factory=Event)
@@ -118,19 +112,28 @@ class Collector:
                     yield from self._recurse(key, tmpdir, relative.parent / path.stem)
                 elif path.suffix == ".slp":
                     self.yielded[key].add(path)
-                    # TODO: Context for single file
-                    yield relative, Collection([SlippiArtifact(path)])
+                    index = 0
+                    parent = path.resolve().parent
+                    context = parent / "context.json"
+                    context_artifact = None
+                    if context.is_file():
+                        context_artifact = ContextArtifact(context)
+                        slps = sorted(parent.glob("*.slp"), key=util.natsort)
+                        index = slps.index(path)
+                    yield relative, [SlippiArtifact(path, index, context_artifact)]
         elif path.is_dir():
             slps = sorted(path.glob("*.slp"), key=util.natsort)
-            slp_artifacts = [SlippiArtifact(slp) for slp in slps]
             if (len(slps) > 0) and (len(set(slps) & self.yielded[key]) != len(slps)):
                 self.yielded[key].update(slps)
                 context = path / "context.json"
                 context_artifact = None
                 if context.is_file():
-                    self.yielded[key].add(context)
                     context_artifact = ContextArtifact(context)
-                yield relative, Collection(slp_artifacts, context_artifact)
+                slp_artifacts = [
+                    SlippiArtifact(slp, i, context_artifact)
+                    for i, slp in enumerate(slps)
+                ]
+                yield relative, slp_artifacts
             for p in path.iterdir():
                 yield from self._recurse(key, p, relative / p.name)
         else:

@@ -2,12 +2,7 @@
 
 import dataclasses
 
-from slp2mp4.artifact import (
-    Artifact,
-    ContextArtifact,
-    Mp4Artifact,
-    SlippiArtifact,
-)
+from slp2mp4.artifact import Artifact, Mp4Artifact, SlippiArtifact
 
 
 @dataclasses.dataclass(eq=False)
@@ -44,21 +39,14 @@ class VideoTask(Task):
 
 @dataclasses.dataclass(eq=False)
 class RenderGameTask(VideoTask):
-    index: int = dataclasses.field(default=0)
     slp: SlippiArtifact = dataclasses.field(init=False)
-    context: ContextArtifact | None = dataclasses.field(init=False, default=None)
+
 
     def __post_init__(self):
         super().__post_init__()
-
         slps = [i for i in self.inputs if isinstance(i, SlippiArtifact)]
         assert len(slps) == 1
         self.slp = slps[0]
-
-        contexts = [i for i in self.inputs if isinstance(i, ContextArtifact)]
-        assert len(contexts) <= 1
-        if contexts:
-            self.context = contexts[0]
 
     @property
     def resources(self):

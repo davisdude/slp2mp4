@@ -1,10 +1,10 @@
 # An artifact is any input or output in the pipeline, even temporary
 
-from dataclasses import dataclass
+import dataclasses
 from pathlib import Path
 
 
-@dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True)
 class Artifact:
     path: Path
 
@@ -21,7 +21,7 @@ class Artifact:
         self.path.unlink(missing_ok=True)
 
 
-@dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True)
 class ExistingFileArtifact(Artifact):
     def __post_init__(self):
         super().__post_init__()
@@ -32,17 +32,7 @@ class ExistingFileArtifact(Artifact):
         pass
 
 
-@dataclass(frozen=True)
-class SlippiArtifact(ExistingFileArtifact):
-    def __post_init__(self):
-        super().__post_init__()
-        if self.path.suffix != ".slp":
-            raise RuntimeError(
-                f"'{self.path}' has invalid file extension for a slippi file."
-            )
-
-
-@dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True)
 class ContextArtifact(ExistingFileArtifact):
     def __post_init__(self):
         super().__post_init__()
@@ -52,7 +42,20 @@ class ContextArtifact(ExistingFileArtifact):
             )
 
 
-@dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True)
+class SlippiArtifact(ExistingFileArtifact):
+    index: int = dataclasses.field(default=0)
+    context: ContextArtifact | None = dataclasses.field(default=None)
+
+    def __post_init__(self):
+        super().__post_init__()
+        if self.path.suffix != ".slp":
+            raise RuntimeError(
+                f"'{self.path}' has invalid file extension for a slippi file."
+            )
+
+
+@dataclasses.dataclass(frozen=True)
 class Mp4Artifact(Artifact):
     def __post_init__(self):
         super().__post_init__()
@@ -62,7 +65,7 @@ class Mp4Artifact(Artifact):
             )
 
 
-@dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True)
 class TimestampArtifact(Artifact):
     def __post_init__(self):
         super().__post_init__()
