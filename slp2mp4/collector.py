@@ -118,6 +118,7 @@ class Collector:
                     yield from self._recurse(key, tmpdir, relative.parent / path.stem)
                 elif path.suffix == ".slp":
                     self.yielded[key].add(path)
+                    # TODO: Context for single file
                     yield relative, Collection([SlippiArtifact(path)])
         elif path.is_dir():
             slps = sorted(path.glob("*.slp"), key=util.natsort)

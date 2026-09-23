@@ -20,6 +20,10 @@ class Task:
     def resources(self) -> dict[str, float]:
         raise NotImplementedError
 
+    @property
+    def short_name(self) -> str:
+        raise NotImplementedError
+
     def check_inputs(self):
         for i in self.inputs:
             if not i.exists():
@@ -28,6 +32,7 @@ class Task:
     def cleanup(self):
         for i in self.inputs:
             i.cleanup()
+
 
 @dataclasses.dataclass(eq=False)
 class VideoTask(Task):
@@ -59,6 +64,10 @@ class RenderGameTask(VideoTask):
     def resources(self):
         return {"cpu": 1.0}
 
+    @property
+    def short_name(self):
+        return "render"
+
 
 @dataclasses.dataclass(eq=False)
 class ConcatVideosTask(VideoTask):
@@ -72,5 +81,21 @@ class ConcatVideosTask(VideoTask):
         #       preempted by lower priorty tasks. It's quick enough that I think it's okay.
         return {"cpu": 1.0}
 
+    @property
+    def short_name(self):
+        return "concat"
 
-# TODO: Copy task
+
+@dataclasses.dataclass(eq=False)
+class MoveFileTask(VideoTask):
+    def __post_init__(self):
+        super().__post_init__()
+        assert len(self.inputs) == len(self.outputs)
+
+    @property
+    def resources(self):
+        return {"cpu": 0.0}
+
+    @property
+    def short_name(self):
+        return "move"

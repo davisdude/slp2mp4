@@ -3,7 +3,7 @@
 import copy
 import dataclasses
 from collections import deque
-from threading import Lock
+from threading import RLock
 
 from slp2mp4.artifact import Artifact, ExistingFileArtifact
 from slp2mp4.task import Task
@@ -23,7 +23,7 @@ class Scheduler:
     dependents: dict[Task, set[Task]] = dataclasses.field(default_factory=dict)
     producers: dict[Artifact, Task] = dataclasses.field(default_factory=dict)
 
-    lock: Lock = dataclasses.field(default_factory=Lock, init=False)
+    lock: RLock = dataclasses.field(default_factory=RLock, init=False)
     full_resources: dict[str, float] = dataclasses.field(
         default_factory=dict, init=False
     )
@@ -112,8 +112,8 @@ class Scheduler:
         with self.lock:
             return self.producers.get(artifact)
 
-    def _resources_available(self, t: Task):
-        for name, amount in t.resources.items():
+    def _resources_available(self, task: Task):
+        for name, amount in task.resources.items():
             if self.available_resources[name] < amount:
                 return False
         return True

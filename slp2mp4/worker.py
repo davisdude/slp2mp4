@@ -13,7 +13,7 @@ from slp2mp4.artifact import Mp4Artifact, SlippiArtifact
 from slp2mp4.config import Config
 from slp2mp4.dolphin.runner import DolphinRunner
 from slp2mp4.ffmpeg import FfmpegRunner
-from slp2mp4.task import ConcatVideosTask, RenderGameTask, Task
+from slp2mp4.task import ConcatVideosTask, MoveFileTask, RenderGameTask, Task
 
 
 @dataclasses.dataclass
@@ -46,7 +46,12 @@ class Worker:
 
     @_submit.register
     def _(self, task: ConcatVideosTask):
-        return self.combine_mp4s(task.inputs, task.video, task)
+        self.combine_mp4s(task.inputs, task.video, task)
+
+    @_submit.register
+    def _(self, task: MoveFileTask):
+        for i, o in zip(task.inputs, task.outputs):
+            i.move(o)
 
     def render_slp(self, slp: SlippiArtifact, mp4: Mp4Artifact):
         self.logger.info(f"Rendering '{slp.path}' to '{mp4.path}'")
