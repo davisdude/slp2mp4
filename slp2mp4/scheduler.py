@@ -39,11 +39,11 @@ class Scheduler:
                         raise RuntimeError(
                             f"Task '{t.name}' requires unknown resource '{resource}'."
                         )
-                    if (req := t.resources[resource]) > (
-                        avail := self.full_resources[resource]
-                    ):
+                    requested = t.resources[resource]
+                    available = self.full_resources[resource]
+                    if requested > available:
                         raise RuntimeError(
-                            f"Task '{t.name}' will never satisfy '{resource}' requirement ({req} > {avail})."
+                            f"Task '{t.name}' will never satisfy '{resource}' requirement ({requested} > {available})."
                         )
 
                 for output in t.outputs:

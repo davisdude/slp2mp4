@@ -77,7 +77,7 @@ class Orchestrator:
 
     def next(self):
         """Iterator that returns <task>."""
-        tasks_by_input: dict[Path, list[Task]] = defaultdict(list)
+        input_by_task: dict[Task, Path] = {}
         for input_item, path, collection in self.collector.next():
             tasks = []
             tmp_vids = []
@@ -94,23 +94,34 @@ class Orchestrator:
             _handle, tmp_mp4 = tempfile.mkstemp(suffix=".mp4", dir=self.workdir)
             vid = Mp4Artifact(Path(tmp_mp4))
             self.tmp_artifacts.append(vid)
-            tasks.append(ConcatVideosTask(f"concat {vid.path}", tmp_vids, [vid]))
-            tasks_by_input[input_item].extend(tasks)
+            concat_task = ConcatVideosTask(f"concat {vid.path}", tmp_vids, [vid])
+            tasks.append(concat_task)
+            input_by_task[concat_task] = input_item
             yield tasks
 
         leaves = self.scheduler.get_leaves()
         if self.conf.runtime.combine_mode == CombineMode.ALL:
             # TODO: Sorting
             all_vids = [task.video for task in leaves]
-
             _handle, tmp_mp4 = tempfile.mkstemp(suffix=".mp4", dir=self.workdir)
             vid = Mp4Artifact(Path(tmp_mp4))
             self.tmp_artifacts.append(vid)
             yield [ConcatVideosTask("concat all", all_vids, [vid])]
         elif self.conf.runtime.combine_mode == CombineMode.BY_INPUT:
+            # TODO: Sorting
+            tasks_by_input: dict[Path, list[Task]] = defaultdict(list)
+            for task in leaves:
+                tasks_by_input[input_by_task[task]].append(task)
+            new_tasks = []
             for tasks in tasks_by_input.values():
-                pass
-                # TODO: Sorting
+                all_vids = [task.video for task in tasks]
+                _handle, tmp_mp4 = tempfile.mkstemp(suffix=".mp4", dir=self.workdir)
+                vid = Mp4Artifact(Path(tmp_mp4))
+                self.tmp_artifacts.append(vid)
+                new_tasks.append(
+                    ConcatVideosTask(f"concat {vid.path}", all_vids, [vid])
+                )
+            yield new_tasks
         # TODO: BY_PHASE
 
         # TODO: Move final tmp files to real names
