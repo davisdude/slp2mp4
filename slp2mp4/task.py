@@ -7,7 +7,6 @@ from slp2mp4.artifact import (
     ContextArtifact,
     Mp4Artifact,
     SlippiArtifact,
-    TimestampArtifact,
 )
 
 
@@ -62,15 +61,7 @@ class RenderGameTask(Task):
 
 @dataclasses.dataclass(eq=False)
 class ConcatVideosTask(Task):
-    timestamp: TimestampArtifact | None = dataclasses.field(init=False, default=None)
-
-    def __post_init__(self):
-        super().__post_init__()
-
-        timestamps = [o for o in self.outputs if isinstance(o, TimestampArtifact)]
-        assert len(timestamps) <= 1
-        if timestamps:
-            self.timestamp = timestamps[0]
+    timestamps: list[int] = dataclasses.field(init=False, default_factory=list)
 
     @property
     def resources(self):

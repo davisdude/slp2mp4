@@ -15,7 +15,7 @@ from pathlib import Path
 import psutil
 
 from slp2mp4 import log
-from slp2mp4.artifact import Artifact, Mp4Artifact, TimestampArtifact
+from slp2mp4.artifact import Artifact, Mp4Artifact
 from slp2mp4.collector import Collection, Collector
 from slp2mp4.config import CombineMode, Config
 from slp2mp4.scheduler import Scheduler
@@ -93,12 +93,8 @@ class Orchestrator:
 
             _handle, tmp_mp4 = tempfile.mkstemp(suffix=".mp4", dir=self.workdir)
             vid = Mp4Artifact(Path(tmp_mp4))
-            _handle, tmp_txt = tempfile.mkstemp(suffix=".txt", dir=self.workdir)
-            txt = TimestampArtifact(Path(tmp_txt))
-            outputs = [vid, txt]
-
-            self.tmp_artifacts.extend(outputs)
-            tasks.append(ConcatVideosTask(f"concat {vid.path}", tmp_vids, outputs))
+            self.tmp_artifacts.append(vid)
+            tasks.append(ConcatVideosTask(f"concat {vid.path}", tmp_vids, [vid]))
             tasks_by_input[input_item].extend(tasks)
             yield tasks
 
@@ -109,12 +105,8 @@ class Orchestrator:
 
             _handle, tmp_mp4 = tempfile.mkstemp(suffix=".mp4", dir=self.workdir)
             vid = Mp4Artifact(Path(tmp_mp4))
-            _handle, tmp_txt = tempfile.mkstemp(suffix=".txt", dir=self.workdir)
-            txt = TimestampArtifact(Path(tmp_txt))
-            outputs = [vid, txt]
-
-            self.tmp_artifacts.extend(outputs)
-            yield [ConcatVideosTask("concat all", all_vids, outputs)]
+            self.tmp_artifacts.append(vid)
+            yield [ConcatVideosTask("concat all", all_vids, [vid])]
         elif self.conf.runtime.combine_mode == CombineMode.BY_INPUT:
             for tasks in tasks_by_input.values():
                 pass
