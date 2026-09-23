@@ -148,7 +148,7 @@ class RuntimeConfig:
         metadata={"help": "Mapping of characters to replace in video titles"}
     )
     combine_mode: CombineMode = dataclasses.field(
-        metadata={"help": "How to combine set videos; None=separate sets"}
+        metadata={"help": "How to combine set videos; None = separate sets"}
     )
 
     @classmethod
