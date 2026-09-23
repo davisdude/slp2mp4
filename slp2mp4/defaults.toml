@@ -26,6 +26,7 @@ volume = 25
 parallel = 0
 youtubify_names = true
 preserve_directory_structure = false
+combine_mode = "None"
 
 [runtime.name_replacements]
 "-" = "–"

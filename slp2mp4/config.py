@@ -51,6 +51,12 @@ class DolphinResolution(Enum):
         return self.value[1]
 
 
+class CombineMode(Enum):
+    NONE = "None"
+    BY_INPUT = "By Input"
+    BY_PHASE = "By Phase"
+
+
 @dataclasses.dataclass
 class PathsConfig:
     # Paths are un-altered so saving works properly
@@ -140,6 +146,9 @@ class RuntimeConfig:
     name_replacements: dict[str, str] = dataclasses.field(
         metadata={"help": "Mapping of characters to replace in video titles"}
     )
+    combine_mode: CombineMode = dataclasses.field(
+        metadata={"help": "How to combine set videos; None=separate sets"}
+    )
 
     @classmethod
     def from_dict(cls, data):
@@ -148,6 +157,7 @@ class RuntimeConfig:
             preserve_directory_structure=data["preserve_directory_structure"],
             youtubify_names=data["youtubify_names"],
             name_replacements=data["name_replacements"],
+            combine_mode=CombineMode(data["combine_mode"]),
         )
 
     def validate(self):
