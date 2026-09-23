@@ -6,7 +6,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-from slp2mp4 import log, util
+from slp2mp4 import log
 
 
 class FfmpegRunner:
@@ -20,7 +20,7 @@ class FfmpegRunner:
 
     # TODO: Pass kill_event
     def _run(self, args):
-        ffmpeg_args = [self.ffmpeg_path] + util.flatten_arg_tuples(args)
+        ffmpeg_args = [self.ffmpeg_path] + args
         proc = subprocess.run(
             ffmpeg_args,
             check=False,
@@ -38,17 +38,13 @@ class FfmpegRunner:
     def reencode_audio(self, audio_file_path: Path):
         reencoded_path = audio_file_path.parent / "fixed.out"
         args = (
-            ("-y",),
-            (
-                "-i",
-                audio_file_path,
-            ),
-            self.audio_args,
-            (
-                "-filter:a",
-                f"volume='{self.config.ffmpeg.volume / 100}'",
-            ),
-            (reencoded_path,),
+            "-y",
+            "-i",
+            audio_file_path,
+            *self.audio_args,
+            "-filter:a",
+            f"volume='{self.config.ffmpeg.volume / 100}'",
+            reencoded_path,
         )
         if self._run(args):
             return reencoded_path
@@ -62,33 +58,21 @@ class FfmpegRunner:
         output_file: Path,
     ):
         args = (
-            ("-y",),
-            (
-                "-i",
-                audio_file,
-            ),
-            (
-                "-i",
-                video_file,
-            ),
-            (
-                "-c:a",
-                "copy",
-            ),
-            (
-                "-c:v",
-                "copy",
-            ),
-            (
-                "-b:v",
-                "7500k",  # TODO follow setting
-            ),
-            (
-                "-avoid_negative_ts",
-                "make_zero",
-            ),
-            ("-xerror",),
-            (output_file,),
+            "-y",
+            "-i",
+            audio_file,
+            "-i",
+            video_file,
+            "-c:a",
+            "copy",
+            "-c:v",
+            "copy",
+            "-b:v",  # TODO follow setting; this is ignored with -c:v
+            "7500k",
+            "-avoid_negative_ts",
+            "make_zero",
+            "-xerror",
+            output_file,
         )
         return self._run(args)
 
@@ -103,24 +87,16 @@ class FfmpegRunner:
             concat_file.write(files)
             concat_file.flush()
             args = (
-                ("-y",),
-                (
-                    "-f",
-                    "concat",
-                ),
-                (
-                    "-safe",
-                    "0",
-                ),
-                (
-                    "-i",
-                    concat_file.name,
-                ),
-                (
-                    "-c",
-                    "copy",
-                ),
-                ("-xerror",),
-                (output_file,),
+                "-y",
+                "-f",
+                "concat",
+                "-safe",
+                "0",
+                "-i",
+                concat_file.name,
+                "-c",
+                "copy",
+                "-xerror",
+                output_file,
             )
             return self._run(args)

@@ -13,10 +13,6 @@ def update_dict(d1: dict, d2: dict):
             d1[k] = v
 
 
-def flatten_arg_tuples(args):
-    return [arg for arg_tuple in args for arg in arg_tuple]
-
-
 # https://stackoverflow.com/a/78930347/2238176
 def natsort(s):
     a = re.split(r"(\d+)", str(s).casefold())

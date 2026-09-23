@@ -54,30 +54,20 @@ class DolphinRunner:
                 ini.make_gecko_file(userdir, self.user_gecko) as _gecko_file,
             ):
                 args = (
-                    (self.slippi_playback,),
-                    (
-                        "--exec",
-                        self.ssbm_iso,
-                    ),
-                    ("--batch",),
-                    (
-                        "--video_backend",
-                        self.video_backend,
-                    ),
-                    (
-                        "--slippi-input",
-                        comm_file,
-                    ),
-                    ("--hide-seekbar",),
-                    (
-                        "--output-directory",
-                        dump_dir,
-                    ),
-                    (
-                        "--user",
-                        userdir,
-                    ),
-                    ("--cout",),
+                    self.slippi_playback,
+                    "--exec",
+                    self.ssbm_iso,
+                    "--batch",
+                    "--video_backend",
+                    self.video_backend,
+                    "--slippi-input",
+                    comm_file,
+                    "--hide-seekbar",
+                    "--output-directory",
+                    dump_dir,
+                    "--user",
+                    userdir,
+                    "--cout",
                 )
                 dolphin_args = util.flatten_arg_tuples(args)
                 try:
