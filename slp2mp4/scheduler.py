@@ -33,67 +33,72 @@ class Scheduler:
 
     def submit(self, tasks: list[Task]):
         with self.lock:
-            for t in tasks:
-                for resource in t.resources:
+            for task in tasks:
+                for resource in task.resources:
                     if resource not in self.available_resources:
                         raise RuntimeError(
-                            f"Task '{t.name}' requires unknown resource '{resource}'."
+                            f"Task '{task.name}' requires unknown resource '{resource}'."
                         )
-                    requested = t.resources[resource]
+                    requested = task.resources[resource]
                     available = self.full_resources[resource]
                     if requested > available:
                         raise RuntimeError(
-                            f"Task '{t.name}' will never satisfy '{resource}' requirement ({requested} > {available})."
+                            f"Task '{task.name}' will never satisfy '{resource}' requirement ({requested} > {available})."
                         )
 
-                for output in t.outputs:
-                    self.producers[output] = t
-                self.waiting_on[t] = set()
-                self.dependents[t] = set()
+                for output in task.outputs:
+                    self.producers[output] = task
+                self.waiting_on[task] = set()
+                self.dependents[task] = set()
 
-            for t in tasks:
-                for i in t.inputs:
+            for task in tasks:
+                for i in task.inputs:
                     if isinstance(i, ExistingFileArtifact):
                         continue
                     upstream = self.producers.get(i)
                     if upstream is None:
                         raise RuntimeError(f"No producer found for artifact '{i}'.")
-                    self.waiting_on[t].add(upstream)
-                    self.dependents[upstream].add(t)
+                    self.waiting_on[task].add(upstream)
+                    self.dependents[upstream].add(task)
 
-            for t, deps in self.waiting_on.items():
-                if (len(deps) == 0) and (t not in self.ready_tasks):
-                    self.ready_tasks.append(t)
+            for task, deps in self.waiting_on.items():
+                if (
+                    (len(deps) == 0)
+                    and (task not in self.ready_tasks)
+                    and (task not in self.running_tasks)
+                    and (task not in self.completed_tasks)
+                ):
+                    self.ready_tasks.append(task)
 
     def get_work(self):
         with self.lock:
             blocked = deque()
             while self.ready_tasks:
-                t = self.ready_tasks.popleft()
-                if self._resources_available(t):
-                    for name, value in t.resources.items():
+                task = self.ready_tasks.popleft()
+                if self._resources_available(task):
+                    for name, value in task.resources.items():
                         self.available_resources[name] -= value
-                    self.running_tasks.add(t)
+                    self.running_tasks.add(task)
                     self.ready_tasks.extendleft(blocked)
-                    return t
-                blocked.append(t)
+                    return task
+                blocked.append(task)
             self.ready_tasks.extend(blocked)
             return None
 
-    def finish(self, t: Task):
+    def finish(self, task: Task):
         with self.lock:
-            if t not in self.running_tasks:
-                raise RuntimeError(f"Task '{t.name}' was not running.")
-            for name, value in t.resources.items():
+            if task not in self.running_tasks:
+                raise RuntimeError(f"Task '{task.name}' was not running.")
+            for name, value in task.resources.items():
                 self.available_resources[name] += value
-            for dependent in self.dependents[t]:
-                self.waiting_on[dependent].remove(t)
+            for dependent in self.dependents[task]:
+                self.waiting_on[dependent].remove(task)
                 # Prioritize tasks hogging temp file space
                 if len(self.waiting_on[dependent]) == 0:
                     self.ready_tasks.appendleft(dependent)
-            self.running_tasks.remove(t)
-            self.completed_tasks.add(t)
-            t.cleanup()
+            self.running_tasks.remove(task)
+            self.completed_tasks.add(task)
+            task.cleanup()
 
     def get_leaves(self):
         with self.lock:
@@ -104,7 +109,8 @@ class Scheduler:
             ]
 
     def get_producer(self, artifact: Artifact):
-        return self.producers.get(artifact)
+        with self.lock:
+            return self.producers.get(artifact)
 
     def _resources_available(self, t: Task):
         for name, amount in t.resources.items():
