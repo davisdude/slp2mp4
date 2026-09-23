@@ -35,7 +35,8 @@ class Orchestrator:
     worker: Worker | None = dataclasses.field(default=None)
     scheduler: Scheduler | None = dataclasses.field(default=None)
     log: Logger | None = dataclasses.field(default=None)
-    made_workdir: bool = dataclasses.field(default=False, init=False)
+    created_dirs: list[Path] = dataclasses.field(default_factory=list, init=False)
+    created_files: list[Path] = dataclasses.field(default_factory=list, init=False)
 
     def __post_init__(self):
         if self.num_procs is None:
@@ -44,7 +45,7 @@ class Orchestrator:
             self.num_procs = psutil.cpu_count(logical=False) or 1
         if self.workdir is None:
             self.workdir = Path(tempfile.mkdtemp())
-            self.made_workdir = True
+            self.created_dirs.append(self.workdir)
         if self.collector is None:
             self.collector = Collector(
                 self.inputs, self.kill_event, self.monitor, self.workdir
@@ -79,7 +80,9 @@ class Orchestrator:
             tmp_artifacts = []
             for slp in collection.slps:
                 _handle, tmp = tempfile.mkstemp(suffix=".mp4", dir=self.workdir)
-                tmp_artifact = Mp4Artifact(Path(tmp))
+                tmp_path = Path(tmp)
+                self.created_files.append(tmp_path)
+                tmp_artifact = Mp4Artifact(tmp_path)
                 task = RenderGameTask(f"render {slp.path}", [slp], [tmp_artifact])
                 tmp_artifacts.append(tmp_artifact)
                 render_tasks.append(task)
@@ -129,5 +132,7 @@ class Orchestrator:
         self.cleanup()
 
     def cleanup(self):
-        if self.made_workdir:
-            shutil.rmtree(self.workdir)
+        for d in self.created_dirs:
+            shutil.rmtree(d)
+        for f in self.created_files:
+            f.unlink(missing_ok=True)
