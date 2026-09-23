@@ -64,7 +64,7 @@ class Collector:
             shutil.rmtree(d)
 
     def _next(self):
-        """Iterator that returns <collection root>, <collection>."""
+        """Iterator that returns <input>, <collection root>, <collection>."""
         # Set up monitoring
         for i in self.inputs:
             self.yielded[i] = set()
@@ -79,7 +79,7 @@ class Collector:
         # Iterate like normal to catch files that exist before monitoring
         for i in self.inputs:
             for path, artifacts in self._recurse(i, i):
-                yield path, artifacts
+                yield i, path, artifacts
 
         # Monitor files
         while self.monitor and not self.kill_event.is_set():
@@ -89,7 +89,7 @@ class Collector:
                 continue
             for i in batch:
                 for path, artifacts in self._recurse(i, i):
-                    yield path, artifacts
+                    yield i, path, artifacts
         if self.monitor:
             observer.stop()
             observer.join()

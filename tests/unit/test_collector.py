@@ -22,7 +22,7 @@ def test_collector_single_file(tmp_path):
     test_slp.touch()
     collector = Collector([test_slp])
     items = list(collector.next())
-    expected = (test_slp, Collection([SlippiArtifact(test_slp)]))
+    expected = (test_slp, test_slp, Collection([SlippiArtifact(test_slp)]))
     assert items == [expected]
 
 
@@ -39,8 +39,9 @@ def test_collector_context(tmp_path):
     items = list(collector.next())
 
     assert len(items) == 1
-    collection_root, collection = items[0]
+    item_input, collection_root, collection = items[0]
 
+    assert item_input == tmp_path
     assert collection_root == tmp_path
     assert collection == Collection(
         [SlippiArtifact(test_slp)], ContextArtifact(context)
@@ -53,7 +54,7 @@ def test_collector_multiple_files(tmp_path):
         slp.touch()
     collector = Collector(test_slps)
     items = list(collector.next())
-    expected = [(slp, Collection([SlippiArtifact(slp)])) for slp in test_slps]
+    expected = [(slp, slp, Collection([SlippiArtifact(slp)])) for slp in test_slps]
     assert items == expected
 
 
@@ -63,7 +64,7 @@ def test_collector_single_dir(tmp_path):
     test_slp.touch()
     collector = Collector([test_slp])
     items = list(collector.next())
-    expected = (test_slp, Collection([SlippiArtifact(test_slp)]))
+    expected = (test_slp, test_slp, Collection([SlippiArtifact(test_slp)]))
     assert items == [expected]
 
 
@@ -73,7 +74,7 @@ def test_collector_nested_simple_dir(tmp_path):
     test_slp.touch()
     collector = Collector([tmp_path])
     items = list(collector.next())
-    expected = (test_slp.parent, Collection([SlippiArtifact(test_slp)]))
+    expected = (tmp_path, test_slp.parent, Collection([SlippiArtifact(test_slp)]))
     assert items == [expected]
 
 
@@ -117,7 +118,7 @@ def test_collector_nested_complex_dir(tmp_path):
         expected_collection = Collection(
             [SlippiArtifact(d / f"g{i}.slp") for i in range(1, 4)]
         )
-        expected_base = (d, expected_collection)
+        expected_base = (tmp_path, d, expected_collection)
         assert expected_base in items
 
 
@@ -137,8 +138,9 @@ def test_collector_zip_simple(tmp_path):
     items = list(collector.next())
 
     assert len(items) == 1
-    collection_root, collection = items[0]
+    item_input, collection_root, collection = items[0]
 
+    assert item_input == test_zip
     assert collection_root == test_dir / "test"
     assert [file.path.name for file in collection.slps] == [
         "g1.slp",
@@ -165,8 +167,9 @@ def test_collector_zip_in_dir(tmp_path):
     items = list(collector.next())
 
     assert len(items) == 1
-    collection_root, collection = items[0]
+    item_input, collection_root, collection = items[0]
 
+    assert item_input == test_zip
     assert collection_root == tmp_path / "foo" / "bar" / "baz" / "test"
     assert [file.path.name for file in collection.slps] == [
         "g1.slp",
@@ -220,7 +223,8 @@ def test_collector_zip_complex(tmp_path):
     }
     actual_roots = set()
 
-    for collection_root, collection in items:
+    for item_input, collection_root, collection in items:
+        assert item_input == test_zip
         assert [file.path.name for file in collection.slps] == [
             "g1.slp",
             "g2.slp",
