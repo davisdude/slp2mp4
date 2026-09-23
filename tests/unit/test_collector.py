@@ -12,8 +12,10 @@ def zip_bytes(entries: dict[str, dict | Path]) -> bytes:
         for name, data in entries.items():
             if isinstance(data, Path):
                 archive.write(data, arcname=name)
-            else:
+            elif isinstance(data, dict):
                 archive.writestr(name, zip_bytes(data))
+            else:
+                archive.writestr(str(name), data)
     return output.getvalue()
 
 
@@ -127,9 +129,8 @@ def test_collector_zip_simple(tmp_path):
     # ├── g1.slp
     # ├── g2.slp
     # └── g3.slp
-    test_slp = Path("tests/integration/test.slp")
     test_dir = tmp_path
-    slp_files = {f"g{i}.slp": test_slp for i in range(1, 4)}
+    slp_files = {f"g{i}.slp": "" for i in range(1, 4)}
     archive_tree = slp_files
     test_zip = test_dir / "test.zip"
     test_zip.write_bytes(zip_bytes(archive_tree))
@@ -155,22 +156,21 @@ def test_collector_zip_in_dir(tmp_path):
     # ├── g1.slp
     # ├── g2.slp
     # └── g3.slp
-    test_slp = Path("tests/integration/test.slp")
     test_dir = tmp_path / "foo/bar/baz"
     test_dir.mkdir(parents=True)
-    slp_files = {f"g{i}.slp": test_slp for i in range(1, 4)}
+    slp_files = {f"g{i}.slp": "" for i in range(1, 4)}
     archive_tree = slp_files
     test_zip = test_dir / "test.zip"
     test_zip.write_bytes(zip_bytes(archive_tree))
 
-    collector = Collector([test_zip])
+    collector = Collector([tmp_path])
     items = list(collector.next())
 
     assert len(items) == 1
     item_input, collection_root, collection = items[0]
 
-    assert item_input == test_zip
-    assert collection_root == tmp_path / "foo" / "bar" / "baz" / "test"
+    assert item_input == tmp_path
+    assert collection_root == test_dir / "test"
     assert [file.path.name for file in collection.slps] == [
         "g1.slp",
         "g2.slp",
@@ -196,9 +196,8 @@ def test_collector_zip_complex(tmp_path):
     #         ├── g1.slp
     #         ├── g2.slp
     #         └── g3.slp
-    test_slp = Path("tests/integration/test.slp")
     test_dir = tmp_path
-    slp_files = {f"g{i}.slp": test_slp for i in range(1, 4)}
+    slp_files = {f"g{i}.slp": "" for i in range(1, 4)}
     archive_tree = {
         **slp_files,
         "single.zip": slp_files,
