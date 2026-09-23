@@ -46,12 +46,12 @@ class Collector:
     yielded: dict[Path, set] = dataclasses.field(default_factory=dict, init=False)
     raw_monitor_inputs: deque = dataclasses.field(default_factory=deque, init=False)
     done: bool = dataclasses.field(default=False, init=False)
-    made_workdir: bool = dataclasses.field(default=False, init=False)
+    created_dirs: list[Path] = dataclasses.field(default_factory=list, init=False)
 
     def __post_init__(self):
         if self.workdir is None:
             self.workdir = Path(tempfile.mkdtemp())
-            self.made_workdir = True
+            self.created_dirs.append(self.workdir)
 
     def next(self):
         try:
@@ -60,8 +60,8 @@ class Collector:
             self.done = True
 
     def cleanup(self):
-        if self.made_workdir:
-            shutil.rmtree(self.workdir)
+        for d in self.created_dirs:
+            shutil.rmtree(d)
 
     def _next(self):
         """Iterator that returns <collection root>, <collection>."""
@@ -111,8 +111,8 @@ class Collector:
             if path not in self.yielded[key]:
                 if zipfile.is_zipfile(path):
                     self.yielded[key].add(path)
-                    # TODO: Clear these directories as well
                     tmpdir = Path(tempfile.mkdtemp(dir=self.workdir))
+                    self.created_dirs.append(tmpdir)
                     with zipfile.ZipFile(path, "r") as archive:
                         archive.extractall(path=tmpdir)
                     yield from self._recurse(key, tmpdir, relative.parent / path.stem)
