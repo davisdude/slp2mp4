@@ -1,6 +1,7 @@
 # Given a task, runs it
 
 import dataclasses
+from datetime import timedelta
 from functools import singledispatchmethod
 from logging import Logger
 from multiprocessing import Event
@@ -8,7 +9,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from slp2mp4 import log
-from slp2mp4.artifact import Mp4Artifact, SlippiArtifact
+from slp2mp4.artifact import Mp4Artifact, SlippiArtifact, TimestampArtifact
 from slp2mp4.config import Config
 from slp2mp4.dolphin.runner import DolphinRunner
 from slp2mp4.ffmpeg import FfmpegRunner
@@ -45,7 +46,7 @@ class Worker:
 
     @_submit.register
     def _(self, task: ConcatVideosTask):
-        self.combine_mp4s(task.inputs, task.outputs[0])
+        self.combine_mp4s(task.inputs, task.video, task.timestamp)
 
     def render_slp(self, slp: SlippiArtifact, mp4: Mp4Artifact):
         self.logger.info(f"Rendering '{slp.path}' to '{mp4.path}'")
@@ -64,10 +65,22 @@ class Worker:
                 raise RuntimeError(f"Failed to render '{slp.path}'")
             self.logger.info(f"Done rendering '{slp.path}'")
 
-    def combine_mp4s(self, inputs: list[Mp4Artifact], output: Mp4Artifact):
+    def combine_mp4s(
+        self,
+        inputs: list[Mp4Artifact],
+        output: Mp4Artifact,
+        timestamp: TimestampArtifact | None,
+    ):
         input_paths = [i.path for i in inputs]
         self.logger.info(f"Combining '{input_paths}' to '{output.path}'")
         success = self.ffmpeg.concat_videos(input_paths, output.path)
         if not success:
             raise RuntimeError(f"Failed to create '{output.path}'")
+        if timestamp:
+            current_time = 0.0
+            with open(timestamp.path, "w") as f:
+                for path in input_paths:
+                    time_str = str(timedelta(seconds=int(current_time)))
+                    f.write(f"{time_str} - {path.stem}\n")
+                    current_time += self.ffmpeg.get_video_duration(path)
         self.logger.info(f"Done combining '{output.path}'")

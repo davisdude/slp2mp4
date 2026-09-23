@@ -86,15 +86,18 @@ class Orchestrator:
                 task = RenderGameTask(f"render {slp.path}", [slp], [tmp_artifact])
                 tmp_artifacts.append(tmp_artifact)
                 render_tasks.append(task)
-            output_artifact = Mp4Artifact(self.get_output_name(path, collection))
+            out_video_artifact = Mp4Artifact(self.get_output_name(path, collection))
+            out_timestamp_artifact = out_video_artifact.with_suffix(".txt")
             concat_task = ConcatVideosTask(
-                f"concat {output_artifact.path}", tmp_artifacts, [output_artifact]
+                f"concat {out_video_artifact.path}",
+                tmp_artifacts,
+                [out_video_artifact, out_timestamp_artifact],
             )
             tasks = render_tasks + [concat_task]
             self.scheduler.submit(tasks)
 
             if self.dry_run:
-                self.log.info(output_artifact.path)
+                self.log.info(out_video_artifact.path)
                 for slp in collection.slps:
                     self.log.info(f"\t{slp.path}")
                 if collection.context:
