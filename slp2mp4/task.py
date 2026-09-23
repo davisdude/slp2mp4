@@ -15,12 +15,6 @@ class Task:
     name: str
     inputs: list[Artifact]
     outputs: list[Artifact]
-    video: Mp4Artifact = dataclasses.field(init=False)
-
-    def __post_init__(self):
-        videos = [o for o in self.outputs if isinstance(o, Mp4Artifact)]
-        assert len(videos) == 1
-        self.video = videos[0]
 
     @property
     def resources(self) -> dict[str, float]:
@@ -35,10 +29,17 @@ class Task:
         for i in self.inputs:
             i.cleanup()
 
+@dataclasses.dataclass(eq=False)
+class VideoTask(Task):
+    def __post_init__(self):
+        videos = [o for o in self.outputs if isinstance(o, Mp4Artifact)]
+        assert len(videos) == 1
+        self.video = videos[0]
+
 
 @dataclasses.dataclass(eq=False)
-class RenderGameTask(Task):
-    index: int
+class RenderGameTask(VideoTask):
+    index: int = dataclasses.field(default=0)
     slp: SlippiArtifact = dataclasses.field(init=False)
     context: ContextArtifact | None = dataclasses.field(init=False, default=None)
 
@@ -60,7 +61,7 @@ class RenderGameTask(Task):
 
 
 @dataclasses.dataclass(eq=False)
-class ConcatVideosTask(Task):
+class ConcatVideosTask(VideoTask):
     timestamps: list[int] = dataclasses.field(init=False, default_factory=list)
 
     @property
