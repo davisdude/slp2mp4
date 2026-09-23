@@ -18,7 +18,7 @@ class Artifact:
         return self.path.is_file()
 
     def cleanup(self):
-        self.path.unlink()
+        self.path.unlink(missing_ok=True)
 
 
 @dataclass(frozen=True)

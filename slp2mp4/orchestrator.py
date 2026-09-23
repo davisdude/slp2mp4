@@ -6,6 +6,7 @@ import shutil
 import tempfile
 import time
 import traceback
+from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from logging import Logger
 from multiprocessing import Event
@@ -14,11 +15,11 @@ from pathlib import Path
 import psutil
 
 from slp2mp4 import log
-from slp2mp4.artifact import Mp4Artifact
+from slp2mp4.artifact import Artifact, Mp4Artifact, TimestampArtifact
 from slp2mp4.collector import Collection, Collector
 from slp2mp4.config import Config
 from slp2mp4.scheduler import Scheduler
-from slp2mp4.task import ConcatVideosTask, RenderGameTask
+from slp2mp4.task import ConcatVideosTask, RenderGameTask, Task
 from slp2mp4.worker import Worker
 
 
@@ -36,7 +37,7 @@ class Orchestrator:
     scheduler: Scheduler | None = dataclasses.field(default=None)
     log: Logger | None = dataclasses.field(default=None)
     created_dirs: list[Path] = dataclasses.field(default_factory=list, init=False)
-    created_files: list[Path] = dataclasses.field(default_factory=list, init=False)
+    tmp_artifacts: list[Artifact] = dataclasses.field(default_factory=list, init=False)
 
     def __post_init__(self):
         if self.num_procs is None:
@@ -74,34 +75,56 @@ class Orchestrator:
             path = path.expanduser().absolute()
         return self.format_output_name(parent / (path.name + ".mp4"))
 
-    def collect_tasks(self):
-        for path, collection in self.collector.next():
-            render_tasks = []
-            tmp_artifacts = []
-            for slp in collection.slps:
+    def next(self):
+        """Iterator that returns <input>, <task>."""
+        tasks = []
+        for input_item, path, collection in self.collector.next():
+            tmp_vids = []
+            for index, slp in enumerate(collection.slps):
                 _handle, tmp = tempfile.mkstemp(suffix=".mp4", dir=self.workdir)
-                tmp_path = Path(tmp)
-                self.created_files.append(tmp_path)
-                tmp_artifact = Mp4Artifact(tmp_path)
-                task = RenderGameTask(f"render {slp.path}", [slp], [tmp_artifact])
-                tmp_artifacts.append(tmp_artifact)
-                render_tasks.append(task)
-            out_video_artifact = Mp4Artifact(self.get_output_name(path, collection))
-            out_timestamp_artifact = out_video_artifact.with_suffix(".txt")
-            concat_task = ConcatVideosTask(
-                f"concat {out_video_artifact.path}",
-                tmp_artifacts,
-                [out_video_artifact, out_timestamp_artifact],
+                vid = Mp4Artifact(Path(tmp))
+                tmp_vids.append(vid)
+                self.tmp_artifacts.append(vid)
+                inputs = [slp]
+                if collection.context is not None:
+                    inputs.append(collection.context)
+                tasks.append(RenderGameTask(f"render {slp.path}", inputs, [vid], index))
+            _handle, tmp = tempfile.mkstemp(suffix=".mp4", dir=self.workdir)
+            vid_path = Path(tmp)
+            vid = Mp4Artifact(vid_path)
+            timestamps = TimestampArtifact(vid_path.with_suffix(".txt"))
+            self.tmp_artifacts.extend([vid, timestamps])
+            tasks.append(
+                ConcatVideosTask(f"concat {vid.path}", tmp_vids, [vid, timestamps])
             )
-            tasks = render_tasks + [concat_task]
+            yield input_item, tasks
+
+        # TODO: yield more concats based on config.combine_mode
+        # leaves = self.scheduler.get_leaves()
+
+        # TODO: Move final tmp files to real names
+
+    def _print_leaf(self, leaf: Task, indent_level=0):
+        indent = "\t"
+        outputs = (", ").join(o.path.name for o in leaf.outputs)
+        self.log.info(f"{indent * indent_level}{outputs}")
+        for i in leaf.inputs:
+            task = self.scheduler.get_producer(i)
+            if task:
+                self._print_leaf(task, indent_level + 1)
+            else:
+                self.log.info(f"{indent * (indent_level + 1)}{i.path.name}")
+
+    def collect_tasks(self):
+        tasks_by_input: dict[Path, list[Task]] = defaultdict(list)
+        for input_item, tasks in self.next():
+            tasks_by_input[input_item].extend(tasks)
             self.scheduler.submit(tasks)
 
-            if self.dry_run:
-                self.log.info(out_video_artifact.path)
-                for slp in collection.slps:
-                    self.log.info(f"\t{slp.path}")
-                if collection.context:
-                    self.log.info(f"\t{collection.context.path}")
+        leaves = self.scheduler.get_leaves()
+        if self.dry_run:
+            for leaf in leaves:
+                self._print_leaf(leaf)
 
     def do_work(self):
         while not self.kill_event.is_set():
@@ -137,5 +160,5 @@ class Orchestrator:
     def cleanup(self):
         for d in self.created_dirs:
             shutil.rmtree(d)
-        for f in self.created_files:
-            f.unlink(missing_ok=True)
+        for artifact in self.tmp_artifacts:
+            artifact.cleanup()

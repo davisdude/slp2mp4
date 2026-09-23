@@ -5,7 +5,7 @@ import dataclasses
 from collections import deque
 from threading import Lock
 
-from slp2mp4.artifact import ExistingFileArtifact
+from slp2mp4.artifact import Artifact, ExistingFileArtifact
 from slp2mp4.task import Task
 
 
@@ -94,6 +94,23 @@ class Scheduler:
             self.running_tasks.remove(t)
             self.completed_tasks.add(t)
             t.cleanup()
+
+    def get_leaves(self):
+        with self.lock:
+            return [
+                task
+                for task, dependents in self.dependents.items()
+                if len(dependents) == 0
+            ]
+
+    def get_producer(self, artifact: Artifact):
+        with self.lock:
+            for task in self.running_tasks | self.completed_tasks:
+                if artifact in task.outputs:
+                    return task
+            for task in self.ready_tasks:
+                if artifact in task.outputs:
+                    return task
 
     def _resources_available(self, t: Task):
         for name, amount in t.resources.items():
