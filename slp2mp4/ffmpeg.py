@@ -13,31 +13,30 @@ class FfmpegRunner:
     def __init__(self, config):
         self.config = config
         self.ffmpeg_path = shutil.which(config.paths.ffmpeg)
-        if self.ffmpeg_path is None:
-            raise RuntimeError(f"Invalid ffmpeg path '{self.ffmpeg_path}'")
+        self.ffprobe_path = config.paths.get_ffprobe()
         self.audio_args = shlex.split(config.ffmpeg.audio_args)
         self.log = log.get_logger()
 
     # TODO: Pass kill_event
-    def _run(self, args):
-        ffmpeg_args = [self.ffmpeg_path] + args
-        proc = subprocess.run(
-            ffmpeg_args,
-            check=False,
-            stdin=subprocess.DEVNULL,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-        )
+    def _run(self, args, kwargs=None):
+        if kwargs is None:
+            kwargs = {
+                "stdin": subprocess.DEVNULL,
+                "stdout": subprocess.PIPE,
+                "stderr": subprocess.STDOUT,
+            }
+        proc = subprocess.run(args, check=False, **kwargs)
         stdout = proc.stdout.decode(errors="backslashreplace")
         if proc.returncode != 0:
-            self.log.error(f"{ffmpeg_args = }: {stdout}")
+            self.log.error(f"{args = }: {stdout}")
         else:
-            self.log.debug(f"{ffmpeg_args = }: {stdout}")
-        return proc.returncode == 0
+            self.log.debug(f"{args = }: {stdout}")
+        return proc
 
     def reencode_audio(self, audio_file_path: Path):
         reencoded_path = audio_file_path.parent / "fixed.out"
         args = (
+            self.ffmpeg_path,
             "-y",
             "-i",
             audio_file_path,
@@ -46,7 +45,8 @@ class FfmpegRunner:
             f"volume='{self.config.ffmpeg.volume / 100}'",
             reencoded_path,
         )
-        if self._run(args):
+        proc = self._run(args)
+        if proc.returncode == 0:
             return reencoded_path
 
     # Assumes output file can handle no reencoding for concat
@@ -58,6 +58,7 @@ class FfmpegRunner:
         output_file: Path,
     ):
         args = (
+            self.ffmpeg_path,
             "-y",
             "-i",
             audio_file,
@@ -74,7 +75,8 @@ class FfmpegRunner:
             "-xerror",
             output_file,
         )
-        return self._run(args)
+        proc = self._run(args)
+        return proc.returncode == 0
 
     # Assumes all videos have the same encoding
     def concat_videos(self, videos: list[Path], output_file: Path):
@@ -87,6 +89,7 @@ class FfmpegRunner:
             concat_file.write(files)
             concat_file.flush()
             args = (
+                self.ffmpeg_path,
                 "-y",
                 "-f",
                 "concat",
@@ -97,6 +100,22 @@ class FfmpegRunner:
                 "-c",
                 "copy",
                 "-xerror",
-                output_file,
+                str(output_file),
             )
-            return self._run(args)
+            proc = self._run(args)
+            return proc.returncode == 0
+
+    def get_video_duration(self, video: Path):
+        args = (
+            self.ffprobe_path,
+            "-i",
+            str(video),
+            "-show_entries",
+            "format=duration",
+            "-v",
+            "quiet",
+            "-of",
+            "csv=p=0",
+        )
+        proc = self._run(args)
+        return float(proc.stdout)
