@@ -8,6 +8,7 @@ import time
 import traceback
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
+from datetime import timedelta
 from logging import Logger
 from multiprocessing import Event
 from pathlib import Path
@@ -76,6 +77,18 @@ class Orchestrator:
             name = parent / path.with_suffix(".mp4")
         return self.format_output_name(name)
 
+    def write_timestamps(self, main_task):
+        filename = main_task.video.path.with_suffix(".txt")
+        for task in self.scheduler.get_parent_tasks(main_task):
+            if hasattr(task, "timestamps"):
+                if task.timestamps:
+                    with open(filename, "w") as f:
+                        for i, t in zip(task.inputs, task.timestamps):
+                            # TODO: Convert i from tmp name to real name
+                            time_str = str(timedelta(seconds=int(t)))
+                            f.write(f"{time_str} - {i}\n")
+                break
+
     def next(self):
         """Iterator that returns <task>."""
         input_by_task: dict[Task, Path] = {}
@@ -141,7 +154,6 @@ class Orchestrator:
             new_artifact = Mp4Artifact(new_path)
             tasks.append(MoveFileTask(f"move {new_path}", [task.video], [new_artifact]))
         yield tasks
-        # TODO: Timestamps
 
     def _print_leaf(self, leaf: Task, indent_level=0):
         indent = "\t"
@@ -197,6 +209,11 @@ class Orchestrator:
                     self.log.error(
                         f"Orchestrator encountered exception: {traceback.format_exc()}"
                     )
+
+        # Timestamps must be written after concat is done
+        leaves = self.scheduler.get_leaves()
+        for task in leaves:
+            self.write_timestamps(task)
 
         self.collector.cleanup()
         self.cleanup()

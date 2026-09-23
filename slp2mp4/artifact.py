@@ -63,13 +63,3 @@ class Mp4Artifact(Artifact):
             raise RuntimeError(
                 f"'{self.path}' has invalid file extension for an mp4 file."
             )
-
-
-@dataclasses.dataclass(frozen=True)
-class TimestampArtifact(Artifact):
-    def __post_init__(self):
-        super().__post_init__()
-        if self.path.suffix != ".txt":
-            raise RuntimeError(
-                f"'{self.path}' has invalid file extension for a timestamp file."
-            )
