@@ -2,6 +2,7 @@
 
 import concurrent.futures
 import dataclasses
+import json
 import shutil
 import tempfile
 import time
@@ -77,6 +78,12 @@ class Orchestrator:
             name = parent / (path.name + ".mp4")
         return self.format_output_name(name)
 
+    def get_slp_name(self, artifact: Artifact):
+        task = self.scheduler.get_producer(artifact)
+        for _, leaf in self.scheduler.walk_tree(task):
+            if isinstance(leaf, SlippiArtifact):
+                return leaf
+
     def get_timestamp_names(self, input_items: list[Artifact]):
         producers = [self.scheduler.get_producer(i) for i in input_items]
         paths = [p.path for p in producers]
@@ -84,11 +91,8 @@ class Orchestrator:
         if len(set(names)) != 1:
             return names
         names = []
-        for task in producers:
-            for _, leaf in self.scheduler.walk_tree(task):
-                if isinstance(leaf, SlippiArtifact):
-                    names.append(f"Game {leaf.index + 1}")
-        return names
+        slps = [self.get_slp_name(task.video) for task in producers]
+        return [f"Game {slp.index + 1}" for slp in slps]
 
     def write_timestamps(self, main_task):
         filename = main_task.video.path.with_suffix(".txt")
@@ -103,8 +107,16 @@ class Orchestrator:
                         )
                 break
 
+    def get_set_ordinal(self, task: Task):
+        try:
+            slp = self.get_slp_name(task.video)
+            with open(slp.context.path, "rb") as f:
+                return json.load(f)["startgg"]["set"]["ordinal"]
+        except:  # noqa: E722
+            return 0
+
     def sort_tasks_for_concat(self, tasks: list[Task]):
-        return sorted(tasks, key=lambda task: task.path)
+        return sorted(tasks, key=lambda task: (self.get_set_ordinal(task), task.path))
 
     def next(self):
         """Iterator that returns <task>."""
