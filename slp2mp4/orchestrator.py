@@ -81,8 +81,6 @@ class Orchestrator:
 
     def get_output_name(self, tasks: list[Task], path: Path):
         contexts = list({task.slp.context for task in tasks})
-        if not self.conf.runtime.use_context_json_for_names:
-            return path
         if (len(contexts) != 1) or (contexts[0] is None):
             # I don't think this is possible currently, but better safe...
             return path
