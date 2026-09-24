@@ -1,9 +1,46 @@
 from pathlib import Path
 
+from pytest import fixture
+
 from slp2mp4.artifact import Mp4Artifact, SlippiArtifact
 from slp2mp4.config import CombineMode
 from slp2mp4.pipeline import Pipeline
 from slp2mp4.task import ConcatVideosTask
+
+
+@fixture
+def complex_pipeline(tmp_path):
+    def build():
+        input_tasks = []
+        input_by_task = {}
+        phase_by_task = {}
+        phases = [
+            ("Tournament A", "Singles", "Winners", 0),
+            ("Tournament A", "Singles", "Losers", 0),
+            ("Tournament A", "Doubles", "Winners", 0),
+            ("Tournament B", "Doubles", "Winners", 0),
+            ("Tournament B", "Singles", "Losers", 0),
+            ("Tournament B", "Doubles", "Winners", 1),
+            ("Tournament C", "Doubles", "Losers", 1),
+            ("Tournament C", "Doubles", "Losers", 0),
+            ("Tournament C", "Doubles", "Losers", 2),
+        ]
+        for i, phase in enumerate(phases):
+            output = Mp4Artifact(Path(f"{i} out.mp4"))
+            task = ConcatVideosTask(
+                f"concat {i}",
+                [Mp4Artifact(Path(f"{i}.mp4"))],
+                [output],
+                Path(f"{i} final.mp4"),
+            )
+            input_tasks.append(task)
+            input_item = tmp_path / Path(f"input-{i // 3}.mp4")
+            input_item.touch()
+            input_by_task[task] = input_item
+            phase_by_task[task] = phase
+        return input_tasks, input_by_task, phase_by_task
+
+    return build
 
 
 def test_get_render_tasks_single(tmp_path):
@@ -81,10 +118,14 @@ def test_get_concat_tasks_all_combine_simple(tmp_path):
             Path(f"{i} final.mp4"),
         )
         input_tasks.append(task)
-        input_by_task[task] = None # Unused
+        input_by_task[task] = None  # Unused
         phase_by_task[task] = (str(i), str(i), str(i))
 
-    tasks = list(pipeline.get_concat_tasks(input_tasks, input_by_task, phase_by_task, CombineMode.ALL))
+    tasks = list(
+        pipeline.get_concat_tasks(
+            input_tasks, input_by_task, phase_by_task, CombineMode.ALL
+        )
+    )
     assert len(tasks) == 1
     assert len(tasks[0]) == 1
 
@@ -94,34 +135,14 @@ def test_get_concat_tasks_all_combine_simple(tmp_path):
     assert task.final_name == Path("all.mp4")
 
 
-def test_get_concat_tasks_all_combine_complex(tmp_path):
+def test_get_concat_tasks_all_combine_complex(tmp_path, complex_pipeline):
     pipeline = Pipeline(tmp_path)
-
-    outputs = []
-    input_tasks = []
-    input_by_task = {}
-    phase_by_task = {}
-
-    phases = [
-        ("Tournament A", "Singles", "Winners"),
-        ("Tournament A", "Singles", "Losers"),
-        ("Tournament A", "Doubles", "Winners"),
-        ("Tournament B", "Doubles", "Winners"),
-        ("Tournament B", "Singles", "Losers"),
-        ("Tournament B", "Doubles", "Winners"),
-        ("Tournament C", "Doubles", "Winners"),
-        ("Tournament C", "Doubles", "Losers"),
-        ("Tournament C", "Doubles", "Other"),
-    ]
-
-    for i, phase in enumerate(phases):
-        output = Mp4Artifact(Path(f"{i} out.mp4"))
-        outputs.append(output)
-        task = ConcatVideosTask(f"concat {i}", [Mp4Artifact(Path(f"{i}.mp4"))], [output], Path(f"{i} final.mp4"))
-        input_tasks.append(task)
-        input_by_task[task] = Path(f"input-{i}.mp4")
-        phase_by_task[task] = phase
-    tasks = list(pipeline.get_concat_tasks(input_tasks, input_by_task, phase_by_task, CombineMode.ALL))
+    input_tasks, input_by_task, phase_by_task = complex_pipeline()
+    tasks = list(
+        pipeline.get_concat_tasks(
+            input_tasks, input_by_task, phase_by_task, CombineMode.ALL
+        )
+    )
 
     assert len(tasks) == 1
 
@@ -131,56 +152,24 @@ def test_get_concat_tasks_all_combine_complex(tmp_path):
     assert task.final_name == Path("all.mp4")
     assert len(task.inputs) == 9
     assert task.inputs == [
-        Mp4Artifact(Path("2 out.mp4")), # Tournament A - Doubles - Winners
-        Mp4Artifact(Path("1 out.mp4")), # Tournament A - Singles - Losers
-        Mp4Artifact(Path("0 out.mp4")), # Tournament A - Singles - Winners
-        Mp4Artifact(Path("3 out.mp4")), # Tournament B - Doubles - Winners
-        Mp4Artifact(Path("5 out.mp4")), # Tournament B - Doubles - Winners
-        Mp4Artifact(Path("4 out.mp4")), # Tournament B - Singles - Losers
-        Mp4Artifact(Path("7 out.mp4")), # Tournament C - Doubles - Losers
-        Mp4Artifact(Path("8 out.mp4")), # Tournament C - Doubles - Other
-        Mp4Artifact(Path("6 out.mp4")), # Tournament C - Doubles - Winners
+        Mp4Artifact(Path("2 out.mp4")),  # Tournament A - Doubles - Winners
+        Mp4Artifact(Path("1 out.mp4")),  # Tournament A - Singles - Losers
+        Mp4Artifact(Path("0 out.mp4")),  # Tournament A - Singles - Winners
+        Mp4Artifact(Path("3 out.mp4")),  # Tournament B - Doubles - Winners
+        Mp4Artifact(Path("5 out.mp4")),  # Tournament B - Doubles - Winners
+        Mp4Artifact(Path("4 out.mp4")),  # Tournament B - Singles - Losers
+        Mp4Artifact(Path("7 out.mp4")),  # Tournament C - Doubles - Losers
+        Mp4Artifact(Path("6 out.mp4")),  # Tournament C - Doubles - Losers
+        Mp4Artifact(Path("8 out.mp4")),  # Tournament C - Doubles - Losers
     ]
 
 
-def test_get_concat_tasks_input_combine(tmp_path):
+def test_get_concat_tasks_input_combine(tmp_path, complex_pipeline):
     pipeline = Pipeline(tmp_path)
-
-    outputs = []
-    input_tasks = []
-    input_by_task = {}
-    phase_by_task = {}
-
-    phases = [
-        ("Tournament A", "Singles", "Winners"),
-        ("Tournament A", "Singles", "Losers"),
-        ("Tournament A", "Doubles", "Winners"),
-        ("Tournament B", "Doubles", "Winners"),
-        ("Tournament B", "Singles", "Losers"),
-        ("Tournament B", "Doubles", "Winners"),
-        ("Tournament C", "Doubles", "Winners"),
-        ("Tournament C", "Doubles", "Losers"),
-        ("Tournament C", "Doubles", "Other"),
-    ]
-
-    for i, phase in enumerate(phases):
-        output = Mp4Artifact(Path(f"{i} out.mp4"))
-        outputs.append(output)
-
-        task = ConcatVideosTask(f"concat {i}", [Mp4Artifact(Path(f"{i}.mp4"))], [output], Path(f"{i} final.mp4"))
-
-        input_tasks.append(task)
-        input_item = tmp_path / Path(f"input-{i // 3}.mp4")
-        input_item.touch()
-        input_by_task[task] = input_item
-        phase_by_task[task] = phase
-
+    input_tasks, input_by_task, phase_by_task = complex_pipeline()
     tasks = list(
         pipeline.get_concat_tasks(
-            input_tasks,
-            input_by_task,
-            phase_by_task,
-            CombineMode.BY_INPUT,
+            input_tasks, input_by_task, phase_by_task, CombineMode.BY_INPUT
         )
     )
 
@@ -192,9 +181,9 @@ def test_get_concat_tasks_input_combine(tmp_path):
     assert task.final_name == Path("input-0.mp4")
     assert len(task.inputs) == 3
     assert task.inputs == [
-        Mp4Artifact(Path("2 out.mp4")), # Tournament A - Doubles - Winners
-        Mp4Artifact(Path("1 out.mp4")), # Tournament A - Singles - Losers
-        Mp4Artifact(Path("0 out.mp4")), # Tournament A - Singles - Winners
+        Mp4Artifact(Path("2 out.mp4")),  # Tournament A - Doubles - Winners
+        Mp4Artifact(Path("1 out.mp4")),  # Tournament A - Singles - Losers
+        Mp4Artifact(Path("0 out.mp4")),  # Tournament A - Singles - Winners
     ]
 
     assert len(tasks[1]) == 1
@@ -203,9 +192,9 @@ def test_get_concat_tasks_input_combine(tmp_path):
     assert task.final_name == Path("input-1.mp4")
     assert len(task.inputs) == 3
     assert task.inputs == [
-        Mp4Artifact(Path("3 out.mp4")), # Tournament B - Doubles - Winners
-        Mp4Artifact(Path("5 out.mp4")), # Tournament B - Doubles - Winners
-        Mp4Artifact(Path("4 out.mp4")), # Tournament B - Singles - Losers
+        Mp4Artifact(Path("3 out.mp4")),  # Tournament B - Doubles - Winners
+        Mp4Artifact(Path("5 out.mp4")),  # Tournament B - Doubles - Winners
+        Mp4Artifact(Path("4 out.mp4")),  # Tournament B - Singles - Losers
     ]
 
     assert len(tasks[2]) == 1
@@ -214,14 +203,79 @@ def test_get_concat_tasks_input_combine(tmp_path):
     assert task.final_name == Path("input-2.mp4")
     assert len(task.inputs) == 3
     assert task.inputs == [
-        Mp4Artifact(Path("7 out.mp4")), # Tournament C - Doubles - Losers
-        Mp4Artifact(Path("8 out.mp4")), # Tournament C - Doubles - Other
-        Mp4Artifact(Path("6 out.mp4")), # Tournament C - Doubles - Winners
+        Mp4Artifact(Path("7 out.mp4")),  # Tournament C - Doubles - Losers
+        Mp4Artifact(Path("6 out.mp4")),  # Tournament C - Doubles - Losers
+        Mp4Artifact(Path("8 out.mp4")),  # Tournament C - Doubles - Losers
     ]
 
 
-def test_get_concat_tasks_phase_combine(tmp_path):
-    pass
+def test_get_concat_tasks_phase_combine(tmp_path, complex_pipeline):
+    pipeline = Pipeline(tmp_path)
+    input_tasks, input_by_task, phase_by_task = complex_pipeline()
+    tasks = list(
+        pipeline.get_concat_tasks(
+            input_tasks, input_by_task, phase_by_task, CombineMode.BY_PHASE
+        )
+    )
+
+    assert len(tasks) == 6
+
+    assert len(tasks[0]) == 1
+    task = tasks[0][0]
+    assert task.name == "concat Tournament A - Singles - Winners.mp4"
+    assert task.final_name == Path("Tournament A - Singles - Winners.mp4")
+    assert len(task.inputs) == 1
+    assert task.inputs == [
+        Mp4Artifact(Path("0 out.mp4")),  # Tournament A - Singles - Winners
+    ]
+
+    assert len(tasks[1]) == 1
+    task = tasks[1][0]
+    assert task.name == "concat Tournament A - Singles - Losers.mp4"
+    assert task.final_name == Path("Tournament A - Singles - Losers.mp4")
+    assert len(task.inputs) == 1
+    assert task.inputs == [
+        Mp4Artifact(Path("1 out.mp4")),  # Tournament A - Singles - Losers
+    ]
+
+    assert len(tasks[2]) == 1
+    task = tasks[2][0]
+    assert task.name == "concat Tournament A - Doubles - Winners.mp4"
+    assert task.final_name == Path("Tournament A - Doubles - Winners.mp4")
+    assert len(task.inputs) == 1
+    assert task.inputs == [
+        Mp4Artifact(Path("2 out.mp4")),  # Tournament A - Doubles - Winners
+    ]
+
+    assert len(tasks[3]) == 1
+    task = tasks[3][0]
+    assert task.name == "concat Tournament B - Doubles - Winners.mp4"
+    assert task.final_name == Path("Tournament B - Doubles - Winners.mp4")
+    assert len(task.inputs) == 2
+    assert task.inputs == [
+        Mp4Artifact(Path("3 out.mp4")),  # Tournament B - Doubles - Winners
+        Mp4Artifact(Path("5 out.mp4")),  # Tournament B - Doubles - Winners
+    ]
+
+    assert len(tasks[4]) == 1
+    task = tasks[4][0]
+    assert task.name == "concat Tournament B - Singles - Losers.mp4"
+    assert task.final_name == Path("Tournament B - Singles - Losers.mp4")
+    assert len(task.inputs) == 1
+    assert task.inputs == [
+        Mp4Artifact(Path("4 out.mp4")),  # Tournament B - Singles - Losers
+    ]
+
+    assert len(tasks[5]) == 1
+    task = tasks[5][0]
+    assert task.name == "concat Tournament C - Doubles - Losers.mp4"
+    assert task.final_name == Path("Tournament C - Doubles - Losers.mp4")
+    assert len(task.inputs) == 3
+    assert task.inputs == [
+        Mp4Artifact(Path("7 out.mp4")),  # Tournament C - Doubles - Losers
+        Mp4Artifact(Path("6 out.mp4")),  # Tournament C - Doubles - Losers
+        Mp4Artifact(Path("8 out.mp4")),  # Tournament C - Doubles - Losers
+    ]
 
 
 def test_get_move_tasks(tmp_path):

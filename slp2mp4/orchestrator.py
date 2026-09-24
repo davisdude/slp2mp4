@@ -107,7 +107,7 @@ class Orchestrator:
                 input_by_task[task] = input_item
                 yield [task]
         leaves = self.scheduler.get_leaves()
-        phase_by_task = {task: self.get_round_info(task)[:3] for task in leaves}
+        phase_by_task = {task: self.get_round_info(task) for task in leaves}
         yield from self.pipeline.get_concat_tasks(
             leaves, input_by_task, phase_by_task, self.conf.runtime.combine_mode
         )

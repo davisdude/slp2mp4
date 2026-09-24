@@ -11,7 +11,7 @@ from slp2mp4.artifact import Artifact, Mp4Artifact, SlippiArtifact
 from slp2mp4.config import CombineMode
 from slp2mp4.task import ConcatVideosTask, MoveFileTask, RenderGameTask, Task
 
-Phase = tuple[str, str, str]
+Phase = tuple[str, str, str, int]
 
 
 @dataclasses.dataclass
@@ -65,7 +65,8 @@ class Pipeline:
         elif combine_mode == CombineMode.BY_PHASE:
             groups: dict[Phase, list[Task]] = defaultdict(list)
             for task in tasks:
-                groups[phase_by_task[task]].append(task)
+                # Only strings are used for grouping
+                groups[phase_by_task[task][:3]].append(task)
             for round_info, group_tasks in groups.items():
                 name = (" - ").join(round_info) + ".mp4"
                 yield group_tasks, Path(name)

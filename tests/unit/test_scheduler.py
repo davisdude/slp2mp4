@@ -3,9 +3,9 @@ from pathlib import Path
 
 import pytest
 
-from slp2mp4.artifact import Artifact, Mp4Artifact
+from slp2mp4.artifact import Artifact, Mp4Artifact, SlippiArtifact
 from slp2mp4.scheduler import Scheduler
-from slp2mp4.task import ConcatVideosTask, Task
+from slp2mp4.task import ConcatVideosTask, RenderGameTask, Task
 
 
 @dataclasses.dataclass
@@ -15,6 +15,54 @@ class MagicTask(Task):
     @property
     def resources(self):
         return {"magic": self.magic_limit}
+
+
+@dataclasses.dataclass
+class Pipeline:
+    sched: Scheduler
+    render_tasks: dict[str, list[RenderGameTask]]
+    concat_tasks: dict[str, ConcatVideosTask]
+
+
+@pytest.fixture
+def make_pipeline(make_file):
+    def build(
+        sets: list[tuple[str, list[str]]],
+        cpus: float = 1.0,
+        create_mp4s: bool = False,
+        create_slps: bool = True,
+    ):
+        render_tasks = {}
+        concat_tasks = {}
+        tasks = []
+        for name, set_paths in sets:
+            mp4_artifacts = []
+            mp4_tasks = []
+            for set_path in set_paths:
+                slp_artifact = make_file(
+                    f"{set_path}.slp", create=create_slps, cls=SlippiArtifact
+                )
+                mp4_artifact = make_file(
+                    f"{set_path}.mp4", create=create_mp4s, cls=Mp4Artifact
+                )
+                mp4_artifacts.append(mp4_artifact)
+                render_task = RenderGameTask(
+                    f"render_{set_path}", [slp_artifact], [mp4_artifact]
+                )
+                mp4_tasks.append(render_task)
+            set_artifact = make_file(f"{name}.mp4", create=create_mp4s, cls=Mp4Artifact)
+            concat_task = ConcatVideosTask(
+                f"concat_{name}", mp4_artifacts, [set_artifact]
+            )
+            render_tasks[name] = mp4_tasks
+            concat_tasks[name] = concat_task
+            tasks.extend([*mp4_tasks, concat_task])
+
+        sched = Scheduler({"cpu": cpus})
+        sched.submit(tasks)
+        return Pipeline(sched, render_tasks, concat_tasks)
+
+    return build
 
 
 def test_graph_construction(make_pipeline):
