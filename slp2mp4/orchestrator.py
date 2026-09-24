@@ -15,12 +15,12 @@ from pathlib import Path
 import psutil
 
 from slp2mp4 import log
-from slp2mp4.artifact import Artifact, SlippiArtifact
+from slp2mp4.artifact import Artifact, Mp4Artifact, SlippiArtifact
 from slp2mp4.collector import Collector
 from slp2mp4.config import Config
 from slp2mp4.pipeline import Pipeline
 from slp2mp4.scheduler import Scheduler
-from slp2mp4.task import Task
+from slp2mp4.task import MoveFileTask, Task
 from slp2mp4.worker import Worker
 
 
@@ -99,6 +99,18 @@ class Orchestrator:
                         f.writelines(f"{t} - {n}\n" for n, t in zip(names, times))
                 break
 
+    # TODO: Give awareness of context.json
+    def get_move_tasks(self, tasks: list[Task]):
+        for task in tasks:
+            # TODO: Format name
+            output_path = self.output_directory / task.final_name
+            output_artifact = Mp4Artifact(output_path)
+            yield [
+                MoveFileTask(
+                    f"move {output_path}", [task.video], [output_artifact], output_path
+                )
+            ]
+
     def next(self):
         """Iterator that returns <task>."""
         input_by_task: dict[Task, Path] = {}
@@ -112,7 +124,7 @@ class Orchestrator:
             leaves, input_by_task, phase_by_task, self.conf.runtime.combine_mode
         )
         leaves = self.scheduler.get_leaves()
-        yield from self.pipeline.get_move_tasks(leaves)
+        yield from self.get_move_tasks(leaves)
 
     def collect_tasks(self):
         for tasks in self.next():

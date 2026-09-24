@@ -9,7 +9,7 @@ from pathlib import Path
 
 from slp2mp4.artifact import Artifact, Mp4Artifact, SlippiArtifact
 from slp2mp4.config import CombineMode
-from slp2mp4.task import ConcatVideosTask, MoveFileTask, RenderGameTask, Task
+from slp2mp4.task import ConcatVideosTask, RenderGameTask, Task
 
 Phase = tuple[str, str, str, int]
 
@@ -106,19 +106,6 @@ class Pipeline:
             sorted_tasks = self._sort_tasks(group_tasks, phase_by_task)
             videos = [task.video for task in sorted_tasks]
             yield [self._concat_task(f"concat {final}", videos, final)]
-
-    # TODO: Maybe move this one back to orchestrator? Requires too much conf knowledge maybe
-    # TODO: Give awareness of context.json
-    def get_move_tasks(self, tasks: list[Task]):
-        for task in tasks:
-            # TODO: Format name
-            output_path = self.output_directory / task.final_name
-            output_artifact = Mp4Artifact(output_path)
-            yield [
-                MoveFileTask(
-                    f"move {output_path}", [task.video], [output_artifact], output_path
-                )
-            ]
 
     def cleanup(self):
         for d in self.created_dirs:

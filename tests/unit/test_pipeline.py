@@ -276,7 +276,3 @@ def test_get_concat_tasks_phase_combine(tmp_path, complex_pipeline):
         Mp4Artifact(Path("6 out.mp4")),  # Tournament C - Doubles - Losers
         Mp4Artifact(Path("8 out.mp4")),  # Tournament C - Doubles - Losers
     ]
-
-
-def test_get_move_tasks(tmp_path):
-    pass
