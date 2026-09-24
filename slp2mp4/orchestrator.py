@@ -51,16 +51,21 @@ class Orchestrator:
         self.pipeline = Pipeline(self.workdir, self.output_directory)
         self.log = log.get_logger()
 
-    def get_slp_name(self, artifact: Artifact):
+    def get_slps(self, artifact: Artifact):
         task = self.scheduler.get_producer(artifact)
         for _, leaf in self.scheduler.walk_tree(task):
             if isinstance(leaf, SlippiArtifact):
-                return leaf
+                yield leaf
 
     def get_round_info(self, task: Task):
-        try:
-            slp = self.get_slp_name(task.video)
-            with open(slp.context.path, "rb") as f:
+        slps = self.get_slps(task.video)
+        contexts = list({slp.context for slp in slps})
+        default_round_info = ("", "", "", -math.inf)
+        if (len(contexts) != 1) or (contexts[0] is None):
+            return default_round_info
+        context = contexts[0]
+        with open(context.path, "rb") as f:
+            try:
                 # TODO: parry / challonge / etc.
                 data = json.load(f)
                 tournament_name = data["startgg"]["tournament"]["name"]
@@ -70,8 +75,9 @@ class Orchestrator:
                     data["startgg"]["set"]["ordinal"] or data["startgg"]["set"]["round"]
                 )
                 return (tournament_name, event_name, phase_name, set_order)
-        except:  # noqa: E722
-            return ("", "", "", -math.inf)
+            except Exception as e:  # noqa: BLE001
+                self.log.error(f"Encountered error getting round info: {e}")
+        return default_round_info
 
     def print_leaf(self, task: Task):
         indent = "    "
