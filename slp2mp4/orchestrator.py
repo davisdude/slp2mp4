@@ -35,6 +35,7 @@ class Orchestrator:
     dry_run: bool = dataclasses.field(default=False)
     num_procs: int | None = dataclasses.field(default=None)
     workdir: Path | None = dataclasses.field(default=None)
+    output_directory: Path | None = dataclasses.field(default=None)
     collector: Collector | None = dataclasses.field(default=None)
     worker: Worker | None = dataclasses.field(default=None)
     scheduler: Scheduler | None = dataclasses.field(default=None)
@@ -50,6 +51,8 @@ class Orchestrator:
         if self.workdir is None:
             self.workdir = Path(tempfile.mkdtemp())
             self.created_dirs.append(self.workdir)
+        if self.output_directory is None:
+            self.output_directory = Path(".")
         if self.collector is None:
             self.collector = Collector(
                 self.inputs, self.kill_event, self.monitor, self.workdir
@@ -164,7 +167,7 @@ class Orchestrator:
                 )
                 return (tournament_name, event_name, phase_name, set_order)
         except:  # noqa: E722
-            return ("", "", -math.inf)
+            return ("", "", "", -math.inf)
 
     def sort_tasks_for_concat(self, tasks: list[Task]):
         return sorted(
@@ -205,7 +208,7 @@ class Orchestrator:
                 _handle, tmp_mp4 = tempfile.mkstemp(suffix=".mp4", dir=self.workdir)
                 vid = Mp4Artifact(Path(tmp_mp4))
                 self.tmp_artifacts.append(vid)
-                path = Path("all")
+                path = self.output_directory / "all"
                 concat_task = ConcatVideosTask("concat all", all_vids, [vid], path)
                 yield [concat_task]
         elif self.conf.runtime.combine_mode == CombineMode.BY_INPUT:
@@ -243,7 +246,7 @@ class Orchestrator:
                 _handle, tmp_mp4 = tempfile.mkstemp(suffix=".mp4", dir=self.workdir)
                 vid = Mp4Artifact(Path(tmp_mp4))
                 self.tmp_artifacts.append(vid)
-                name = f"{tournament_name} - {event_name} - {phase_name}"
+                name = self.output_directory / f"{tournament_name} - {event_name} - {phase_name}"
                 path = self.get_output_path(Path(name))
                 concat_task = ConcatVideosTask(f"concat {vid}", all_vids, [vid], path)
                 new_tasks.append(concat_task)

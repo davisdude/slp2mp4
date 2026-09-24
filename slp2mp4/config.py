@@ -221,6 +221,7 @@ class RuntimeOptions:
         metadata={
             "short": "o",
             "help": "Where to write output videos",
+            "is_directory": True,
         },
     )
     debug: bool = dataclasses.field(default=False)

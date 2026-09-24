@@ -48,7 +48,7 @@ def build_dataclass(variables, parent, obj, prefix=None):
             parent=parent,
             key=key,
             value=value,
-            field_type=field.type,
+            field=field,
         )
         widget.grid(row=row, column=1, sticky="ew")
         row += 1
@@ -63,15 +63,15 @@ def is_dict_of_type(d, t):
     return isinstance(d, dict) and all(isinstance(v, t) for v in d.values())
 
 
-def build_widget(variables, parent, key, value, field_type):
-    if config.is_optional_type(field_type):
-        field_type = config.get_optional_type(field_type)
+def build_widget(variables, parent, key, value, field):
+    if config.is_optional_type(field.type):
+        field.type = config.get_optional_type(field.type)
         default_value = None
-        if (field_type is Path) or (field_type is str):
+        if (field.type is Path) or (field.type is str):
             default_value = ""
         value = value if (value is not None) else default_value
-        return build_widget(variables, parent, key, value, field_type)
-    elif field_type is bool:
+        return build_widget(variables, parent, key, value, field)
+    elif field.type is bool:
         var = tk.BooleanVar(value=value)
         widget = ttk.Checkbutton(parent, variable=var)
     elif isinstance(value, Enum):
@@ -81,13 +81,14 @@ def build_widget(variables, parent, key, value, field_type):
         widget = ttk.Combobox(
             parent, textvariable=var, values=options, state="readonly"
         )
-    elif field_type is int:
+    elif field.type is int:
         # TODO: Spinners for some with min/max
         var = tk.IntVar(value=value)
         widget = ttk.Entry(parent, textvariable=var)
-    elif field_type is Path:
+    elif field.type is Path:
         var = tk.StringVar(value=str(value))
-        widget = create_path_widget(parent, var)
+        is_directory = field.metadata.get("is_directory")
+        widget = create_path_widget(parent, var, is_directory)
     elif is_dict_of_type(value, bool):
         return create_bool_dict_widget(variables, parent, key, value)
     elif is_dict_of_type(value, str):
@@ -99,18 +100,21 @@ def build_widget(variables, parent, key, value, field_type):
     return widget
 
 
-def create_path_widget(parent, var):
+def create_path_widget(parent, var, is_dir):
     frame = ttk.Frame(parent)
     ttk.Entry(frame, textvariable=var).pack(side="left", fill="x", expand=True)
-    button = ttk.Button(frame, text="Browse", command=lambda: browse_path(var))
+    button = ttk.Button(frame, text="Browse", command=lambda: browse_path(var, is_dir))
     button.pack(side="left")
     return frame
 
 
-def browse_path(var):
-    filename = filedialog.askopenfilename()
-    if filename:
-        var.set(filename)
+def browse_path(var, is_dir):
+    if is_dir:
+        path = filedialog.askdirectory()
+    else:
+        path = filedialog.askopenfilename()
+    if path:
+        var.set(path)
 
 
 def create_bool_dict_widget(variables, parent, prefix, values):
@@ -350,6 +354,7 @@ class Application(tk.Tk):
             monitor=self.variables[("monitor",)].get(),
             dry_run=self.variables[("dry_run",)].get(),
             workdir=workdir,
+            output_directory=Path(self.variables[("output_directory",)].get()),
         )
         threading.Thread(target=orchestrator.run).start()
 

@@ -89,6 +89,7 @@ def main():
         monitor=args.monitor,
         dry_run=args.dry_run,
         workdir=args.temporary_directory,
+        output_directory=args.output_directory,
     )
     orchestrator.run()
 
