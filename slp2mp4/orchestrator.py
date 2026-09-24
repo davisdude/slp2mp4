@@ -14,8 +14,8 @@ from pathlib import Path
 
 import psutil
 
-from slp2mp4 import log
-from slp2mp4.artifact import Artifact, Mp4Artifact, SlippiArtifact
+from slp2mp4 import log, util
+from slp2mp4.artifact import Artifact, ContextArtifact, Mp4Artifact, SlippiArtifact
 from slp2mp4.collector import Collector
 from slp2mp4.config import Config
 from slp2mp4.pipeline import Pipeline
@@ -57,10 +57,13 @@ class Orchestrator:
             if isinstance(leaf, SlippiArtifact):
                 yield leaf
 
-    def get_round_info(self, task: Task):
+    def get_contexts(self, task: Task):
         slps = self.get_slps(task.video)
-        contexts = list({slp.context for slp in slps})
+        return list({slp.context for slp in slps})
+
+    def get_round_info(self, task: Task):
         default_round_info = ("", "", "", -math.inf)
+        contexts = self.get_contexts(task)
         if (len(contexts) != 1) or (contexts[0] is None):
             return default_round_info
         context = contexts[0]
@@ -105,11 +108,12 @@ class Orchestrator:
                         f.writelines(f"{t} - {n}\n" for n, t in zip(names, times))
                 break
 
-    # TODO: Give awareness of context.json
     def get_move_tasks(self, tasks: list[Task]):
         for task in tasks:
-            # TODO: Format name
-            output_path = self.output_directory / task.final_name
+            name = task.final_name.stem
+            if self.conf.runtime.youtubify_names:
+                name = util.translate(name, self.conf.runtime.name_replacements)
+            output_path = self.output_directory / f"{name}.mp4"
             output_artifact = Mp4Artifact(output_path)
             yield [
                 MoveFileTask(
@@ -117,10 +121,38 @@ class Orchestrator:
                 )
             ]
 
+    def get_final_name(self, context: ContextArtifact):
+        with open(context.path, "rb") as f:
+            try:
+                # TODO: parry / challonge / etc.
+                data = json.load(f)
+                separator = (
+                    " / "
+                    if (
+                        self.conf.runtime.youtubify_names
+                        and ("/" in self.conf.runtime.name_replacements)
+                    )
+                    else " + "
+                )
+                player1 = separator.join(data["scores"][0]["slots"][0]["displayNames"])
+                player2 = separator.join(data["scores"][0]["slots"][1]["displayNames"])
+                tournament_name = data["startgg"]["tournament"]["name"]
+                event_name = data["startgg"]["event"]["name"]
+                phase_name = data["startgg"]["phase"]["name"]
+                round_text = data["startgg"]["set"]["fullRoundText"]
+                name = f"{player1} vs {player2} - {tournament_name} - {event_name} - {phase_name} - {round_text}.mp4"
+                return Path(name)
+            except Exception as e:  # noqa: BLE001
+                self.log.error(f"Encountered error getting round info: {e}")
+        return None
+
     def next(self):
         """Iterator that returns <task>."""
         input_by_task: dict[Task, Path] = {}
         for input_item, final, artifacts in self.collector.next():
+            contexts = list({artifact.context for artifact in artifacts})
+            if (len(contexts) == 1) and ((context := contexts[0]) is not None):
+                final = self.get_final_name(context) or final
             for task in self.pipeline.get_render_tasks(artifacts, final):
                 input_by_task[task] = input_item
                 yield [task]
