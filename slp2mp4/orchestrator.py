@@ -4,6 +4,7 @@ import concurrent.futures
 import dataclasses
 import json
 import math
+import os
 import shutil
 import tempfile
 import time
@@ -11,7 +12,6 @@ import traceback
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
-from functools import singledispatchmethod
 from logging import Logger
 from multiprocessing import Event
 from pathlib import Path
@@ -120,7 +120,7 @@ class Orchestrator:
             if isinstance(leaf, SlippiArtifact):
                 return leaf
 
-    def get_set_round_info(self, task: Task):
+    def get_round_info(self, task: Task):
         try:
             slp = self.get_slp_name(task.video)
             with open(slp.context.path, "rb") as f:
@@ -136,10 +136,11 @@ class Orchestrator:
         except:  # noqa: E722
             return ("", "", "", -math.inf)
 
+    def _sorting_func(self, task):
+        return (self.get_round_info(task), task.final_name)
+
     def sort_tasks_for_concat(self, tasks: list[Task]):
-        return sorted(
-            tasks, key=lambda task: (self.get_set_round_info(task), task.final_name)
-        )
+        return sorted(tasks, key=self._sorting_func)
 
     def print_leaf(self, task: Task):
         indent = "    "
@@ -159,109 +160,99 @@ class Orchestrator:
             if hasattr(leaf, "timestamps") and not self.dry_run:
                 if leaf.timestamps:
                     with open(filename, "w") as f:
-                        names = [self.scheduler.get_producer(i).final_name.stem for i in leaf.inputs]
+                        names = [
+                            self.scheduler.get_producer(i).final_name.stem
+                            for i in leaf.inputs
+                        ]
                         times = [timedelta(seconds=int(t)) for t in leaf.timestamps]
                         f.writelines(f"{t} - {n}\n" for n, t in zip(names, times))
                 break
 
-    @singledispatchmethod
-    def get_final_name(self, item):
-        raise TypeError(f"Unsupported task type '{type(item)}'")
+    def make_tmp_mp4(self):
+        fd, tmp = tempfile.mkstemp(suffix=".mp4", dir=self.workdir)
+        os.close(fd)
+        artifact = Mp4Artifact(Path(tmp))
+        self.tmp_artifacts.append(artifact)
+        return artifact
 
-    @get_final_name.register
-    def _(self, item: SlippiArtifact):
-        return Path(f"Game {item.index + 1}.mp4")
+    def concat_task(self, task_name: str, videos: list[Mp4Artifact], final: Path):
+        output = self.make_tmp_mp4()
+        return ConcatVideosTask(task_name, videos, [output], final)
+
+    def get_render_tasks(self, slps: list[SlippiArtifact], final: Path):
+        rendered_videos: list[Mp4Artifact] = []
+        for slp in slps:
+            output = self.make_tmp_mp4()
+            rendered_videos.append(output)
+            # Not using `final` here makes timestamps easier later
+            name = slp.path.with_suffix(".mp4").name
+            yield RenderGameTask(f"render {slp}", [slp], [output], Path(name))
+        if len(rendered_videos) > 1:
+            yield self.concat_task(f"concat {final}", rendered_videos, final)
+
+    def _combine_tasks(
+        self,
+        tasks: list[Task],
+        input_by_task: dict[Task, Path],
+        phase_by_task: dict[Task, tuple[str, str, str]],
+    ):
+        if self.conf.runtime.combine_mode == CombineMode.ALL:
+            yield tasks, Path("all.mp4")
+        elif self.conf.runtime.combine_mode == CombineMode.BY_INPUT:
+            groups: dict[Path, list[Task]] = defaultdict(list)
+            for task in tasks:
+                groups[input_by_task[task]].append(task)
+            for input_item, group_tasks in groups.items():
+                name = (
+                    input_item.with_suffix(".mp4").name
+                    if input_item.is_file()
+                    else f"{input_item.name}.mp4"
+                )
+                yield group_tasks, Path(name)
+        elif self.conf.runtime.combine_mode == CombineMode.BY_PHASE:
+            groups: dict[tuple[str, str, str], list[Task]] = defaultdict(list)
+            for task in tasks:
+                groups[phase_by_task[task]].append(task)
+            for round_info, group_tasks in groups.items():
+                name = (" - ").join(round_info) + ".mp4"
+                yield group_tasks, Path(name)
+
+    def combine_tasks(
+        self,
+        tasks: list[Task],
+        input_by_task: dict[Task, Path],
+        phase_by_task: dict[Task, tuple[str, str, str]],
+    ):
+        for group_tasks, final in self._combine_tasks(
+            tasks, input_by_task, phase_by_task
+        ):
+            sorted_tasks = self.sort_tasks_for_concat(group_tasks)
+            videos = [task.video for task in sorted_tasks]
+            yield [self.concat_task(f"concat {final}", videos, final)]
+
+    def finalize_names(self, tasks: list[Task]):
+        for task in tasks:
+            # TODO: Format name
+            output_path = self.output_directory / task.final_name
+            output_artifact = Mp4Artifact(output_path)
+            yield [
+                MoveFileTask(
+                    f"move {output_path}", [task.video], [output_artifact], output_path
+                )
+            ]
 
     def next(self):
         """Iterator that returns <task>."""
         input_by_task: dict[Task, Path] = {}
         for input_item, final, artifacts in self.collector.next():
-            tmp_vids = []
-            for slp in artifacts:
-                _handle, tmp = tempfile.mkstemp(suffix=".mp4", dir=self.workdir)
-                vid = Mp4Artifact(Path(tmp))
-                tmp_vids.append(vid)
-                self.tmp_artifacts.append(vid)
-                # Not using `final` here makes timestamps easier later
-                name = self.get_final_name(slp)
-                render_task = RenderGameTask(f"render {slp}", [slp], [vid], name)
-                input_by_task[render_task] = input_item
-                yield [render_task]
-
-            if len(tmp_vids) > 1:
-                _handle, tmp_mp4 = tempfile.mkstemp(suffix=".mp4", dir=self.workdir)
-                vid = Mp4Artifact(Path(tmp_mp4))
-                self.tmp_artifacts.append(vid)
-                concat_task = ConcatVideosTask(f"concat {vid}", tmp_vids, [vid], final)
-                input_by_task[concat_task] = input_item
-                yield [concat_task]
-
+            for task in self.get_render_tasks(artifacts, final):
+                input_by_task[task] = input_item
+                yield [task]
         leaves = self.scheduler.get_leaves()
-        if self.conf.runtime.combine_mode == CombineMode.ALL:
-            sorted_tasks = self.sort_tasks_for_concat(leaves)
-            all_vids = [task.video for task in sorted_tasks]
-            if len(all_vids) > 1:
-                _handle, tmp_mp4 = tempfile.mkstemp(suffix=".mp4", dir=self.workdir)
-                vid = Mp4Artifact(Path(tmp_mp4))
-                self.tmp_artifacts.append(vid)
-                final = Path("all.mp4")
-                concat_task = ConcatVideosTask("concat all", all_vids, [vid], final)
-                yield [concat_task]
-        elif self.conf.runtime.combine_mode == CombineMode.BY_INPUT:
-            tasks_by_input: dict[Path, list[Task]] = defaultdict(list)
-            for task in leaves:
-                tasks_by_input[input_by_task[task]].append(task)
-            new_tasks = []
-            for input_item, tasks in tasks_by_input.items():
-                sorted_tasks = self.sort_tasks_for_concat(tasks)
-                all_vids = [task.video for task in sorted_tasks]
-                if len(all_vids) == 1:
-                    continue
-                _handle, tmp_mp4 = tempfile.mkstemp(suffix=".mp4", dir=self.workdir)
-                vid = Mp4Artifact(Path(tmp_mp4))
-                self.tmp_artifacts.append(vid)
-                if input_item.is_file():
-                    final = Path(input_item.with_suffix(".mp4").name)
-                else:
-                    final = Path(input_item.name + ".mp4")
-                concat_task = ConcatVideosTask(f"concat {vid}", all_vids, [vid], final)
-                new_tasks.append(concat_task)
-            yield new_tasks
-        elif self.conf.runtime.combine_mode == CombineMode.BY_PHASE:
-            tasks_by_phase: dict[tuple[str, str, str], list[Task]] = defaultdict(list)
-            for task in leaves:
-                round_info = self.get_set_round_info(task)
-                tasks_by_phase[round_info[:3]].append(task)
-            new_tasks = []
-            for (
-                tournament_name,
-                event_name,
-                phase_name,
-            ), tasks in tasks_by_phase.items():
-                sorted_tasks = self.sort_tasks_for_concat(tasks)
-                all_vids = [task.video for task in sorted_tasks]
-                if len(all_vids) == 1:
-                    continue
-                _handle, tmp_mp4 = tempfile.mkstemp(suffix=".mp4", dir=self.workdir)
-                vid = Mp4Artifact(Path(tmp_mp4))
-                self.tmp_artifacts.append(vid)
-                final = Path(f"{tournament_name} - {event_name} - {phase_name}.mp4")
-                concat_task = ConcatVideosTask(f"concat {vid}", all_vids, [vid], final)
-                new_tasks.append(concat_task)
-            yield new_tasks
-
+        phase_by_task = {task: self.get_round_info(task)[:3] for task in leaves}
+        yield from self.combine_tasks(leaves, input_by_task, phase_by_task)
         leaves = self.scheduler.get_leaves()
-        tasks = []
-        for task in leaves:
-            # TODO: format name
-            new_path = self.output_directory / task.final_name
-            new_artifact = Mp4Artifact(new_path)
-            tasks.append(
-                MoveFileTask(
-                    f"move {new_path}", [task.video], [new_artifact], new_artifact.path
-                )
-            )
-        yield tasks
+        yield from self.finalize_names(leaves)
 
     def collect_tasks(self):
         for tasks in self.next():
