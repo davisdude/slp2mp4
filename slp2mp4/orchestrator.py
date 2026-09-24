@@ -12,6 +12,7 @@ from logging import Logger
 from multiprocessing import Event
 from pathlib import Path
 
+import pathvalidate
 import psutil
 
 from slp2mp4 import log, util
@@ -110,16 +111,15 @@ class Orchestrator:
 
     def get_move_tasks(self, tasks: list[Task]):
         for task in tasks:
-            # TODO: path validate names
             parents = task.final_name.parents
             name = task.final_name.stem
             if self.conf.runtime.youtubify_names:
                 name = util.translate(name, self.conf.runtime.name_replacements)
-
             output_directory = self.output_directory
             if self.conf.runtime.preserve_directory_structure:
                 for parent in parents:
                     output_directory /= parent
+            name = pathvalidate.sanitize_filename(name, max_len=251)  # 255 - .mp4
             output_path = output_directory / f"{name}.mp4"
             output_artifact = Mp4Artifact(output_path)
             yield [
