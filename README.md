@@ -4,20 +4,17 @@ Convert Slippi replay files (`.slp`) to video files (`.mp4`) with ease.
 
 ## Features
 
-- Multiple conversion modes:
-    - Single file(s)
-    - Directory (recursive)
-    - [Replay Manager][replay-manager] zip(s)
 - Parallel processing for faster conversions
 - GUI for easy configuration and operation
 - Customizable output resolution and bitrate
+- Optionally combine all videos for easier upload
 - Cross-platform support for Windows, Linux
     - Dolphin on Mac does not support framedumping
 
 ## Requirements
 
 - Python 3.11 or higher
-- [FFmpeg](https://ffmpeg.org/) installed and accessible
+- [FFmpeg](https://ffmpeg.org/) and `ffprobe` installed and accessible
 - [Slippi Dolphin](https://slippi.gg/downloads) installed
 - Super Smash Bros. Melee ISO file
 
@@ -47,20 +44,52 @@ Both methods require having `git` and `pip` installed
 ### Command Line Interface
 
 ```text
-usage: slp2mp4 [-h] [-n] [-m] [-t TEMPORARY_DIRECTORY] [-o OUTPUT_DIRECTORY] [--debug] inputs [inputs ...]
+usage: slp2mp4 [-h] [-v] [-n] [-m] [-t TEMPORARY_DIRECTORY] [-o OUTPUT_DIRECTORY] [--debug] [--paths-ffmpeg PATHS_FFMPEG]
+               [--paths-slippi-playback PATHS_SLIPPI_PLAYBACK] [--paths-ssbm-iso PATHS_SSBM_ISO] [--paths-ffprobe PATHS_FFPROBE]
+               [--dolphin-backend DOLPHIN_BACKEND] [--dolphin-resolution DOLPHIN_RESOLUTION] [--dolphin-bitrate DOLPHIN_BITRATE]
+               [--dolphin-gecko-codes DOLPHIN_GECKO_CODES] [--ffmpeg-audio-args FFMPEG_AUDIO_ARGS] [--ffmpeg-volume FFMPEG_VOLUME]
+               [--runtime-parallel RUNTIME_PARALLEL]
+               [--runtime-preserve-directory-structure | --no-runtime-preserve-directory-structure]
+               [--runtime-youtubify-names | --no-runtime-youtubify-names] [--runtime-name-replacements RUNTIME_NAME_REPLACEMENTS]
+               [--runtime-combine-mode RUNTIME_COMBINE_MODE]
+               [--runtime-use-context-json-for-naming | --no-runtime-use-context-json-for-naming]
+               inputs [inputs ...]
 
 positional arguments:
   inputs
 
 options:
   -h, --help            show this help message and exit
+  -v, --version         show program's version number and exit
   -n, --dry-run         Don't actually render videos; useful for testing
   -m, --monitor         Continuously watch input directories
-  -t TEMPORARY_DIRECTORY, --temporary-directory TEMPORARY_DIRECTORY
+  -t, --temporary-directory TEMPORARY_DIRECTORY
                         Where to write temp videos; leave blank for system default
-  -o OUTPUT_DIRECTORY, --output-directory OUTPUT_DIRECTORY
+  -o, --output-directory OUTPUT_DIRECTORY
                         Where to write output videos
   --debug
+  --paths-ffmpeg PATHS_FFMPEG
+  --paths-slippi-playback PATHS_SLIPPI_PLAYBACK
+  --paths-ssbm-iso PATHS_SSBM_ISO
+  --paths-ffprobe PATHS_FFPROBE
+  --dolphin-backend DOLPHIN_BACKEND
+  --dolphin-resolution DOLPHIN_RESOLUTION
+  --dolphin-bitrate DOLPHIN_BITRATE
+  --dolphin-gecko-codes DOLPHIN_GECKO_CODES
+  --ffmpeg-audio-args FFMPEG_AUDIO_ARGS
+  --ffmpeg-volume FFMPEG_VOLUME
+  --runtime-parallel RUNTIME_PARALLEL
+                        Max # of slippi instances; 0 = # of logical CPU cores
+  --runtime-preserve-directory-structure, --no-runtime-preserve-directory-structure
+                        Recreate input directory structure instead of being 'flat'
+  --runtime-youtubify-names, --no-runtime-youtubify-names
+                        Enable name replacements
+  --runtime-name-replacements RUNTIME_NAME_REPLACEMENTS
+                        Mapping of characters to replace in video titles
+  --runtime-combine-mode RUNTIME_COMBINE_MODE
+                        How to combine set videos; None = separate sets
+  --runtime-use-context-json-for-naming, --no-runtime-use-context-json-for-naming
+                        Use context.json files (if found) when naming videos
 ```
 
 ### Graphical User Interface
@@ -132,6 +161,9 @@ The default settings can be found [here][default-settings].
 
     - Replacements are only per-character. Replacing a single character with multiple characters or
       vice-versa may result in unexpected behavior.
+
+- `combine_mode`: How to combine videos (`None`, `All`, `By Input`, `By Phase`)
+- `use_context_json_for_naming`: Use `context.json` files (if found) for file names
 
 ### Example Configuration
 

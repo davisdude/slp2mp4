@@ -302,7 +302,8 @@ class Application(tk.Tk):
         frame = ttk.LabelFrame(self, text="Actions")
         frame.pack(fill="both", expand=True, padx=10, pady=10)
         ttk.Button(frame, text="Run", command=self.run).pack(side="left")
-        ttk.Button(frame, text="Stop", command=self.stop).pack(side="left")
+        ttk.Button(frame, text="Kill", command=self.kill).pack(side="left")
+        # TODO: Stop button for monitor mode
 
     def make_log_text(self):
         self.log_text = scrolledtext.ScrolledText(self, height=10, wrap=tk.WORD)
@@ -365,7 +366,7 @@ class Application(tk.Tk):
         )
         threading.Thread(target=orchestrator.run).start()
 
-    def stop(self):
+    def kill(self):
         self.kill_event.set()
 
 

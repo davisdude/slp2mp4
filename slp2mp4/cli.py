@@ -75,6 +75,7 @@ def main():
 
     args = parser.parse_args()
 
+    # TODO: Need a way to distinguish killing from stopping in monitor mode
     kill_event = Event()
     conf = config.get_config()
     conf.validate()

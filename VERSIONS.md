@@ -5,7 +5,12 @@
 - Totally reworked all internals
 - Removed `prepend_directory` option
 - Removed concept of different modes
-- Added `monitor` option
+- Uses context.json files for naming
+- Combine videos for easier upload ([#50](https://github.com/davisdude/slp2mp4/issues/50))
+- Added `monitor` option to continuously scan for input files ([#20](https://github.com/davisdude/slp2mp4/issues/20))
+- Auto-generate CLI / GUI config menus ([#33](https://github.com/davisdude/slp2mp4/issues/33))
+- Allow users to configure temp dir more easily ([#23](https://github.com/davisdude/slp2mp4/issues/23))
+- Testing! ([#8](https://github.com/davisdude/slp2mp4/issues/8))
 
 ## 3.1.1
 
