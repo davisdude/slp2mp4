@@ -37,6 +37,7 @@ class Collector:
     kill_event: Event = dataclasses.field(default_factory=Event)
     monitor: bool = dataclasses.field(default=False)
     workdir: Path | None = dataclasses.field(default=None)
+
     yielded: dict[Path, set] = dataclasses.field(default_factory=dict, init=False)
     raw_monitor_inputs: deque = dataclasses.field(default_factory=deque, init=False)
     done: bool = dataclasses.field(default=False, init=False)
@@ -55,7 +56,7 @@ class Collector:
 
     def cleanup(self):
         for d in self.created_dirs:
-            shutil.rmtree(d)
+            shutil.rmtree(d, ignore_errors=True)
 
     def _next(self):
         """Iterator that returns <input>, <collection root>, <collection>."""

@@ -5,6 +5,7 @@ from multiprocessing import Event
 from pathlib import Path
 
 from slp2mp4 import config, log
+from slp2mp4.collector import Collector
 from slp2mp4.config import Config, RuntimeOptions
 from slp2mp4.orchestrator import Orchestrator
 
@@ -82,11 +83,17 @@ def main():
 
     signal.signal(signal.SIGINT, make_sigint_handler(logger, kill_event))
 
-    orchestrator = Orchestrator(
+    collector = Collector(
         inputs=args.inputs,
-        conf=conf,
         kill_event=kill_event,
         monitor=args.monitor,
+        workdir=args.temporary_directory,
+    )
+
+    orchestrator = Orchestrator(
+        conf=conf,
+        kill_event=kill_event,
+        collector=collector,
         dry_run=args.dry_run,
         workdir=args.temporary_directory,
         output_directory=args.output_directory,
