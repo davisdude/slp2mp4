@@ -176,7 +176,6 @@ class Orchestrator:
         """Iterator that returns <task>."""
         input_by_task: dict[Task, Path] = {}
         for input_item, final, artifacts in self.collector.next():
-            tasks = []
             tmp_vids = []
             for slp in artifacts:
                 _handle, tmp = tempfile.mkstemp(suffix=".mp4", dir=self.workdir)
@@ -186,16 +185,16 @@ class Orchestrator:
                 # Not using `final` here makes timestamps easier later
                 name = self.get_final_name(slp)
                 render_task = RenderGameTask(f"render {slp}", [slp], [vid], name)
-                tasks.append(render_task)
                 input_by_task[render_task] = input_item
+                yield [render_task]
 
-            _handle, tmp_mp4 = tempfile.mkstemp(suffix=".mp4", dir=self.workdir)
-            vid = Mp4Artifact(Path(tmp_mp4))
-            self.tmp_artifacts.append(vid)
-            concat_task = ConcatVideosTask(f"concat {vid}", tmp_vids, [vid], final)
-            tasks.append(concat_task)
-            input_by_task[concat_task] = input_item
-            yield tasks
+            if len(tmp_vids) > 1:
+                _handle, tmp_mp4 = tempfile.mkstemp(suffix=".mp4", dir=self.workdir)
+                vid = Mp4Artifact(Path(tmp_mp4))
+                self.tmp_artifacts.append(vid)
+                concat_task = ConcatVideosTask(f"concat {vid}", tmp_vids, [vid], final)
+                input_by_task[concat_task] = input_item
+                yield [concat_task]
 
         leaves = self.scheduler.get_leaves()
         if self.conf.runtime.combine_mode == CombineMode.ALL:
