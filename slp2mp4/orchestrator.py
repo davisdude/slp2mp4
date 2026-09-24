@@ -103,6 +103,9 @@ class Orchestrator:
                         )
                 break
 
+    def sort_tasks_for_concat(self, tasks: list[Task]):
+        return sorted(tasks, key=lambda task: task.path)
+
     def next(self):
         """Iterator that returns <task>."""
         input_by_task: dict[Task, Path] = {}
@@ -130,8 +133,8 @@ class Orchestrator:
 
         leaves = self.scheduler.get_leaves()
         if self.conf.runtime.combine_mode == CombineMode.ALL:
-            # TODO: Sorting
-            all_vids = [task.video for task in leaves]
+            sorted_tasks = self.sort_tasks_for_concat(leaves)
+            all_vids = [task.video for task in sorted_tasks]
             if len(all_vids) > 1:
                 _handle, tmp_mp4 = tempfile.mkstemp(suffix=".mp4", dir=self.workdir)
                 vid = Mp4Artifact(Path(tmp_mp4))
@@ -140,13 +143,13 @@ class Orchestrator:
                 concat_task = ConcatVideosTask("concat all", all_vids, [vid], path)
                 yield [concat_task]
         elif self.conf.runtime.combine_mode == CombineMode.BY_INPUT:
-            # TODO: Sorting
             tasks_by_input: dict[Path, list[Task]] = defaultdict(list)
             for task in leaves:
                 tasks_by_input[input_by_task[task]].append(task)
             new_tasks = []
             for input_item, tasks in tasks_by_input.items():
-                all_vids = [task.video for task in tasks]
+                sorted_tasks = self.sort_tasks_for_concat(tasks)
+                all_vids = [task.video for task in sorted_tasks]
                 if len(all_vids) == 1:
                     continue
                 _handle, tmp_mp4 = tempfile.mkstemp(suffix=".mp4", dir=self.workdir)
