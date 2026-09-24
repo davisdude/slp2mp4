@@ -63,20 +63,25 @@ class Orchestrator:
 
     def format_output_name(self, path: Path):
         # TODO: pathvalidate
-        # TODO: youtubify
         # TODO: Preserve directory structure
-        return path
+        if not self.conf.runtime.youtubify_names:
+            return path
+        name = util.translate(path.stem, self.conf.runtime.name_replacements)
+        return path.resolve().parent / (name + ".mp4")
 
     def get_output_path(self, path: Path):
-        if path.is_file() or path.suffix == ".mp4":
-            name = path.with_suffix(".mp4")
+        if path.is_file():
+            if path.suffix in (".slp", ".mp4", ".zip"):
+                name = path.stem
+            else:
+                name = path
         else:
             if path != Path("."):
                 parent = path.parent
             else:
                 parent = Path("..")
                 path = path.expanduser().absolute()
-            name = parent / (path.name + ".mp4")
+            name = parent / path.name
         return self.format_output_name(name)
 
     def get_output_name(self, tasks: list[Task], path: Path):
@@ -151,12 +156,13 @@ class Orchestrator:
             with open(slp.context.path, "rb") as f:
                 # TODO: parry / challonge / etc.
                 data = json.load(f)
+                tournament_name = data["startgg"]["tournament"]["name"]
                 event_name = data["startgg"]["event"]["name"]
                 phase_name = data["startgg"]["phase"]["name"]
                 set_order = (
                     data["startgg"]["set"]["ordinal"] or data["startgg"]["set"]["round"]
                 )
-                return (event_name, phase_name, set_order)
+                return (tournament_name, event_name, phase_name, set_order)
         except:  # noqa: E722
             return ("", "", -math.inf)
 
@@ -220,12 +226,16 @@ class Orchestrator:
                 new_tasks.append(concat_task)
             yield new_tasks
         elif self.conf.runtime.combine_mode == CombineMode.BY_PHASE:
-            tasks_by_phase: dict[tuple[str, str], list[Task]] = defaultdict(list)
+            tasks_by_phase: dict[tuple[str, str, str], list[Task]] = defaultdict(list)
             for task in leaves:
                 round_info = self.get_set_round_info(task)
-                tasks_by_phase[round_info[:2]].append(task)
+                tasks_by_phase[round_info[:3]].append(task)
             new_tasks = []
-            for (event_name, phase_name), tasks in tasks_by_phase.items():
+            for (
+                tournament_name,
+                event_name,
+                phase_name,
+            ), tasks in tasks_by_phase.items():
                 sorted_tasks = self.sort_tasks_for_concat(tasks)
                 all_vids = [task.video for task in sorted_tasks]
                 if len(all_vids) == 1:
@@ -233,7 +243,8 @@ class Orchestrator:
                 _handle, tmp_mp4 = tempfile.mkstemp(suffix=".mp4", dir=self.workdir)
                 vid = Mp4Artifact(Path(tmp_mp4))
                 self.tmp_artifacts.append(vid)
-                path = self.get_output_path(Path(f"{event_name} {phase_name}"))
+                name = f"{tournament_name} - {event_name} - {phase_name}"
+                path = self.get_output_path(Path(name))
                 concat_task = ConcatVideosTask(f"concat {vid}", all_vids, [vid], path)
                 new_tasks.append(concat_task)
             yield new_tasks
