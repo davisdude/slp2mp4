@@ -145,18 +145,13 @@ class Orchestrator:
         indent = "    "
         for indent_level, leaf in self.scheduler.walk_tree(task):
             if isinstance(leaf, Task):
-                outputs = [
-                    str(o.path) if indent_level == 0 else str(o) for o in leaf.outputs
-                ]
-                output_str = (", ").join(outputs)
-                self.log.info(
-                    f"{indent_level * indent}{output_str} ({leaf.short_name})"
-                )
+                pad = indent_level * indent
+                self.log.info(f"{pad}{leaf.final_name} ({leaf.short_name})")
             elif isinstance(leaf, Artifact):
-                indent_str = (indent_level + 1) * indent
-                self.log.info(f"{indent_str}{leaf}")
+                pad = (indent_level + 1) * indent
+                self.log.info(f"{pad}{leaf}")
                 if context := getattr(leaf, "context", None):
-                    self.log.info(f"{indent_str}{context} ({leaf.index + 1})")
+                    self.log.info(f"{pad}{context} ({leaf.index + 1})")
 
     def write_timestamps(self, main_task):
         filename = main_task.video.path.with_suffix(".txt")
