@@ -98,9 +98,7 @@ class Collector:
                 break
         return inputs
 
-    def _recurse(self, key: Path, path: Path, relative: Path | None = None):
-        if relative is None:
-            relative = path
+    def _recurse(self, key: Path, path: Path, relative: Path = Path(".")):
         if path.is_file():
             if path not in self.yielded[key]:
                 if zipfile.is_zipfile(path):
@@ -120,7 +118,8 @@ class Collector:
                         context_artifact = ContextArtifact(context)
                         slps = sorted(parent.glob("*.slp"), key=util.natsort)
                         index = slps.index(path)
-                    yield relative, [SlippiArtifact(path, index, context_artifact)]
+                    name = path.with_suffix(".mp4")
+                    yield name, [SlippiArtifact(path, index, context_artifact)]
         elif path.is_dir():
             slps = sorted(path.glob("*.slp"), key=util.natsort)
             if (len(slps) > 0) and (len(set(slps) & self.yielded[key]) != len(slps)):
@@ -133,7 +132,11 @@ class Collector:
                     SlippiArtifact(slp, i, context_artifact)
                     for i, slp in enumerate(slps)
                 ]
-                yield relative, slp_artifacts
+                if relative == Path("."):
+                    name = Path(path.name + ".mp4")
+                else:
+                    name = relative.parent / (relative.name + ".mp4")
+                yield name, slp_artifacts
             for p in path.iterdir():
                 yield from self._recurse(key, p, relative / p.name)
         else:

@@ -32,7 +32,8 @@ class Task:
 
 @dataclasses.dataclass(eq=False)
 class VideoTask(Task):
-    path: Path = dataclasses.field(default=None)
+    # What the name would be if this was the last step in the pipeline
+    final_name: Path | None = dataclasses.field(default=None)
     video: Mp4Artifact = dataclasses.field(init=False)
 
     def __post_init__(self):
