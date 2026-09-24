@@ -15,7 +15,7 @@ class Artifact:
         return self.path.name
 
     def exists(self):
-        return self.path.is_file()
+        return self.path.exists()
 
     def cleanup(self):
         self.path.unlink(missing_ok=True)

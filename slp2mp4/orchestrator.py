@@ -16,7 +16,7 @@ from pathlib import Path
 import psutil
 
 from slp2mp4 import log
-from slp2mp4.artifact import Artifact, Mp4Artifact
+from slp2mp4.artifact import Artifact, Mp4Artifact, SlippiArtifact
 from slp2mp4.collector import Collector
 from slp2mp4.config import CombineMode, Config
 from slp2mp4.scheduler import Scheduler
@@ -74,25 +74,38 @@ class Orchestrator:
             else:
                 parent = Path("..")
                 path = path.expanduser().absolute()
-            name = parent / path.with_suffix(".mp4")
+            name = parent / (path.name + ".mp4")
         return self.format_output_name(name)
+
+    def get_timestamp_names(self, input_items: list[Artifact]):
+        producers = [self.scheduler.get_producer(i) for i in input_items]
+        paths = [p.path for p in producers]
+        names = [p.stem if p.is_file() else p.name for p in paths]
+        if len(set(names)) != 1:
+            return names
+        names = []
+        for task in producers:
+            for _, leaf in self.scheduler.walk_tree(task):
+                if isinstance(leaf, SlippiArtifact):
+                    names.append(f"Game {leaf.index + 1}")
+        return names
 
     def write_timestamps(self, main_task):
         filename = main_task.video.path.with_suffix(".txt")
-        for task in self.scheduler.get_parent_tasks(main_task):
-            if hasattr(task, "timestamps"):
-                if task.timestamps:
+        for _, leaf in self.scheduler.walk_tree(main_task):
+            if hasattr(leaf, "timestamps"):
+                if leaf.timestamps:
                     with open(filename, "w") as f:
-                        for i, t in zip(task.inputs, task.timestamps):
-                            # TODO: Convert i from tmp name to real name
-                            time_str = str(timedelta(seconds=int(t)))
-                            f.write(f"{time_str} - {i}\n")
+                        names = self.get_timestamp_names(leaf.inputs)
+                        deltas = [timedelta(seconds=int(t)) for t in leaf.timestamps]
+                        f.writelines(
+                            f"{delta} - {name}\n" for name, delta in zip(names, deltas)
+                        )
                 break
 
     def next(self):
         """Iterator that returns <task>."""
         input_by_task: dict[Task, Path] = {}
-        paths_by_task: dict[Task, Path] = {}
         for input_item, path, artifacts in self.collector.next():
             tasks = []
             tmp_vids = []
@@ -101,19 +114,17 @@ class Orchestrator:
                 vid = Mp4Artifact(Path(tmp))
                 tmp_vids.append(vid)
                 self.tmp_artifacts.append(vid)
-                inputs = [slp]
-                render_task = RenderGameTask(f"render {slp}", inputs, [vid])
-                paths_by_task[render_task] = slp.path
+                render_task = RenderGameTask(f"render {slp}", [slp], [vid], path)
                 tasks.append(render_task)
+                input_by_task[render_task] = input_item
 
             if len(tmp_vids) > 1:
                 _handle, tmp_mp4 = tempfile.mkstemp(suffix=".mp4", dir=self.workdir)
                 vid = Mp4Artifact(Path(tmp_mp4))
                 self.tmp_artifacts.append(vid)
-                concat_task = ConcatVideosTask(f"concat {vid}", tmp_vids, [vid])
+                concat_task = ConcatVideosTask(f"concat {vid}", tmp_vids, [vid], path)
                 tasks.append(concat_task)
                 input_by_task[concat_task] = input_item
-                paths_by_task[concat_task] = path
 
             yield tasks
 
@@ -125,8 +136,8 @@ class Orchestrator:
                 _handle, tmp_mp4 = tempfile.mkstemp(suffix=".mp4", dir=self.workdir)
                 vid = Mp4Artifact(Path(tmp_mp4))
                 self.tmp_artifacts.append(vid)
-                concat_task = ConcatVideosTask("concat all", all_vids, [vid])
-                paths_by_task[concat_task] = Path("all.mp4")
+                path = Path("all")
+                concat_task = ConcatVideosTask("concat all", all_vids, [vid], path)
                 yield [concat_task]
         elif self.conf.runtime.combine_mode == CombineMode.BY_INPUT:
             # TODO: Sorting
@@ -141,37 +152,39 @@ class Orchestrator:
                 _handle, tmp_mp4 = tempfile.mkstemp(suffix=".mp4", dir=self.workdir)
                 vid = Mp4Artifact(Path(tmp_mp4))
                 self.tmp_artifacts.append(vid)
-                concat_task = ConcatVideosTask(f"concat {vid}", all_vids, [vid])
-                paths_by_task[concat_task] = Path(input_item)
+                path = self.get_output_path(input_item)
+                concat_task = ConcatVideosTask(f"concat {vid}", all_vids, [vid], path)
                 new_tasks.append(concat_task)
             yield new_tasks
 
         leaves = self.scheduler.get_leaves()
         tasks = []
         for task in leaves:
-            path = paths_by_task[task]
-            new_path = self.get_output_path(path)
+            new_path = self.get_output_path(task.path)
             new_artifact = Mp4Artifact(new_path)
-            tasks.append(MoveFileTask(f"move {new_path}", [task.video], [new_artifact]))
+            tasks.append(
+                MoveFileTask(
+                    f"move {new_path}", [task.video], [new_artifact], new_artifact.path
+                )
+            )
         yield tasks
 
-    def _print_leaf(self, leaf: Task, indent_level=0):
-        indent = "\t"
-        outputs = (", ").join(
-            str(o.path) if indent_level == 0 else str(o) for o in leaf.outputs
-        )
-        self.log.info(f"{indent * indent_level}{outputs} ({leaf.short_name})")
-        for i in leaf.inputs:
-            task = self.scheduler.get_producer(i)
-            if task:
-                self._print_leaf(task, indent_level + 1)
-            else:
-                self.log.info(f"{indent * (indent_level + 1)}{i}")
-                if context := getattr(i, "context", ""):
-                    index = i.index
-                    self.log.info(
-                        f"{indent * (indent_level + 1)}{context} ({index + 1})"
-                    )
+    def _print_leaf(self, task: Task):
+        indent = "    "
+        for indent_level, leaf in self.scheduler.walk_tree(task):
+            if isinstance(leaf, Task):
+                outputs = [
+                    str(o.path) if indent_level == 0 else str(o) for o in leaf.outputs
+                ]
+                output_str = (", ").join(outputs)
+                self.log.info(
+                    f"{indent_level * indent}{output_str} ({leaf.short_name})"
+                )
+            elif isinstance(leaf, Artifact):
+                indent_str = (indent_level + 1) * indent
+                self.log.info(f"{indent_str}{leaf}")
+                if context := getattr(leaf, "context", None):
+                    self.log.info(f"{indent_str}{context} ({leaf.index + 1})")
 
     def collect_tasks(self):
         for tasks in self.next():
@@ -223,6 +236,3 @@ class Orchestrator:
             shutil.rmtree(d)
         for artifact in self.tmp_artifacts:
             artifact.cleanup()
-
-
-# TODO: Somtimes has issues when parallel > # inputs?

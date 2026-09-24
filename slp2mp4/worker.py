@@ -51,6 +51,8 @@ class Worker:
     @_submit.register
     def _(self, task: MoveFileTask):
         for i, o in zip(task.inputs, task.outputs):
+            self.logger.info(f"Moving '{i.path}' to '{o.path}'")
+            o.path.parent.mkdir(parents=True, exist_ok=True)
             i.path.move(o.path)
 
     def render_slp(self, slp: SlippiArtifact, mp4: Mp4Artifact):

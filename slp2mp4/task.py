@@ -1,6 +1,7 @@
 # Tasks are jobs that take artifacts as inputs and outputs
 
 import dataclasses
+from pathlib import Path
 
 from slp2mp4.artifact import Artifact, Mp4Artifact, SlippiArtifact
 
@@ -31,6 +32,9 @@ class Task:
 
 @dataclasses.dataclass(eq=False)
 class VideoTask(Task):
+    path: Path = dataclasses.field(default=None)
+    video: Mp4Artifact = dataclasses.field(init=False)
+
     def __post_init__(self):
         videos = [o for o in self.outputs if isinstance(o, Mp4Artifact)]
         assert len(videos) == 1

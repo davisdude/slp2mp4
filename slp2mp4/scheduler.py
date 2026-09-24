@@ -112,17 +112,14 @@ class Scheduler:
         with self.lock:
             return self.producers.get(artifact)
 
-    def get_parent_tasks(self, task: Task):
-        with self.lock:
-            yield task
-            tasks = [task]
-            while tasks:
-                task = tasks.pop()
-                for i in task.inputs:
-                    producer = self.get_producer(i)
-                    if producer is not None:
-                        tasks.append(producer)
-                        yield producer
+    def walk_tree(self, task: Task, nest=0):
+        yield nest, task
+        for i in task.inputs:
+            producer = self.get_producer(i)
+            if producer:
+                yield from self.walk_tree(producer, nest + 1)
+            else:
+                yield nest + 1, i
 
     def _resources_available(self, task: Task):
         for name, amount in task.resources.items():
