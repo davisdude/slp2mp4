@@ -3,6 +3,7 @@
 import concurrent.futures
 import dataclasses
 import json
+import math
 import shutil
 import tempfile
 import time
@@ -23,6 +24,7 @@ from slp2mp4.config import CombineMode, Config
 from slp2mp4.scheduler import Scheduler
 from slp2mp4.task import ConcatVideosTask, MoveFileTask, RenderGameTask, Task
 from slp2mp4.worker import Worker
+from slp2mp4 import util
 
 
 @dataclasses.dataclass
@@ -67,7 +69,7 @@ class Orchestrator:
         return path
 
     def get_output_path(self, path: Path):
-        if path.is_file():
+        if path.is_file() or path.suffix == ".mp4":
             name = path.with_suffix(".mp4")
         else:
             if path != Path("."):
@@ -77,6 +79,41 @@ class Orchestrator:
                 path = path.expanduser().absolute()
             name = parent / (path.name + ".mp4")
         return self.format_output_name(name)
+
+    def get_output_name(self, tasks: list[Task], path: Path):
+        contexts = list({task.slp.context for task in tasks})
+        if (len(contexts) != 1) or (contexts[0] is None):
+            # I don't think this is possible currently, but better safe...
+            return path
+        context = contexts[0]
+        try:
+            # TODO: Customizable
+            # TODO: parry / challonge
+            with open(context.path, "rb") as f:
+                data = json.load(f)
+                name1 = ("/").join(data["scores"][0]["slots"][0]["displayNames"])
+                name2 = ("/").join(data["scores"][0]["slots"][1]["displayNames"])
+                tournament = data["startgg"]["tournament"]["name"]
+                event = data["startgg"]["event"]["name"]
+                phase = data["startgg"]["phase"]["name"]
+                round_str = data["startgg"]["set"]["fullRoundText"]
+                round_short = util.translate(round_str, {
+                    "Winners": "W",
+                    "Losers": "L",
+                    "Grand": "G",
+                    "Semi": "S",
+                    "Quarter": "Q",
+                    "Round": "R",
+                    "Final": "F",
+                    "Reset": "R",
+                    " ": "",
+                    "-": "",
+                })
+                name = f"{name1} vs {name2} - {tournament} - {event} - {phase} - {round_short}"
+                return path.resolve().parent / name
+        except Exception as e:  # noqa: E722
+            print(f"{e = }")
+            return path
 
     def get_slp_name(self, artifact: Artifact):
         task = self.scheduler.get_producer(artifact)
@@ -107,16 +144,21 @@ class Orchestrator:
                         )
                 break
 
-    def get_set_ordinal(self, task: Task):
+    def get_set_round_info(self, task: Task):
         try:
             slp = self.get_slp_name(task.video)
             with open(slp.context.path, "rb") as f:
-                return json.load(f)["startgg"]["set"]["ordinal"]
+                # TODO: parry / challonge / etc.
+                data = json.load(f)
+                event_name = data["startgg"]["event"]["name"]
+                phase_name = data["startgg"]["phase"]["name"]
+                set_order = data["startgg"]["set"]["ordinal"] or data["startgg"]["set"]["round"]
+                return (event_name, phase_name, set_order)
         except:  # noqa: E722
-            return 0
+            return ("", "", -math.inf)
 
     def sort_tasks_for_concat(self, tasks: list[Task]):
-        return sorted(tasks, key=lambda task: (self.get_set_ordinal(task), task.path))
+        return sorted(tasks, key=lambda task: (self.get_set_round_info(task), task.path))
 
     def next(self):
         """Iterator that returns <task>."""
@@ -137,7 +179,8 @@ class Orchestrator:
                 _handle, tmp_mp4 = tempfile.mkstemp(suffix=".mp4", dir=self.workdir)
                 vid = Mp4Artifact(Path(tmp_mp4))
                 self.tmp_artifacts.append(vid)
-                concat_task = ConcatVideosTask(f"concat {vid}", tmp_vids, [vid], path)
+                name = self.get_output_name(tasks, path)
+                concat_task = ConcatVideosTask(f"concat {vid}", tmp_vids, [vid], name)
                 tasks.append(concat_task)
                 input_by_task[concat_task] = input_item
 
