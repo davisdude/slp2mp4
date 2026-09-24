@@ -335,7 +335,6 @@ class Application(tk.Tk):
         self.listbox.delete(0, tk.END)
 
     def run(self):
-        # TODO: Output directory
         debug = self.variables[("debug",)].get()
         self.log = log.update_logger(debug, self.log_text)
         self.log.debug("Debug")

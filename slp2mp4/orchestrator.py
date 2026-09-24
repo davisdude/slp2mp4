@@ -110,10 +110,17 @@ class Orchestrator:
 
     def get_move_tasks(self, tasks: list[Task]):
         for task in tasks:
+            # TODO: path validate names
+            parents = task.final_name.parents
             name = task.final_name.stem
             if self.conf.runtime.youtubify_names:
                 name = util.translate(name, self.conf.runtime.name_replacements)
-            output_path = self.output_directory / f"{name}.mp4"
+
+            output_directory = self.output_directory
+            if self.conf.runtime.preserve_directory_structure:
+                for parent in parents:
+                    output_directory /= parent
+            output_path = output_directory / f"{name}.mp4"
             output_artifact = Mp4Artifact(output_path)
             yield [
                 MoveFileTask(
@@ -122,6 +129,8 @@ class Orchestrator:
             ]
 
     def get_final_name(self, context: ContextArtifact):
+        if not self.conf.runtime.use_context_json_for_naming:
+            return None
         with open(context.path, "rb") as f:
             try:
                 # TODO: parry / challonge / etc.
