@@ -24,8 +24,9 @@ volume = 25
 
 [runtime]
 parallel = 0
-youtubify_names = true
 preserve_directory_structure = false
+use_context_json_for_names = false  # TODO: Make true once better tested
+youtubify_names = true
 combine_mode = "None"
 
 [runtime.name_replacements]

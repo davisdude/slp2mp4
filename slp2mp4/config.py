@@ -141,6 +141,9 @@ class RuntimeConfig:
     preserve_directory_structure: bool = dataclasses.field(
         metadata={"help": "Recreate input directory structure instead of being 'flat'"}
     )
+    use_context_json_for_names: bool = dataclasses.field(
+        metadata={"help": "Use context.json for file names if available"}
+    )
     youtubify_names: bool = dataclasses.field(
         metadata={"help": "Enable name replacements"}
     )
@@ -156,6 +159,7 @@ class RuntimeConfig:
         return cls(
             parallel=data["parallel"],
             preserve_directory_structure=data["preserve_directory_structure"],
+            use_context_json_for_names=data["use_context_json_for_names"],
             youtubify_names=data["youtubify_names"],
             name_replacements=data["name_replacements"],
             combine_mode=CombineMode(data["combine_mode"]),
