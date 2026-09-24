@@ -36,7 +36,7 @@ class Worker:
         self._submit(task)
 
     @singledispatchmethod
-    def _submit(self, task: Task):
+    def _submit(self, task):
         raise TypeError(f"Unsupported task type '{type(task)}'")
 
     @_submit.register
