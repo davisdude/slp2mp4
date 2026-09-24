@@ -55,6 +55,7 @@ class CombineMode(Enum):
     NONE = "None"
     ALL = "All"
     BY_INPUT = "By Input"
+    BY_PHASE = "By Phase"
 
 
 @dataclasses.dataclass
