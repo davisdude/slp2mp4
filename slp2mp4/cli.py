@@ -17,10 +17,14 @@ except ImportError:
     __version__ = "0.0.0+dev"
 
 
-def make_sigint_handler(logger, event: Event):
+def make_sigint_handler(logger, stop_event: Event, kill_event: Event):
     def func(_sig, _frame):
-        logger.info("Got sigint - stopping")
-        event.set()
+        if not stop_event.is_set():
+            logger.info("Got first sigint - stopping")
+            stop_event.set()
+            return
+        logger.info("Got second sigint - killing")
+        kill_event.set()
 
     return func
 
@@ -75,18 +79,18 @@ def main():
 
     args = parser.parse_args()
 
-    # TODO: Need a way to distinguish killing from stopping in monitor mode
+    stop_event = Event()
     kill_event = Event()
     conf = config.get_config()
     conf.validate()
     logger = log.update_logger(args.debug)
     update_conf_from_args(args, conf)
 
-    signal.signal(signal.SIGINT, make_sigint_handler(logger, kill_event))
+    signal.signal(signal.SIGINT, make_sigint_handler(logger, stop_event, kill_event))
 
     collector = Collector(
         inputs=args.inputs,
-        kill_event=kill_event,
+        stop_event=stop_event,
         monitor=args.monitor,
         workdir=args.temporary_directory,
     )

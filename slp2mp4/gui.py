@@ -248,6 +248,7 @@ class Application(tk.Tk):
         self.inputs = []
         self.variables: dict[str, tk.Variable] = {}
         self.runtime_options = config.RuntimeOptions()
+        self.stop_event = Event()
         self.kill_event = Event()
 
         self.make_input_selector()
@@ -302,8 +303,8 @@ class Application(tk.Tk):
         frame = ttk.LabelFrame(self, text="Actions")
         frame.pack(fill="both", expand=True, padx=10, pady=10)
         ttk.Button(frame, text="Run", command=self.run).pack(side="left")
+        ttk.Button(frame, text="Stop", command=self.stop).pack(side="left")
         ttk.Button(frame, text="Kill", command=self.kill).pack(side="left")
-        # TODO: Stop button for monitor mode
 
     def make_log_text(self):
         self.log_text = scrolledtext.ScrolledText(self, height=10, wrap=tk.WORD)
@@ -340,6 +341,7 @@ class Application(tk.Tk):
         self.log = log.update_logger(debug, self.log_text)
         self.log.debug("Debug")
 
+        self.stop_event.clear()
         self.kill_event.clear()
         conf = config.get_config()
         conf.validate()
@@ -351,7 +353,7 @@ class Application(tk.Tk):
 
         collector = Collector(
             inputs=self.inputs,
-            kill_event=self.kill_event,
+            stop_event=self.stop_event,
             monitor=self.variables[("monitor",)].get(),
             workdir=workdir,
         )
@@ -365,6 +367,9 @@ class Application(tk.Tk):
             output_directory=Path(self.variables[("output_directory",)].get()),
         )
         threading.Thread(target=orchestrator.run).start()
+
+    def stop(self):
+        self.stop_event.set()
 
     def kill(self):
         self.kill_event.set()

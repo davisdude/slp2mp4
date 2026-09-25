@@ -34,7 +34,7 @@ def create_monitor_event_handler(collector, root: Path):
 @dataclasses.dataclass
 class Collector:
     inputs: list[Path]
-    kill_event: Event = dataclasses.field(default_factory=Event)
+    stop_event: Event = dataclasses.field(default_factory=Event)
     monitor: bool = dataclasses.field(default=False)
     workdir: Path | None = dataclasses.field(default=None)
 
@@ -77,7 +77,7 @@ class Collector:
                 yield i, path, artifacts
 
         # Monitor files
-        while self.monitor and not self.kill_event.is_set():
+        while self.monitor and not self.stop_event.is_set():
             batch = self._get_monitor_batch()
             if len(batch) == 0:
                 time.sleep(1)
