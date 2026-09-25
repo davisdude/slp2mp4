@@ -226,8 +226,9 @@ class ConfigDialog(tk.Toplevel):
             data["paths"]["ffprobe"] = None
         if data["paths"]["chrome"].strip() == "":
             data["paths"]["chrome"] = None
-        if data["scoreboard"]["basic"]["logo"].strip() == "":
-            data["scoreboard"]["basic"]["logo"] = None
+        for t in ("shared", "split", "minimal"):
+            if data["scoreboard"][t]["logo"].strip() == "":
+                data["scoreboard"][t]["logo"] = None
         if data["scoreboard"]["custom"]["singles_html"].strip() == "":
             data["scoreboard"]["custom"]["singles_html"] = None
         if data["scoreboard"]["custom"]["doubles_html"].strip() == "":

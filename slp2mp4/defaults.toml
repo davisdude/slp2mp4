@@ -49,6 +49,10 @@ exclude_streamed_sets = false
 [scoreboard]
 type = "Basic"
 
-[scoreboard.basic]
+[scoreboard.shared]
+
+[scoreboard.split]
+
+[scoreboard.minimal]
 
 [scoreboard.custom]

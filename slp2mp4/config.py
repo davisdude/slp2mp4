@@ -62,7 +62,8 @@ class CombineMode(Enum):
 
 class ScoreboardType(Enum):
     NONE = "None"
-    BASIC = "Basic"
+    SHARED = "Shared"
+    SPLIT = "Split"
     MINIMAL = "Minimal"
     CUSTOM = "Custom"
 
@@ -245,20 +246,28 @@ class CustomScoreboardConfig:
 @dataclasses.dataclass
 class ScoreboardConfig:
     type: ScoreboardType
-    basic: BasicScoreboardConfig
+    shared: BasicScoreboardConfig
+    split: BasicScoreboardConfig
+    minimal: BasicScoreboardConfig
     custom: CustomScoreboardConfig
 
     @classmethod
     def from_dict(cls, data):
         return cls(
             type=ScoreboardType(data["type"]),
-            basic=BasicScoreboardConfig.from_dict(data["basic"]),
+            shared=BasicScoreboardConfig.from_dict(data["shared"]),
+            split=BasicScoreboardConfig.from_dict(data["split"]),
+            minimal=BasicScoreboardConfig.from_dict(data["minimal"]),
             custom=CustomScoreboardConfig.from_dict(data["custom"]),
         )
 
     def validate(self):
-        if self.type == ScoreboardType.BASIC:
-            self.basic.validate()
+        if self.type == ScoreboardType.SHARED:
+            self.shared.validate()
+        if self.type == ScoreboardType.SPLIT:
+            self.split.validate()
+        if self.type == ScoreboardType.MINIMAL:
+            self.minimal.validate()
         elif self.type == ScoreboardType.CUSTOM:
             self.custom.validate()
 
