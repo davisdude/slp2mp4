@@ -159,8 +159,8 @@ The default settings can be found [here][default-settings].
       "-" = "-"
       ```
 
-    - Replacements are only per-character. Replacing a single character with multiple characters or
-      vice-versa may result in unexpected behavior.
+    - Replacements are only per-character. Replacing a single character with
+      multiple characters or vice-versa may result in unexpected behavior.
 
 - `combine_mode`: How to combine videos (`None`, `All`, `By Input`, `By Phase`)
 - `use_context_json_for_naming`: Use `context.json` files (if found) for file names
@@ -212,6 +212,9 @@ parallel = 0
 * If you get weird looking video (where half the width is cropped), try
   changing the video backend (see `backend` in [dolphin
   settings](#dolphin-settings) for possible options).
+
+    * This also applies to other graphical abnormalities, such as textures
+      appearing in the wrong place
 
 * Does not play nicely with WSL, since dolphin expects all paths to be relative
   to Windows.
