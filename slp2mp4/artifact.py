@@ -1,7 +1,10 @@
 # An artifact is any input or output in the pipeline, even temporary
 
 import dataclasses
+from functools import cached_property
 from pathlib import Path
+
+from slp2mp4.context import ContextData
 
 
 @dataclasses.dataclass(frozen=True)
@@ -40,6 +43,10 @@ class ContextArtifact(ExistingFileArtifact):
             raise RuntimeError(
                 f"'{self.path}' has invalid file extension for a context file."
             )
+
+    @cached_property
+    def data(self):
+        return ContextData.from_json(self.path)
 
 
 @dataclasses.dataclass(frozen=True)

@@ -2,7 +2,6 @@
 
 import concurrent.futures
 import dataclasses
-import json
 import math
 import time
 import traceback
@@ -67,23 +66,17 @@ class Orchestrator:
         if not self.conf.runtime.use_context_json:
             return default_round_info
         contexts = self.get_contexts(task)
-        if (len(contexts) != 1) or (contexts[0] is None):
+        if (len(contexts) != 1) or ((context := contexts[0]) is None):
             return default_round_info
-        context = contexts[0]
-        with open(context.path, "rb") as f:
-            try:
-                # TODO: parry / challonge / etc.
-                data = json.load(f)
-                tournament_name = data["startgg"]["tournament"]["name"]
-                event_name = data["startgg"]["event"]["name"]
-                phase_name = data["startgg"]["phase"]["name"]
-                set_order = (
-                    data["startgg"]["set"]["ordinal"] or data["startgg"]["set"]["round"]
-                )
-                return (tournament_name, event_name, phase_name, set_order)
-            except Exception as e:  # noqa: BLE001
-                self.log.error(f"Encountered error getting round info: {e}")
-        return default_round_info
+        if context.data is None:
+            return default_round_info
+        return (
+            context.data.tournament_name,
+            context.data.event_name,
+            context.data.phase_name,
+            context.data.ordinal or -math.inf,
+            context.data.round,
+        )
 
     def print_leaf(self, task: Task):
         indent = "    "
@@ -133,21 +126,16 @@ class Orchestrator:
     def get_final_name(self, context: ContextArtifact):
         if not self.conf.runtime.use_context_json:
             return None
-        with open(context.path, "rb") as f:
-            try:
-                # TODO: parry / challonge / etc.
-                data = json.load(f)
-                player1 = (" + ").join(data["scores"][0]["slots"][0]["displayNames"])
-                player2 = (" + ").join(data["scores"][0]["slots"][1]["displayNames"])
-                tournament_name = data["startgg"]["tournament"]["name"]
-                event_name = data["startgg"]["event"]["name"]
-                phase_name = data["startgg"]["phase"]["name"]
-                round_text = data["startgg"]["set"]["fullRoundText"]
-                name = f"{player1} vs {player2} - {tournament_name} - {event_name} - {phase_name} - {round_text}.mp4"
-                return Path(name)
-            except Exception as e:  # noqa: BLE001
-                self.log.error(f"Encountered error getting round info: {e}")
-        return None
+        if (data := context.data) is None:
+            return None
+        player1 = (" + ").join(data.scores[0].slots[0].display_names)
+        player2 = (" + ").join(data.scores[0].slots[1].display_names)
+        tournament_name = data.tournament_name
+        event_name = data.event_name
+        phase_name = data.phase_name
+        round_name = data.round_name
+        name = f"{player1} vs {player2} - {tournament_name} - {event_name} - {phase_name} - {round_name}.mp4"
+        return Path(name)
 
     def next(self):
         """Iterator that returns <task>."""
