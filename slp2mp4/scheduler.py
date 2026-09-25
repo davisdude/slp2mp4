@@ -58,6 +58,8 @@ class Scheduler:
                     upstream = self.producers.get(i)
                     if upstream is None:
                         raise RuntimeError(f"No producer found for artifact '{i}'.")
+                    if upstream in self.completed_tasks:
+                        continue
                     self.waiting_on[task].add(upstream)
                     self.dependents[upstream].add(task)
 
@@ -120,6 +122,10 @@ class Scheduler:
                 yield from self.walk_tree(producer, nest + 1)
             else:
                 yield nest + 1, i
+
+    def is_pipeline_empty(self):
+        with self.lock:
+            return (len(self.running_tasks) == 0) and (len(self.ready_tasks) == 0)
 
     def _resources_available(self, task: Task):
         for name, amount in task.resources.items():

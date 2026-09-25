@@ -192,7 +192,7 @@ class Orchestrator:
                 finally:
                     self.scheduler.finish(task)
             else:
-                if self.collector.done:
+                if self.collector.done and self.scheduler.is_pipeline_empty():
                     break
                 time.sleep(1)
 
