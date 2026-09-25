@@ -51,8 +51,7 @@ usage: slp2mp4 [-h] [-v] [-n] [-m] [-t TEMPORARY_DIRECTORY] [-o OUTPUT_DIRECTORY
                [--ffmpeg-audio-args FFMPEG_AUDIO_ARGS] [--ffmpeg-volume FFMPEG_VOLUME] [--runtime-parallel RUNTIME_PARALLEL]
                [--runtime-preserve-directory-structure | --no-runtime-preserve-directory-structure]
                [--runtime-youtubify-names | --no-runtime-youtubify-names] [--runtime-name-replacements RUNTIME_NAME_REPLACEMENTS]
-               [--runtime-combine-mode RUNTIME_COMBINE_MODE]
-               [--runtime-use-context-json-for-naming | --no-runtime-use-context-json-for-naming]
+               [--runtime-combine-mode RUNTIME_COMBINE_MODE] [--runtime-use-context-json | --no-runtime-use-context-json]
                inputs [inputs ...]
 
 positional arguments:
@@ -90,8 +89,8 @@ options:
                         Mapping of characters to replace in video titles
   --runtime-combine-mode RUNTIME_COMBINE_MODE
                         How to combine set videos; None = separate sets
-  --runtime-use-context-json-for-naming, --no-runtime-use-context-json-for-naming
-                        Use context.json files (if found) when naming videos
+  --runtime-use-context-json, --no-runtime-use-context-json
+                        Use context.json files (if found) when naming / sorting videos
 ```
 
 ### Graphical User Interface
@@ -167,7 +166,7 @@ The default settings can be found [here][default-settings].
       multiple characters or vice-versa may result in unexpected behavior.
 
 - `combine_mode`: How to combine videos (`None`, `All`, `By Input`, `By Phase`)
-- `use_context_json_for_naming`: Use `context.json` files (if found) for file names
+- `use_context_json`: Use `context.json` files (if found) for file names / ordering
 
 ### Example Configuration
 
