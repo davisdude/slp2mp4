@@ -223,7 +223,9 @@ class Config:
                 val = data[field.name]
                 if field.type is Path:
                     data[field.name] = str(val)
-                elif is_optional_type(field.type) and (get_optional_type(field.type) is Path):
+                elif is_optional_type(field.type) and (
+                    get_optional_type(field.type) is Path
+                ):
                     data[field.name] = str(val) if (val is not None) else None
 
 

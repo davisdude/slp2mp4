@@ -153,15 +153,22 @@ class Orchestrator:
         """Iterator that returns <task>."""
         input_by_task: dict[Task, Path] = {}
         for input_item, final, artifacts in self.collector.next():
+            videos = []
+            for task in self.pipeline.get_render_tasks(artifacts):
+                input_by_task[task] = input_item
+                yield [task]
+                videos.append(task.video)
+
             contexts = list({artifact.context for artifact in artifacts})
             if (len(contexts) == 1) and ((context := contexts[0]) is not None):
                 final = self.get_final_name(context) or final
-            for task in self.pipeline.get_render_tasks(artifacts, final):
+            for task in self.pipeline.get_concat_tasks(videos, final):
                 input_by_task[task] = input_item
                 yield [task]
+
         leaves = self.scheduler.get_leaves()
         phase_by_task = {task: self.get_round_info(task) for task in leaves}
-        yield from self.pipeline.get_concat_tasks(
+        yield from self.pipeline.get_group_concat_tasks(
             leaves, input_by_task, phase_by_task, self.conf.runtime.combine_mode
         )
         leaves = self.scheduler.get_leaves()
