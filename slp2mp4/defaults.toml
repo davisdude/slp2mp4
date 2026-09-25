@@ -6,6 +6,8 @@ ssbm_iso = "~/Downloads/Super Smash Bros. Melee (USA) (En,Ja) (Rev 2).iso"
 [dolphin]
 backend = "OGL"
 resolution = "1080p"
+msaa = 1
+ssaa = true
 bitrate = 16000
 
 [dolphin.gecko_codes]

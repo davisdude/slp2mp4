@@ -46,9 +46,9 @@ Both methods require having `git` and `pip` installed
 ```text
 usage: slp2mp4 [-h] [-v] [-n] [-m] [-t TEMPORARY_DIRECTORY] [-o OUTPUT_DIRECTORY] [--debug] [--paths-ffmpeg PATHS_FFMPEG]
                [--paths-slippi-playback PATHS_SLIPPI_PLAYBACK] [--paths-ssbm-iso PATHS_SSBM_ISO] [--paths-ffprobe PATHS_FFPROBE]
-               [--dolphin-backend DOLPHIN_BACKEND] [--dolphin-resolution DOLPHIN_RESOLUTION] [--dolphin-bitrate DOLPHIN_BITRATE]
-               [--dolphin-gecko-codes DOLPHIN_GECKO_CODES] [--ffmpeg-audio-args FFMPEG_AUDIO_ARGS] [--ffmpeg-volume FFMPEG_VOLUME]
-               [--runtime-parallel RUNTIME_PARALLEL]
+               [--dolphin-backend DOLPHIN_BACKEND] [--dolphin-resolution DOLPHIN_RESOLUTION] [--dolphin-msaa DOLPHIN_MSAA]
+               [--dolphin-ssaa | --no-dolphin-ssaa] [--dolphin-bitrate DOLPHIN_BITRATE] [--dolphin-gecko-codes DOLPHIN_GECKO_CODES]
+               [--ffmpeg-audio-args FFMPEG_AUDIO_ARGS] [--ffmpeg-volume FFMPEG_VOLUME] [--runtime-parallel RUNTIME_PARALLEL]
                [--runtime-preserve-directory-structure | --no-runtime-preserve-directory-structure]
                [--runtime-youtubify-names | --no-runtime-youtubify-names] [--runtime-name-replacements RUNTIME_NAME_REPLACEMENTS]
                [--runtime-combine-mode RUNTIME_COMBINE_MODE]
@@ -74,6 +74,8 @@ options:
   --paths-ffprobe PATHS_FFPROBE
   --dolphin-backend DOLPHIN_BACKEND
   --dolphin-resolution DOLPHIN_RESOLUTION
+  --dolphin-msaa DOLPHIN_MSAA
+  --dolphin-ssaa, --no-dolphin-ssaa
   --dolphin-bitrate DOLPHIN_BITRATE
   --dolphin-gecko-codes DOLPHIN_GECKO_CODES
   --ffmpeg-audio-args FFMPEG_AUDIO_ARGS
@@ -124,6 +126,8 @@ The default settings can be found [here][default-settings].
   `Vulkan`)
 - `resolution`: Output resolution (`480p`, `720p`, `1080p`, `1440p`, `2160p`)
 - `bitrate`: Video bitrate in kbps
+- `msaa` / `ssaa`: Options for changing anti-aliasing; valid values vary based
+  on selected backend
 
 ##### Gecko Codes
 

@@ -103,6 +103,8 @@ class PathsConfig:
 class DolphinConfig:
     backend: DolphinBackend
     resolution: DolphinResolution
+    msaa: int
+    ssaa: bool
     bitrate: int
     gecko_codes: dict[str, bool]
 
@@ -111,6 +113,8 @@ class DolphinConfig:
         return cls(
             backend=DolphinBackend(data["backend"]),
             resolution=DolphinResolution.from_display_name(data["resolution"]),
+            msaa=data["msaa"],
+            ssaa=data["ssaa"],
             bitrate=data["bitrate"],
             gecko_codes=data["gecko_codes"],
         )

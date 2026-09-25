@@ -17,6 +17,8 @@ class DolphinRunner:
         self.video_backend = config.dolphin.backend.value
         self.user_gfx = {
             "Settings": {
+                "MSAA": str(config.dolphin.msaa),
+                "SSAA": "True" if config.dolphin.ssaa else "False",
                 "EFBScale": config.dolphin.resolution.dolphin_value,
                 "BitrateKbps": str(config.dolphin.bitrate),
             },
