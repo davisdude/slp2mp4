@@ -13,7 +13,7 @@ import tomli_w
 
 from slp2mp4 import config, log, util
 from slp2mp4.collector import Collector
-from slp2mp4.config import DolphinBackend, DolphinResolution
+from slp2mp4.config import DolphinBackend, DolphinResolution, ScoreboardType, CombineMode
 from slp2mp4.orchestrator import Orchestrator
 
 try:
@@ -28,21 +28,41 @@ HOME_PAGE = "https://github.com/davisdude/slp2mp4"
 LICENSE_PAGE = f"{HOME_PAGE}/blob/master/LICENSE.md"
 
 
+def build_notebook(variables, parent, obj, prefix=None):
+    if prefix is None:
+        prefix = ()
+    notebook = ttk.Notebook(parent)
+    for section_field in dataclasses.fields(obj):
+        section_name = section_field.name
+        section_obj = getattr(obj, section_name)
+        frame = ttk.Frame(notebook)
+        notebook.add(frame, text=section_name)
+        build_dataclass(variables, frame, section_obj, prefix=(section_name,))
+        frame.columnconfigure(1, weight=1)
+    return notebook
+
+
 def build_dataclass(variables, parent, obj, prefix=None):
+    if prefix is None:
+        prefix = ()
     row = 0
     for field in dataclasses.fields(obj):
         value = getattr(obj, field.name)
-        key = (prefix or ()) + (field.name,)
-        ttk.Label(parent, text=field.name.replace("_", " ").title()).grid(
-            row=row, column=0, sticky="w"
-        )
-        widget = build_widget(
-            variables=variables,
-            parent=parent,
-            key=key,
-            value=value,
-            field=field,
-        )
+        key = prefix + (field.name,)
+        if dataclasses.is_dataclass(field.type):
+            widget = ttk.LabelFrame(parent, text=field.name.title())
+            build_dataclass(variables, widget, value, key)
+        else:
+            ttk.Label(parent, text=field.name.replace("_", " ").title()).grid(
+                row=row, column=0, sticky="w"
+            )
+            widget = build_widget(
+                variables=variables,
+                parent=parent,
+                key=key,
+                value=value,
+                field=field,
+            )
         widget.grid(row=row, column=1, sticky="ew")
         row += 1
 
@@ -177,16 +197,8 @@ class ConfigDialog(tk.Toplevel):
         self.create_widgets()
 
     def create_widgets(self):
-        notebook = ttk.Notebook(self)
+        notebook = build_notebook(self.variables, self, self.config_data)
         notebook.pack(fill="both", expand=True, padx=10, pady=10)
-        for section_field in dataclasses.fields(self.config_data):
-            section_name = section_field.name
-            section_obj = getattr(self.config_data, section_name)
-            frame = ttk.Frame(notebook)
-            notebook.add(frame, text=section_name)
-            build_dataclass(self.variables, frame, section_obj, prefix=(section_name,))
-            frame.columnconfigure(1, weight=1)
-
         button_frame = ttk.Frame(self)
         button_frame.pack(fill="both", padx=10, pady=10)
         ttk.Button(button_frame, text="Cancel", command=self.destroy).pack(side="right")
@@ -208,9 +220,20 @@ class ConfigDialog(tk.Toplevel):
         data["dolphin"]["custom_gecko_codes"] = data["dolphin"][
             "custom_gecko_codes"
         ].strip()
+        data["scoreboard"]["type"] = ScoreboardType(data["scoreboard"]["type"]).value
 
         if data["paths"]["ffprobe"].strip() == "":
             data["paths"]["ffprobe"] = None
+        if data["paths"]["chrome"].strip() == "":
+            data["paths"]["chrome"] = None
+        if data["scoreboard"]["basic"]["logo"].strip() == "":
+            data["scoreboard"]["basic"]["logo"] = None
+        if data["scoreboard"]["custom"]["singles_html"].strip() == "":
+            data["scoreboard"]["custom"]["singles_html"] = None
+        if data["scoreboard"]["custom"]["doubles_html"].strip() == "":
+            data["scoreboard"]["custom"]["doubles_html"] = None
+        if data["scoreboard"]["custom"]["css"].strip() == "":
+            data["scoreboard"]["custom"]["css"] = None
 
         defaults = config.get_default_config().to_dict()
         unique_items = util.get_unique_items(defaults, data)

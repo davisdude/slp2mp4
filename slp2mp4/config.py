@@ -15,6 +15,8 @@ from slp2mp4 import log, util
 DEFAULT_CONFIG_PATH = importlib.resources.files(slp2mp4).joinpath("defaults.toml")
 USER_CONFIG_PATH = Path("~/.slp2mp4.toml").expanduser()
 
+DEFAULT_LOGO_PATH = importlib.resources.files(slp2mp4).joinpath("logo.svg")
+
 
 # From https://github.com/project-slippi/Ishiiruka/tree/slippi/Source/Core/VideoBackends
 class DolphinBackend(Enum):
@@ -58,6 +60,13 @@ class CombineMode(Enum):
     BY_PHASE = "By Phase"
 
 
+class ScoreboardType(Enum):
+    NONE = "None"
+    BASIC = "Basic"
+    MINIMAL = "Minimal"
+    CUSTOM = "Custom"
+
+
 @dataclasses.dataclass
 class PathsConfig:
     # Paths are un-altered so saving works properly
@@ -65,6 +74,7 @@ class PathsConfig:
     slippi_playback: Path
     ssbm_iso: Path
     ffprobe: Path | None = dataclasses.field(default=None)
+    chrome: Path | None = dataclasses.field(default=None)
 
     @classmethod
     def from_dict(cls, data):
@@ -73,11 +83,14 @@ class PathsConfig:
             slippi_playback=Path(data["slippi_playback"]),
             ssbm_iso=Path(data["ssbm_iso"]),
             ffprobe=data.get("ffprobe"),
+            chrome=data.get("chrome"),
         )
 
     def __post_init__(self):
         if self.ffprobe is not None:
             self.ffprobe = Path(self.ffprobe)
+        if self.chrome is not None:
+            self.chrome = Path(self.chrome)
 
     def validate(self):
         assert shutil.which(self.ffmpeg) is not None
@@ -190,11 +203,73 @@ class RuntimeConfig:
 
 
 @dataclasses.dataclass
+class BasicScoreboardConfig:
+    logo: Path | None
+
+    @classmethod
+    def from_dict(cls, data):
+        return cls(logo=data.get("logo"))
+
+    def __post_init__(self):
+        if self.logo is None:
+            self.logo = DEFAULT_LOGO_PATH
+        self.logo = Path(self.logo)
+
+    def validate(self):
+        assert self.logo.is_file()
+
+
+@dataclasses.dataclass
+class CustomScoreboardConfig:
+    singles_html: Path | None = dataclasses.field(default=None)
+    doubles_html: Path | None = dataclasses.field(default=None)
+    css: Path | None = dataclasses.field(default=None)
+
+    @classmethod
+    def from_dict(cls, data):
+        return cls(
+            singles_html=data.get("singles_html"),
+            doubles_html=data.get("doubles_html"),
+            css=data.get("css"),
+        )
+
+    def validate(self):
+        assert self.singles_html is not None
+        assert self.singles_html.is_file()
+        assert self.doubles_html is not None
+        assert self.doubles_html.is_file()
+        assert self.css is not None
+        assert self.css.is_file()
+
+
+@dataclasses.dataclass
+class ScoreboardConfig:
+    type: ScoreboardType
+    basic: BasicScoreboardConfig
+    custom: CustomScoreboardConfig
+
+    @classmethod
+    def from_dict(cls, data):
+        return cls(
+            type=ScoreboardType(data["type"]),
+            basic=BasicScoreboardConfig.from_dict(data["basic"]),
+            custom=CustomScoreboardConfig.from_dict(data["custom"]),
+        )
+
+    def validate(self):
+        if self.type == ScoreboardType.BASIC:
+            self.basic.validate()
+        elif self.type == ScoreboardType.CUSTOM:
+            self.custom.validate()
+
+
+@dataclasses.dataclass
 class Config:
     paths: PathsConfig
     dolphin: DolphinConfig
     ffmpeg: FfmpegConfig
     runtime: RuntimeConfig
+    scoreboard: ScoreboardConfig
 
     @classmethod
     def from_dict(cls, data):
@@ -203,6 +278,7 @@ class Config:
             dolphin=DolphinConfig.from_dict(data["dolphin"]),
             ffmpeg=FfmpegConfig.from_dict(data["ffmpeg"]),
             runtime=RuntimeConfig.from_dict(data["runtime"]),
+            scoreboard=ScoreboardConfig.from_dict(data["scoreboard"]),
         )
 
     def to_dict(self):
@@ -210,6 +286,7 @@ class Config:
         data["dolphin"]["backend"] = data["dolphin"]["backend"].value
         data["dolphin"]["resolution"] = data["dolphin"]["resolution"].display_name
         data["runtime"]["combine_mode"] = data["runtime"]["combine_mode"].value
+        data["scoreboard"]["type"] = data["scoreboard"]["type"].value
         self._convert_paths_to_strs(data)
         return data
 

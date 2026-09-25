@@ -45,3 +45,10 @@ exclude_streamed_sets = false
 ":" = "："
 "'" = "＇"
 '"' = "＂"
+
+[scoreboard]
+type = "Basic"
+
+[scoreboard.basic]
+
+[scoreboard.custom]
