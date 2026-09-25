@@ -62,8 +62,11 @@ def update_conf_from_args(args, conf):
         prefix = top_field.name
         current = getattr(conf, top_field.name)
         for field in dataclasses.fields(top_field.type):
-            name = field.name
-            val = getattr(args, f"{prefix}_{name}")
+            field_name = field.name
+            name = f"{prefix}_{field_name}"
+            if not hasattr(args, name):
+                continue
+            val = getattr(args, name)
             if val is not dataclasses.MISSING:
                 setattr(current, name, val)
 
