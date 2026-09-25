@@ -46,12 +46,13 @@ Both methods require having `git` and `pip` installed
 ```text
 usage: slp2mp4 [-h] [-v] [-n] [-m] [-t TEMPORARY_DIRECTORY] [-o OUTPUT_DIRECTORY] [--debug] [--paths-ffmpeg PATHS_FFMPEG]
                [--paths-slippi-playback PATHS_SLIPPI_PLAYBACK] [--paths-ssbm-iso PATHS_SSBM_ISO] [--paths-ffprobe PATHS_FFPROBE]
-               [--dolphin-backend DOLPHIN_BACKEND] [--dolphin-resolution DOLPHIN_RESOLUTION] [--dolphin-msaa DOLPHIN_MSAA]
-               [--dolphin-ssaa | --no-dolphin-ssaa] [--dolphin-bitrate DOLPHIN_BITRATE] [--dolphin-gecko-codes DOLPHIN_GECKO_CODES]
-               [--ffmpeg-audio-args FFMPEG_AUDIO_ARGS] [--ffmpeg-volume FFMPEG_VOLUME] [--runtime-parallel RUNTIME_PARALLEL]
+               [--dolphin-backend {D3D12,DX11,DX9,OGL,Software Renderer,Vulkan}] [--dolphin-resolution {480p,720p,1080p,1440p,2160p}]
+               [--dolphin-msaa DOLPHIN_MSAA] [--dolphin-ssaa | --no-dolphin-ssaa] [--dolphin-bitrate DOLPHIN_BITRATE]
+               [--dolphin-gecko-codes DOLPHIN_GECKO_CODES] [--ffmpeg-audio-args FFMPEG_AUDIO_ARGS] [--ffmpeg-volume FFMPEG_VOLUME]
+               [--runtime-parallel RUNTIME_PARALLEL]
                [--runtime-preserve-directory-structure | --no-runtime-preserve-directory-structure]
                [--runtime-youtubify-names | --no-runtime-youtubify-names] [--runtime-name-replacements RUNTIME_NAME_REPLACEMENTS]
-               [--runtime-combine-mode RUNTIME_COMBINE_MODE] [--runtime-use-context-json | --no-runtime-use-context-json]
+               [--runtime-combine-mode {None,All,By Input,By Phase}] [--runtime-use-context-json | --no-runtime-use-context-json]
                inputs [inputs ...]
 
 positional arguments:
@@ -71,8 +72,8 @@ options:
   --paths-slippi-playback PATHS_SLIPPI_PLAYBACK
   --paths-ssbm-iso PATHS_SSBM_ISO
   --paths-ffprobe PATHS_FFPROBE
-  --dolphin-backend DOLPHIN_BACKEND
-  --dolphin-resolution DOLPHIN_RESOLUTION
+  --dolphin-backend {D3D12,DX11,DX9,OGL,Software Renderer,Vulkan}
+  --dolphin-resolution {480p,720p,1080p,1440p,2160p}
   --dolphin-msaa DOLPHIN_MSAA
   --dolphin-ssaa, --no-dolphin-ssaa
   --dolphin-bitrate DOLPHIN_BITRATE
@@ -87,7 +88,7 @@ options:
                         Enable name replacements
   --runtime-name-replacements RUNTIME_NAME_REPLACEMENTS
                         Mapping of characters to replace in video titles
-  --runtime-combine-mode RUNTIME_COMBINE_MODE
+  --runtime-combine-mode {None,All,By Input,By Phase}
                         How to combine set videos; None = separate sets
   --runtime-use-context-json, --no-runtime-use-context-json
                         Use context.json files (if found) when naming / sorting videos
@@ -127,6 +128,8 @@ The default settings can be found [here][default-settings].
 - `bitrate`: Video bitrate in kbps
 - `msaa` / `ssaa`: Options for changing anti-aliasing; valid values vary based
   on selected backend
+- `custom_gecko_codes`: A single string of all custom gecko codes to use. All
+  will be enabled. Remove any `=` from the name.
 
 ##### Gecko Codes
 
@@ -166,6 +169,9 @@ The default settings can be found [here][default-settings].
       multiple characters or vice-versa may result in unexpected behavior.
 
 - `combine_mode`: How to combine videos (`None`, `All`, `By Input`, `By Phase`)
+
+    - Note that `By Phase` does not work properly without `context.json` files
+
 - `use_context_json`: Use `context.json` files (if found) for file names / ordering
 
 ### Example Configuration

@@ -28,7 +28,6 @@ dynamic = [
 ]
 
 [project.optional-dependencies]
-# TODO: Checks for tkinter / tcl
 gui = [
     "tomli-w",
 ]
