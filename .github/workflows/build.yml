@@ -5,9 +5,9 @@ jobs:
     strategy:
       matrix:
         platform: [windows-latest, ubuntu-22.04]
-        script: [src/slp2mp4/bin/gui.py]
+        script: [slp2mp4/gui.py]
         include:
-          - script: src/slp2mp4/bin/gui.py
+          - script: slp2mp4/gui.py
             name: slp2mp4_gui
             pip_install_suffix: "[gui]"
     runs-on: ${{ matrix.platform }}
@@ -29,7 +29,7 @@ jobs:
 
       - name: Run pyinstaller
         run: |
-          pyinstaller --name ${{ matrix.name }} --add-data "src/slp2mp4/defaults.toml:slp2mp4/" --onefile ${{ matrix.script }}
+          pyinstaller --name ${{ matrix.name }} --add-data "slp2mp4/defaults.toml:slp2mp4/" --onefile ${{ matrix.script }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -42,9 +42,9 @@ jobs:
     strategy:
       matrix:
         platform: [windows-latest]
-        script: [src/slp2mp4/bin/gui.py]
+        script: [slp2mp4/gui.py]
         include:
-          - script: src/slp2mp4/bin/gui.py
+          - script: slp2mp4/gui.py
             name: slp2mp4_gui
             pip_install_suffix: "[gui]"
     runs-on: ${{ matrix.platform }}
@@ -71,14 +71,14 @@ jobs:
 
       - name: Update defaults.toml to use bundled FFmpeg exe
         run: |
-          (Get-Content src/slp2mp4/defaults.toml) `
+          (Get-Content slp2mp4/defaults.toml) `
             -replace 'ffmpeg = "ffmpeg"', 'ffmpeg = "_internal/slp2mp4/lib/ffmpeg/ffmpeg.exe"' |
-            Set-Content src/slp2mp4/defaults.toml
+            Set-Content slp2mp4/defaults.toml
         shell: pwsh
 
       - name: Run pyinstaller
         run: |
-          pyinstaller --name ${{ matrix.name }} --add-data "src/slp2mp4/defaults.toml:slp2mp4/" --add-data "lib/ffmpeg:slp2mp4/lib/ffmpeg" --onedir ${{ matrix.script }}
+          pyinstaller --name ${{ matrix.name }} --add-data "slp2mp4/defaults.toml:slp2mp4/" --add-data "lib/ffmpeg:slp2mp4/lib/ffmpeg" --onedir ${{ matrix.script }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
