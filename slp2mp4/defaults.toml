@@ -50,6 +50,7 @@ exclude_streamed_sets = false
 type = "Basic"
 
 [scoreboard.shared]
+left = true
 
 [scoreboard.split]
 

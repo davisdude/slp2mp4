@@ -11,6 +11,7 @@ from types import UnionType
 
 import slp2mp4
 from slp2mp4 import log, util
+from slp2mp4.scoreboard import ScoreboardType
 
 DEFAULT_CONFIG_PATH = importlib.resources.files(slp2mp4).joinpath("defaults.toml")
 USER_CONFIG_PATH = Path("~/.slp2mp4.toml").expanduser()
@@ -58,14 +59,6 @@ class CombineMode(Enum):
     ALL = "All"
     BY_INPUT = "By Input"
     BY_PHASE = "By Phase"
-
-
-class ScoreboardType(Enum):
-    NONE = "None"
-    SHARED = "Shared"
-    SPLIT = "Split"
-    MINIMAL = "Minimal"
-    CUSTOM = "Custom"
 
 
 @dataclasses.dataclass
@@ -203,9 +196,9 @@ class RuntimeConfig:
             raise RuntimeError(f"Invalid runtime parallel value '{self.parallel}'")
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(kw_only=True)
 class BasicScoreboardConfig:
-    logo: Path | None
+    logo: Path | None = dataclasses.field(default=None)
 
     @classmethod
     def from_dict(cls, data):
@@ -218,6 +211,15 @@ class BasicScoreboardConfig:
 
     def validate(self):
         assert self.logo.is_file()
+
+
+@dataclasses.dataclass
+class SharedScoreboardConfig(BasicScoreboardConfig):
+    left: bool
+
+    @classmethod
+    def from_dict(cls, data):
+        return cls(left=data["left"], logo=data.get("logo"))
 
 
 @dataclasses.dataclass
@@ -243,10 +245,15 @@ class CustomScoreboardConfig:
         assert self.css.is_file()
 
 
+# Minimal should have widescreen or not option
+# Shared should have left/right option
+# Shared / split should enforce widescreen settings
+
+
 @dataclasses.dataclass
 class ScoreboardConfig:
     type: ScoreboardType
-    shared: BasicScoreboardConfig
+    shared: SharedScoreboardConfig
     split: BasicScoreboardConfig
     minimal: BasicScoreboardConfig
     custom: CustomScoreboardConfig
@@ -255,7 +262,7 @@ class ScoreboardConfig:
     def from_dict(cls, data):
         return cls(
             type=ScoreboardType(data["type"]),
-            shared=BasicScoreboardConfig.from_dict(data["shared"]),
+            shared=SharedScoreboardConfig.from_dict(data["shared"]),
             split=BasicScoreboardConfig.from_dict(data["split"]),
             minimal=BasicScoreboardConfig.from_dict(data["minimal"]),
             custom=CustomScoreboardConfig.from_dict(data["custom"]),

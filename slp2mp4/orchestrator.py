@@ -20,6 +20,7 @@ from slp2mp4.collector import Collector
 from slp2mp4.config import Config
 from slp2mp4.pipeline import Pipeline
 from slp2mp4.scheduler import Scheduler
+from slp2mp4.scoreboard import ScoreboardType
 from slp2mp4.task import MoveFileTask, Task
 from slp2mp4.worker import Worker
 
@@ -123,6 +124,12 @@ class Orchestrator:
                 )
             ]
 
+    def get_scoreboard_tasks(
+        self, slps: list[SlippiArtifact], videos: list[Mp4Artifact]
+    ):
+        if self.conf.scoreboard.type == ScoreboardType.NONE:
+            return videos, []
+
     def get_final_name(self, context: ContextArtifact):
         if not self.conf.runtime.use_context_json:
             return None
@@ -155,6 +162,10 @@ class Orchestrator:
                 input_by_task[task] = input_item
                 yield [task]
                 videos.append(task.video)
+
+            videos, tasks = self.get_scoreboard_tasks(artifacts, videos)
+            if tasks:
+                yield from tasks
 
             for task in self.pipeline.get_concat_tasks(videos, final):
                 input_by_task[task] = input_item

@@ -13,7 +13,11 @@ import tomli_w
 
 from slp2mp4 import config, log, util
 from slp2mp4.collector import Collector
-from slp2mp4.config import DolphinBackend, DolphinResolution, ScoreboardType, CombineMode
+from slp2mp4.config import (
+    DolphinBackend,
+    DolphinResolution,
+    ScoreboardType,
+)
 from slp2mp4.orchestrator import Orchestrator
 
 try:

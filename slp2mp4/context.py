@@ -1,7 +1,10 @@
 import dataclasses
 import json
+from datetime import datetime
 from enum import Enum
 from pathlib import Path
+
+from slp2mp4 import util
 
 
 # https://github.com/jmlee337/replay-manager-for-slippi/blob/46fcbcd9aa5ae51702cdab45f75e343a27e56f9c/src/common/constants.ts#L7
@@ -195,6 +198,35 @@ class ContextData:
     def from_json(self, path: Path):
         with open(path, "rb") as f:
             return ContextData.from_dict(json.load(f))
+
+    @property
+    def is_singles(self):
+        return len(self.final_score.slots[0].display_names) == 1
+
+    @property
+    def round_name_short(self):
+        return util.translate(
+            self.round_name,
+            {
+                "Winners": "W",
+                "Losers": "L",
+                "Grand": "G",
+                "Semi": "S",
+                "Quarter": "Q",
+                "Round": "R",
+                "Final": "F",
+                "Reset": "R",
+                " ": "",
+                "-": "",
+            },
+        )
+
+    @property
+    def tournament_date(self):
+        # TODO: Detecting time zone from location is hard and fragile; assume local
+        # timezone or read from config
+        timezone = datetime.now().astimezone().tzinfo
+        return datetime.fromtimestamp(self.start_ms / 1000, tz=timezone)
 
     @property
     def platform(self):
