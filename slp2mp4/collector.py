@@ -118,7 +118,7 @@ class Collector:
                     if context.is_file():
                         context_artifact = ContextArtifact(context)
                         slps = sorted(parent.glob("*.slp"), key=util.natsort)
-                        index = slps.index(path)
+                        index = slps.index(path.resolve())
                     name = path.with_suffix(".mp4")
                     yield name, [SlippiArtifact(path, index, context_artifact)]
         elif path.is_dir():
