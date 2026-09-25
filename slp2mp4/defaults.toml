@@ -9,6 +9,7 @@ resolution = "1080p"
 msaa = 1
 ssaa = true
 bitrate = 16000
+custom_gecko_codes = ""
 
 [dolphin.gecko_codes]
 "$Optional: Show Player Names" = true

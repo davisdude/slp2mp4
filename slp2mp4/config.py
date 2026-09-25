@@ -107,6 +107,12 @@ class DolphinConfig:
     ssaa: bool
     bitrate: int
     gecko_codes: dict[str, bool]
+    custom_gecko_codes: str = dataclasses.field(
+        metadata={
+            "help": "Custom gecko codes; all are enabled. Cannot contain '='",
+            "multiline": True,
+        },
+    )
 
     @classmethod
     def from_dict(cls, data):
@@ -117,6 +123,7 @@ class DolphinConfig:
             ssaa=data["ssaa"],
             bitrate=data["bitrate"],
             gecko_codes=data["gecko_codes"],
+            custom_gecko_codes=data["custom_gecko_codes"],
         )
 
     def validate(self):

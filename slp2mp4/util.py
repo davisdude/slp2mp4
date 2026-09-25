@@ -42,3 +42,9 @@ def get_unique_items(d1: dict, d2: dict):
         elif in_d1 and not eq_d1:
             out[k] = v
     return out
+
+
+def split_by_blank_line(s):
+    if not (stripped := s.strip()):
+        return []
+    return re.split(r"\r?\n\s*\n", stripped)

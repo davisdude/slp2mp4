@@ -64,6 +64,29 @@ def is_dict_of_type(d, t):
     return isinstance(d, dict) and all(isinstance(v, t) for v in d.values())
 
 
+def select_all(event):
+    event.widget.tag_add("sel", "1.0", "end-1c")
+    event.widget.mark_set(tk.INSERT, "1.0")
+    event.widget.see(tk.INSERT)
+    return "break"
+
+
+@dataclasses.dataclass
+class ScrolledTextwrapper:
+    widget: scrolledtext.ScrolledText
+    start: str
+
+    def __post_init__(self):
+        self.set(self.start)
+
+    def get(self):
+        return self.widget.get("1.0", tk.END)
+
+    def set(self, s):
+        self.widget.delete("1.0", tk.END)
+        return self.widget.insert("1.0", s)
+
+
 def build_widget(variables, parent, key, value, field):
     if config.is_optional_type(field.type):
         field.type = config.get_optional_type(field.type)
@@ -95,8 +118,13 @@ def build_widget(variables, parent, key, value, field):
     elif is_dict_of_type(value, str):
         return create_str_dict_widget(variables, parent, key, value)
     else:
-        var = tk.StringVar(value=str(value))
-        widget = ttk.Entry(parent, textvariable=var)
+        if field.metadata.get("multiline"):
+            widget = scrolledtext.ScrolledText(parent, height=10, wrap=tk.WORD)
+            widget.bind("<Control-a>", select_all)
+            var = ScrolledTextwrapper(widget, str(value))
+        else:
+            var = tk.StringVar(value=str(value))
+            widget = ttk.Entry(parent, textvariable=var)
     variables[key] = var
     return widget
 
@@ -308,6 +336,7 @@ class Application(tk.Tk):
 
     def make_log_text(self):
         self.log_text = scrolledtext.ScrolledText(self, height=10, wrap=tk.WORD)
+        self.log_text.bind("<Control-a>", select_all)
         self.log_text.pack(fill="both", expand=True)
 
     def add_files(self):

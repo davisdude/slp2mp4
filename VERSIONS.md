@@ -12,6 +12,7 @@
 - Allow users to configure temp dir more easily ([#23](https://github.com/davisdude/slp2mp4/issues/23))
 - Testing! ([#8](https://github.com/davisdude/slp2mp4/issues/8))
 - Options to override anti-aliasing settings ([#51](https://github.com/davisdude/slp2mp4/issues/51))
+- Custom gecko codes ([#54](https://github.com/davisdude/slp2mp4/issues/54))
 
 ## 3.1.1
 

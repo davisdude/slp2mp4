@@ -1,17 +1,20 @@
 # Wrapper for running dolphin
 
+import copy
+import re
 import subprocess
 import tempfile
 import time
 from multiprocessing import Event
 from pathlib import Path
 
-from slp2mp4 import log
+from slp2mp4 import log, util
 from slp2mp4.dolphin import comm, ini
 
 
 class DolphinRunner:
     def __init__(self, config):
+        self.log = log.get_logger()
         self.slippi_playback = config.paths.slippi_playback.expanduser()
         self.ssbm_iso = config.paths.ssbm_iso.expanduser()
         self.video_backend = config.dolphin.backend.value
@@ -30,19 +33,27 @@ class DolphinRunner:
                 "EFBScale": config.dolphin.resolution.dolphin_value,
             },
         }
+
+        gecko_codes = copy.deepcopy(config.dolphin.gecko_codes)
+        custom_gecko_codes = util.split_by_blank_line(config.dolphin.custom_gecko_codes)
+        custom_gecko_code_names = [
+            re.match(r"^(\$[^\n\r\[]*).*$", code, re.MULTILINE).group(1).strip()
+            for code in custom_gecko_codes
+        ]
+
+        enabled_gecko_codes = custom_gecko_code_names
+        disabled_gecko_codes = []
+        for name, enabled in gecko_codes.items():
+            if enabled:
+                enabled_gecko_codes.append(name)
+            else:
+                disabled_gecko_codes.append(name)
+
         self.user_gecko = {
-            "Gecko_Enabled": {
-                key: None
-                for key, value in config.dolphin.gecko_codes.items()
-                if value is True
-            },
-            "Gecko_Disabled": {
-                key: None
-                for key, value in config.dolphin.gecko_codes.items()
-                if value is False
-            },
+            "Gecko_Enabled": {name: None for name in enabled_gecko_codes},
+            "Gecko_Disabled": {name: None for name in disabled_gecko_codes},
+            "Gecko": {code: None for code in custom_gecko_codes},
         }
-        self.log = log.get_logger()
 
     def run(self, path: Path, dump_dir: Path, kill_event: Event):
         with tempfile.TemporaryDirectory() as userdir_str:

@@ -53,7 +53,7 @@ def add_config_option_to_parser(parser, config_type, prefix=""):
             args.append(f"-{short}")
         long_name = f"--{prefix}-{name}" if prefix else f"--{name}"
         args.append(long_name)
-        if field_type is not dict:
+        if (field_type is not dict) and (not metadata.get("multiline", False)):
             parser.add_argument(*args, **kwargs)
 
 
