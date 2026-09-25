@@ -197,6 +197,8 @@ class Orchestrator:
                 time.sleep(1)
 
     def run(self):
+        self.log.info("Starting")
+
         # 1 do_work per num_proc, + 1 for collect_tasks
         with ThreadPoolExecutor(self.num_procs + 1) as executor:
             futures = [executor.submit(self.collect_tasks)]
@@ -217,3 +219,5 @@ class Orchestrator:
 
         self.collector.cleanup()
         self.pipeline.cleanup()
+
+        self.log.info("Done!")
