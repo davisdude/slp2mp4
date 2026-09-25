@@ -30,7 +30,7 @@ parallel = 0
 youtubify_names = true
 preserve_directory_structure = false
 combine_mode = "None"
-use_context_json_for_naming = true
+use_context_json = true
 
 [runtime.name_replacements]
 "-" = "–"

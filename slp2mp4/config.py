@@ -161,8 +161,10 @@ class RuntimeConfig:
     combine_mode: CombineMode = dataclasses.field(
         metadata={"help": "How to combine set videos; None = separate sets"}
     )
-    use_context_json_for_naming: bool = dataclasses.field(
-        metadata={"help": "Use context.json files (if found) when naming videos"}
+    use_context_json: bool = dataclasses.field(
+        metadata={
+            "help": "Use context.json files (if found) when naming / sorting videos"
+        }
     )
 
     @classmethod
@@ -173,7 +175,7 @@ class RuntimeConfig:
             youtubify_names=data["youtubify_names"],
             name_replacements=data["name_replacements"],
             combine_mode=CombineMode(data["combine_mode"]),
-            use_context_json_for_naming=data["use_context_json_for_naming"],
+            use_context_json=data["use_context_json"],
         )
 
     def validate(self):

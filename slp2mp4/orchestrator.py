@@ -64,6 +64,8 @@ class Orchestrator:
 
     def get_round_info(self, task: Task):
         default_round_info = ("", "", "", -math.inf)
+        if not self.conf.runtime.use_context_json:
+            return default_round_info
         contexts = self.get_contexts(task)
         if (len(contexts) != 1) or (contexts[0] is None):
             return default_round_info
@@ -129,7 +131,7 @@ class Orchestrator:
             ]
 
     def get_final_name(self, context: ContextArtifact):
-        if not self.conf.runtime.use_context_json_for_naming:
+        if not self.conf.runtime.use_context_json:
             return None
         with open(context.path, "rb") as f:
             try:
