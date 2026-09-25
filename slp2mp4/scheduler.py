@@ -58,10 +58,10 @@ class Scheduler:
                     upstream = self.producers.get(i)
                     if upstream is None:
                         raise RuntimeError(f"No producer found for artifact '{i}'.")
+                    self.dependents[upstream].add(task)
                     if upstream in self.completed_tasks:
                         continue
                     self.waiting_on[task].add(upstream)
-                    self.dependents[upstream].add(task)
 
             for task, deps in self.waiting_on.items():
                 if (
