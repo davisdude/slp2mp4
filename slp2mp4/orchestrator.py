@@ -135,16 +135,8 @@ class Orchestrator:
             try:
                 # TODO: parry / challonge / etc.
                 data = json.load(f)
-                separator = (
-                    " / "
-                    if (
-                        self.conf.runtime.youtubify_names
-                        and ("/" in self.conf.runtime.name_replacements)
-                    )
-                    else " + "
-                )
-                player1 = separator.join(data["scores"][0]["slots"][0]["displayNames"])
-                player2 = separator.join(data["scores"][0]["slots"][1]["displayNames"])
+                player1 = (" + ").join(data["scores"][0]["slots"][0]["displayNames"])
+                player2 = (" + ").join(data["scores"][0]["slots"][1]["displayNames"])
                 tournament_name = data["startgg"]["tournament"]["name"]
                 event_name = data["startgg"]["event"]["name"]
                 phase_name = data["startgg"]["phase"]["name"]
