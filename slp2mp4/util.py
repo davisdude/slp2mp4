@@ -48,3 +48,11 @@ def split_by_blank_line(s):
     if not (stripped := s.strip()):
         return []
     return re.split(r"\r?\n\s*\n", stripped)
+
+
+def enum_to_display(enum_value):
+    return getattr(enum_value, "display_name", enum_value.value)
+
+
+def get_enum_display_values(enum_type):
+    return [enum_to_display(member) for member in enum_type]

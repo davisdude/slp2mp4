@@ -28,14 +28,6 @@ HOME_PAGE = "https://github.com/davisdude/slp2mp4"
 LICENSE_PAGE = f"{HOME_PAGE}/blob/master/LICENSE.md"
 
 
-def enum_display_values(enum_type):
-    return [enum_to_display(member) for member in enum_type]
-
-
-def enum_to_display(enum_value):
-    return getattr(enum_value, "display_name", enum_value.value)
-
-
 def build_dataclass(variables, parent, obj, prefix=None):
     row = 0
     for field in dataclasses.fields(obj):
@@ -100,8 +92,8 @@ def build_widget(variables, parent, key, value, field):
         widget = ttk.Checkbutton(parent, variable=var)
     elif isinstance(value, Enum):
         enum_type = type(value)
-        options = enum_display_values(enum_type)
-        var = tk.StringVar(value=enum_to_display(value))
+        options = util.get_enum_display_values(enum_type)
+        var = tk.StringVar(value=util.enum_to_display(value))
         widget = ttk.Combobox(
             parent, textvariable=var, values=options, state="readonly"
         )

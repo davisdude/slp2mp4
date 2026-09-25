@@ -1,10 +1,11 @@
 import dataclasses
 import signal
-from argparse import ArgumentParser, BooleanOptionalAction
+from argparse import ArgumentParser, ArgumentTypeError, BooleanOptionalAction
+from enum import Enum
 from multiprocessing import Event
 from pathlib import Path
 
-from slp2mp4 import config, log
+from slp2mp4 import config, log, util
 from slp2mp4.collector import Collector
 from slp2mp4.config import Config, RuntimeOptions
 from slp2mp4.orchestrator import Orchestrator
@@ -29,11 +30,25 @@ def make_sigint_handler(logger, stop_event: Event, kill_event: Event):
     return func
 
 
+def enum_parser(enum_type, display_values):
+    display_to_member = dict(zip(display_values, enum_type))
+
+    def parse(value):
+        try:
+            return display_to_member[value]
+        except KeyError:
+            raise ArgumentTypeError(
+                f"invalid value: {value!r}; choose from {', '.join(display_values)}"
+            )
+
+    return parse
+
+
 def add_config_option_to_parser(parser, config_type, prefix=""):
     for field in dataclasses.fields(config_type):
         field_type = field.type
-        kwargs = {}
         metadata = getattr(field, "metadata", {})
+        kwargs = {}
         if (default := field.default) is not None:
             kwargs["default"] = default
         if help_text := metadata.get("help"):
@@ -45,6 +60,11 @@ def add_config_option_to_parser(parser, config_type, prefix=""):
                 kwargs["action"] = "store_false" if default else "store_true"
             else:
                 kwargs["action"] = BooleanOptionalAction
+        elif isinstance(field_type, type) and issubclass(field_type, Enum):
+            display_values = util.get_enum_display_values(field_type)
+            kwargs["type"] = enum_parser(field_type, display_values)
+            kwargs["choices"] = list(field_type)
+            kwargs["metavar"] = "{" + ",".join(display_values) + "}"
         else:
             kwargs["type"] = field_type
         name = field.name.replace("_", "-")
