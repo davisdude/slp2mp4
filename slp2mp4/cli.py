@@ -68,7 +68,7 @@ def update_conf_from_args(args, conf):
                 continue
             val = getattr(args, name)
             if val is not dataclasses.MISSING:
-                setattr(current, name, val)
+                setattr(current, field_name, val)
 
 
 def main():
