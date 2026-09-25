@@ -199,18 +199,21 @@ class ConfigDialog(tk.Toplevel):
                 current = current[part]
             current[key[-1]] = var.get()
 
-        backend = data["dolphin"]["backend"]
-        data["dolphin"]["backend"] = DolphinBackend(backend).value
-        res = data["dolphin"]["resolution"]
+        data["dolphin"]["backend"] = DolphinBackend(data["dolphin"]["backend"]).value
         data["dolphin"]["resolution"] = DolphinResolution.from_display_name(
-            res
+            data["dolphin"]["resolution"]
         ).display_name
+        data["dolphin"]["custom_gecko_codes"] = data["dolphin"][
+            "custom_gecko_codes"
+        ].strip()
+
         if data["paths"]["ffprobe"].strip() == "":
             data["paths"]["ffprobe"] = None
 
         config_path = Path(config.USER_CONFIG_PATH).expanduser()
         defaults = config.get_default_config().to_dict()
         unique_items = util.get_unique_items(defaults, data)
+
         try:
             with open(config_path, "wb") as f:
                 tomli_w.dump(unique_items, f)

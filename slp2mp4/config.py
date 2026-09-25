@@ -123,7 +123,7 @@ class DolphinConfig:
             ssaa=data["ssaa"],
             bitrate=data["bitrate"],
             gecko_codes=data["gecko_codes"],
-            custom_gecko_codes=data["custom_gecko_codes"],
+            custom_gecko_codes=data["custom_gecko_codes"].strip(),
         )
 
     def validate(self):
@@ -203,6 +203,7 @@ class Config:
         data = dataclasses.asdict(self)
         data["dolphin"]["backend"] = data["dolphin"]["backend"].value
         data["dolphin"]["resolution"] = data["dolphin"]["resolution"].display_name
+        data["runtime"]["combine_mode"] = data["runtime"]["combine_mode"].value
         for k, v in data["paths"].items():
             data["paths"][k] = str(v) if (v is not None) else None
         return data
