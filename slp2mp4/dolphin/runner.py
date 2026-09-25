@@ -1,6 +1,5 @@
 # Wrapper for running dolphin
 
-import copy
 import re
 import subprocess
 import tempfile
@@ -34,7 +33,7 @@ class DolphinRunner:
             },
         }
 
-        gecko_codes = copy.deepcopy(config.dolphin.gecko_codes)
+        gecko_codes = config.dolphin.gecko_codes
         custom_gecko_codes = util.split_by_blank_line(config.dolphin.custom_gecko_codes)
         custom_gecko_code_names = [
             re.match(r"^(\$[^\n\r\[]*).*$", code, re.MULTILINE).group(1).strip()
