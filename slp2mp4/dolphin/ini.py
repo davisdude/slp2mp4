@@ -39,7 +39,7 @@ def make_dolphin_file(userdir: pathlib.Path):
         # Enables dumping frames
         "Movie": {
             "DumpFrames": "True",
-            "DumpFramesSlient": "True",
+            "DumpFramesSilent": "True",
         },
         # Enables dumping audio
         "DSP": {
