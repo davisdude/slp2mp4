@@ -204,14 +204,27 @@ class Config:
         data["dolphin"]["backend"] = data["dolphin"]["backend"].value
         data["dolphin"]["resolution"] = data["dolphin"]["resolution"].display_name
         data["runtime"]["combine_mode"] = data["runtime"]["combine_mode"].value
-        for k, v in data["paths"].items():
-            data["paths"][k] = str(v) if (v is not None) else None
+        self._convert_paths_to_strs(data)
         return data
 
     def validate(self):
         for field in dataclasses.fields(self):
             attr = getattr(self, field.name)
             attr.validate()
+
+    def _convert_paths_to_str(self, data: dict, obj=None):
+        if obj is None:
+            obj = self
+        for field in dataclasses.fields(obj):
+            if dataclasses.is_dataclass(field.type):
+                attr = getattr(obj, field.name)
+                self._convert_paths_to_strs(data[field.name], attr)
+            else:
+                val = data[field.name]
+                if field.type is Path:
+                    data[field.name] = str(val)
+                elif is_optional_type(field.type) and (get_optional_type(field.type) is Path):
+                    data[field.name] = str(val) if (val is not None) else None
 
 
 @dataclasses.dataclass
