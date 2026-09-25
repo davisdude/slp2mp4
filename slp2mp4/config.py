@@ -166,6 +166,11 @@ class RuntimeConfig:
             "help": "Use context.json files (if found) when naming / sorting videos"
         }
     )
+    exclude_streamed_sets: bool = dataclasses.field(
+        metadata={
+            "help": "Exclude sets marked with stream metadata (requires context.json)"
+        }
+    )
 
     @classmethod
     def from_dict(cls, data):
@@ -176,6 +181,7 @@ class RuntimeConfig:
             name_replacements=data["name_replacements"],
             combine_mode=CombineMode(data["combine_mode"]),
             use_context_json=data["use_context_json"],
+            exclude_streamed_sets=data["exclude_streamed_sets"],
         )
 
     def validate(self):

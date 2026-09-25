@@ -141,15 +141,21 @@ class Orchestrator:
         """Iterator that returns <task>."""
         input_by_task: dict[Task, Path] = {}
         for input_item, final, artifacts in self.collector.next():
+            contexts = list({artifact.context for artifact in artifacts})
+            if (len(contexts) == 1) and ((context := contexts[0]) is not None):
+                if (
+                    self.conf.runtime.exclude_streamed_sets
+                    and context.data.stream is not None
+                ):
+                    continue
+                final = self.get_final_name(context) or final
+
             videos = []
             for task in self.pipeline.get_render_tasks(artifacts):
                 input_by_task[task] = input_item
                 yield [task]
                 videos.append(task.video)
 
-            contexts = list({artifact.context for artifact in artifacts})
-            if (len(contexts) == 1) and ((context := contexts[0]) is not None):
-                final = self.get_final_name(context) or final
             for task in self.pipeline.get_concat_tasks(videos, final):
                 input_by_task[task] = input_item
                 yield [task]
