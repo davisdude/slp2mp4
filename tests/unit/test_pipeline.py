@@ -49,8 +49,7 @@ def test_get_render_tasks_single(tmp_path):
     for slp in slps:
         slp.touch()
     artifacts = [SlippiArtifact(slp) for slp in slps]
-    final_path = Path("ignored.mp4")
-    tasks = list(pipeline.get_render_tasks(artifacts, final_path))
+    tasks = list(pipeline.get_render_tasks(artifacts))
 
     assert len(tasks) == 1
 
@@ -68,26 +67,46 @@ def test_get_render_tasks_multiple(tmp_path):
     for slp in slps:
         slp.touch()
     artifacts = [SlippiArtifact(slp) for slp in slps]
-    final_path = Path("used.mp4")
-    tasks = list(pipeline.get_render_tasks(artifacts, final_path))
+    tasks = list(pipeline.get_render_tasks(artifacts))
 
-    assert len(tasks) == 4
+    assert len(tasks) == 3
 
-    outputs = []
     for task, artifact, prefix in zip(tasks[:3], artifacts, prefixes):
         assert task.name == f"render {prefix}.slp"
         assert task.slp == artifact
         assert task.inputs == [artifact]
         assert task.final_name == Path(f"{prefix}.mp4")
-        outputs.append(task.video)
 
-    task = tasks[3]
+
+def test_get_concat_tasks_single(tmp_path):
+    pipeline = Pipeline(tmp_path)
+    vids = [tmp_path / "game.mp4"]
+    for vid in vids:
+        vid.touch()
+    artifacts = [Mp4Artifact(vid) for vid in vids]
+    final_path = Path("used.mp4")
+    tasks = list(pipeline.get_concat_tasks(artifacts, final_path))
+    assert len(tasks) == 0
+
+
+def test_get_concat_tasks_multiple(tmp_path):
+    pipeline = Pipeline(tmp_path)
+    prefixes = [f"g{i}" for i in range(3)]
+    vids = [tmp_path / f"{prefix}.mp4" for prefix in prefixes]
+    for vid in vids:
+        vid.touch()
+    artifacts = [Mp4Artifact(vid) for vid in vids]
+    final_path = Path("used.mp4")
+    tasks = list(pipeline.get_concat_tasks(artifacts, final_path))
+
+    assert len(tasks) == 1
+    task = tasks[0]
     assert task.name == "concat used.mp4"
-    assert task.inputs == outputs
+    assert task.inputs == artifacts
     assert task.final_name == Path("used.mp4")
 
 
-def test_get_concat_tasks_no_combine(tmp_path):
+def test_get_group_concat_tasks_no_combine(tmp_path):
     pipeline = Pipeline(tmp_path)
     input_tasks = [
         ConcatVideosTask(
@@ -98,11 +117,11 @@ def test_get_concat_tasks_no_combine(tmp_path):
         )
         for i in range(3)
     ]
-    tasks = list(pipeline.get_concat_tasks(input_tasks, {}, {}, CombineMode.NONE))
+    tasks = list(pipeline.get_group_concat_tasks(input_tasks, {}, {}, CombineMode.NONE))
     assert tasks == []
 
 
-def test_get_concat_tasks_all_combine_simple(tmp_path):
+def test_get_group_concat_tasks_all_combine_simple(tmp_path):
     pipeline = Pipeline(tmp_path)
     outputs = []
     input_tasks = []
@@ -122,7 +141,7 @@ def test_get_concat_tasks_all_combine_simple(tmp_path):
         phase_by_task[task] = (str(i), str(i), str(i))
 
     tasks = list(
-        pipeline.get_concat_tasks(
+        pipeline.get_group_concat_tasks(
             input_tasks, input_by_task, phase_by_task, CombineMode.ALL
         )
     )
@@ -135,11 +154,11 @@ def test_get_concat_tasks_all_combine_simple(tmp_path):
     assert task.final_name == Path("all.mp4")
 
 
-def test_get_concat_tasks_all_combine_complex(tmp_path, complex_pipeline):
+def test_get_group_concat_tasks_all_combine_complex(tmp_path, complex_pipeline):
     pipeline = Pipeline(tmp_path)
     input_tasks, input_by_task, phase_by_task = complex_pipeline()
     tasks = list(
-        pipeline.get_concat_tasks(
+        pipeline.get_group_concat_tasks(
             input_tasks, input_by_task, phase_by_task, CombineMode.ALL
         )
     )
@@ -164,11 +183,11 @@ def test_get_concat_tasks_all_combine_complex(tmp_path, complex_pipeline):
     ]
 
 
-def test_get_concat_tasks_input_combine(tmp_path, complex_pipeline):
+def test_get_group_concat_tasks_input_combine(tmp_path, complex_pipeline):
     pipeline = Pipeline(tmp_path)
     input_tasks, input_by_task, phase_by_task = complex_pipeline()
     tasks = list(
-        pipeline.get_concat_tasks(
+        pipeline.get_group_concat_tasks(
             input_tasks, input_by_task, phase_by_task, CombineMode.BY_INPUT
         )
     )
@@ -209,11 +228,11 @@ def test_get_concat_tasks_input_combine(tmp_path, complex_pipeline):
     ]
 
 
-def test_get_concat_tasks_phase_combine(tmp_path, complex_pipeline):
+def test_get_group_concat_tasks_phase_combine(tmp_path, complex_pipeline):
     pipeline = Pipeline(tmp_path)
     input_tasks, input_by_task, phase_by_task = complex_pipeline()
     tasks = list(
-        pipeline.get_concat_tasks(
+        pipeline.get_group_concat_tasks(
             input_tasks, input_by_task, phase_by_task, CombineMode.BY_PHASE
         )
     )
