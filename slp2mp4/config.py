@@ -233,25 +233,23 @@ class SplitScoreboardConfig(BasicScoreboardConfig):
 
 @dataclasses.dataclass
 class CustomScoreboardConfig:
-    singles_html: Path | None = dataclasses.field(default=None)
-    doubles_html: Path | None = dataclasses.field(default=None)
-    css: Path | None = dataclasses.field(default=None)
+    alignment: str
+    html_path: Path | None = dataclasses.field(default=None)
+    css_path: Path | None = dataclasses.field(default=None)
 
     @classmethod
     def from_dict(cls, data):
         return cls(
-            singles_html=data.get("singles_html"),
+            alignment=data["alignment"],
             doubles_html=data.get("doubles_html"),
-            css=data.get("css"),
+            css_path=data.get("css_path"),
         )
 
     def validate(self):
-        assert self.singles_html is not None
-        assert self.singles_html.is_file()
-        assert self.doubles_html is not None
-        assert self.doubles_html.is_file()
-        assert self.css is not None
-        assert self.css.is_file()
+        assert self.html_path is not None
+        assert self.html_path.is_file()
+        assert self.css_path is not None
+        assert self.css_path.is_file()
 
 
 # Minimal should have widescreen or not option

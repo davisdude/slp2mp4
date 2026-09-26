@@ -23,7 +23,7 @@ class ScoreboardType(Enum):
     CUSTOM = "Custom"
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(kw_only=True)
 class ScoreboardBase:
     slp: SlippiArtifact
     input_video: Mp4Artifact
@@ -35,7 +35,7 @@ class ScoreboardBase:
 
     def __post_init__(self):
         if self.image_path is None:
-            fd, tmp = tempfile.mkstemp(suffix=".mp4", dir=self.workdir)
+            fd, tmp = tempfile.mkstemp(suffix=".png", dir=self.workdir)
             os.close(fd)
             self.image_path = Path(tmp)
             self.tmp_paths.append(self.image_path)
@@ -47,7 +47,7 @@ class ScoreboardBase:
 
     @property
     def size(self) -> tuple[int, int]:
-        # TODO: get size based on input image
+        # TODO: get size based on input video
         return (1280, 720)
 
     @property
@@ -71,7 +71,7 @@ class ScoreboardBase:
         # TODO: Custom color, font, etc
         raise NotImplementedError
 
-    def _render_image(self):
+    def render_image(self):
         # TODO: provide browser_executable
         hti = Html2Image(
             custom_flags=[
@@ -89,7 +89,6 @@ class ScoreboardBase:
         )
 
     def get_ffmpeg_command(self) -> list[str]:
-        self._render_image()
         return [
             "-i",
             str(self.input_video.path),
@@ -157,6 +156,42 @@ class SplitScoreboard(ScoreboardBase):
     @property
     def css_template(self):
         return self.jinja_env.get_template("split.css")
+
+
+@dataclasses.dataclass
+class MinimalScoreboard(ScoreboardBase):
+    @property
+    def video_alignment(self):
+        return "x=(ow-iw)/2:y=0"
+
+    @property
+    def html_template(self):
+        return self.jinja_env.get_template("minimal.html")
+
+    @property
+    def css_template(self):
+        return self.jinja_env.get_template("minimal.css")
+
+
+@dataclasses.dataclass
+class CustomScoreboard(ScoreboardBase):
+    alignment: str
+    html_path: Path
+    css_path: Path
+
+    @property
+    def video_alignment(self):
+        return self.alignment
+
+    @property
+    def html_template(self):
+        html = self.html_path.resolve().read_text(encoding="utf-8")
+        return self.jinja_env.from_string(html)
+
+    @property
+    def css_template(self):
+        css = self.css_path.resolve().read_text(encoding="utf-8")
+        return self.jinja_env.from_string(css)
 
 
 # TODO: some scoreboards should enforce widescreen expectations

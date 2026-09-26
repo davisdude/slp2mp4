@@ -47,7 +47,7 @@ exclude_streamed_sets = false
 '"' = "＂"
 
 [scoreboard]
-type = "Basic"
+type = "Shared"
 
 [scoreboard.shared]
 left = true
@@ -57,3 +57,4 @@ left = true
 [scoreboard.minimal]
 
 [scoreboard.custom]
+video_alignment = "x=(ow-iw)/2:y=0"

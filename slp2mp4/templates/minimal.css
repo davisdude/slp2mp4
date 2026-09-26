@@ -1,0 +1,69 @@
+* {
+    box-sizing: border-box;
+}
+html, body {
+    color: white;
+    font-family: "Inconsolata", "Consolas", "monospace";
+    width: 100%;
+    height: 100%;
+}
+
+.box {
+    background: black;
+    border-width: 1;
+    border-style: solid;
+    border-color: white;
+    padding: 1vh;
+    font-size: 3vh;
+}
+
+.score {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: baseline;
+}
+
+.box-slot-1 {
+    position: absolute;
+    top: 1vh;
+    left: 1vh;
+}
+
+.box-slot-2 {
+    position: absolute;
+    top: 1vh;
+    right: 1vh;
+}
+
+.box-center {
+    text-align: center;
+    position: absolute;
+    top: 1vh;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.container {
+    flex-direction: column;
+}
+
+.info {
+    flex-direction: row;
+}
+
+.small {
+    font-size: 60%;
+    color: LightGray;
+}
+
+.medium {
+    font-size: 80%;
+    color: LightGray;
+}
+
+.score {
+    padding-left: 1vh;
+    flex: 1;
+    align-self: center;
+}

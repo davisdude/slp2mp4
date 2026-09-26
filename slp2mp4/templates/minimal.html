@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+    <body>
+        {% for slot in sb.slp.context.data.scores[sb.slp.index].slots %}
+        <div class="box score box-slot-{{ loop.index }}">
+            {% if loop.first %}
+            <div class="container">
+                {% for i in range(slot.prefixes | length) %}
+                <div class="info">
+                    <span class="small">{{ slot.prefixes[i] }}</span>
+                    <span>{{ slot.display_names[i] }}</span>
+                    <span class="small">{{ slot.pronouns[i] }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            <span class="score" style="text-align: right; padding-left: 1em">{{ slot.score }}</span>
+            {% else %}
+            <span class="score" style="text-align: left; padding-right: 1em">{{ slot.score }}</span>
+            <div class="container">
+                {% for i in range(slot.prefixes | length) %}
+                <div class="info">
+                    <span class="small">{{ slot.prefixes[i] }}</span>
+                    <span>{{ slot.display_names[i] }}</span>
+                    <span class="small">{{ slot.pronouns[i] }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+
+        <div class="box box-center">
+            <div style="">{{ sb.slp.context.data.tournament_name }}</div>
+            <div>
+                <span class="small">{{ sb.slp.context.data.phase_name }}</span>
+                <span class="small">{{ sb.slp.context.data.round_name_short }}</span>
+                <span class="small">Bo{{ sb.slp.context.data.best_of }}</span>
+            </div>
+        </div>
+    </body>
+</html>
