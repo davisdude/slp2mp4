@@ -6,6 +6,8 @@
 - Removed `prepend_directory` option
 - Removed concept of different modes
 - Uses context.json files for naming
+- Optionally ignore context.json files for renaming / sorting
+- Optionally exclude sets marked for stream (via context.json)
 - Combine videos for easier upload ([#50](https://github.com/davisdude/slp2mp4/issues/50))
 - Added `monitor` option to continuously scan for input files ([#20](https://github.com/davisdude/slp2mp4/issues/20))
 - Auto-generate CLI / GUI config menus ([#33](https://github.com/davisdude/slp2mp4/issues/33))

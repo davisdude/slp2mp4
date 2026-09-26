@@ -53,6 +53,7 @@ usage: slp2mp4 [-h] [-v] [-n] [-m] [-t TEMPORARY_DIRECTORY] [-o OUTPUT_DIRECTORY
                [--runtime-preserve-directory-structure | --no-runtime-preserve-directory-structure]
                [--runtime-youtubify-names | --no-runtime-youtubify-names] [--runtime-name-replacements RUNTIME_NAME_REPLACEMENTS]
                [--runtime-combine-mode {None,All,By Input,By Phase}] [--runtime-use-context-json | --no-runtime-use-context-json]
+               [--runtime-exclude-streamed-sets | --no-runtime-exclude-streamed-sets]
                inputs [inputs ...]
 
 positional arguments:
@@ -92,6 +93,8 @@ options:
                         How to combine set videos; None = separate sets
   --runtime-use-context-json, --no-runtime-use-context-json
                         Use context.json files (if found) when naming / sorting videos
+  --runtime-exclude-streamed-sets, --no-runtime-exclude-streamed-sets
+                        Exclude sets marked with stream metadata (requires context.json)
 ```
 
 ### Graphical User Interface
@@ -173,6 +176,7 @@ The default settings can be found [here][default-settings].
     - Note that `By Phase` does not work properly without `context.json` files
 
 - `use_context_json`: Use `context.json` files (if found) for file names / ordering
+- `exclude_streamed_sets`: Use `context.json` to exclude files marked for stream
 
 ### Example Configuration
 
