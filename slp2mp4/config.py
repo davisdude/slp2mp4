@@ -16,8 +16,6 @@ from slp2mp4.scoreboard import ScoreboardType
 DEFAULT_CONFIG_PATH = importlib.resources.files(slp2mp4).joinpath("defaults.toml")
 USER_CONFIG_PATH = Path("~/.slp2mp4.toml").expanduser()
 
-DEFAULT_LOGO_PATH = importlib.resources.files(slp2mp4).joinpath("logo.svg")
-
 
 # From https://github.com/project-slippi/Ishiiruka/tree/slippi/Source/Core/VideoBackends
 class DolphinBackend(Enum):
@@ -69,6 +67,7 @@ class PathsConfig:
     ssbm_iso: Path
     ffprobe: Path | None = dataclasses.field(default=None)
     chrome: Path | None = dataclasses.field(default=None)
+    # TODO: Make this just `browser` if html2image accepts that
 
     @classmethod
     def from_dict(cls, data):
@@ -205,12 +204,11 @@ class BasicScoreboardConfig:
         return cls(logo=data.get("logo"))
 
     def __post_init__(self):
-        if self.logo is None:
-            self.logo = DEFAULT_LOGO_PATH
-        self.logo = Path(self.logo)
+        if self.logo is not None:
+            self.logo = Path(self.logo)
 
     def validate(self):
-        assert self.logo.is_file()
+        assert (self.logo is None) or self.logo.is_file()
 
 
 @dataclasses.dataclass
@@ -241,7 +239,7 @@ class CustomScoreboardConfig:
     def from_dict(cls, data):
         return cls(
             alignment=data["alignment"],
-            doubles_html=data.get("doubles_html"),
+            html_path=data.get("html_path"),
             css_path=data.get("css_path"),
         )
 
@@ -250,11 +248,6 @@ class CustomScoreboardConfig:
         assert self.html_path.is_file()
         assert self.css_path is not None
         assert self.css_path.is_file()
-
-
-# Minimal should have widescreen or not option
-# Shared should have left/right option
-# Shared / split should enforce widescreen settings
 
 
 @dataclasses.dataclass
