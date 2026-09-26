@@ -42,6 +42,8 @@ include = [
   "slp2mp4/*.py",
   "slp2mp4/*.toml",
   "slp2mp4/*.svg",
+  "slp2mp4/templates/*.html",
+  "slp2mp4/templates/*.css",
 ]
 
 [tool.hatch.version]
