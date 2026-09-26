@@ -2,7 +2,6 @@
 
 import dataclasses
 import os
-import shutil
 import tempfile
 from collections import defaultdict
 from pathlib import Path
@@ -21,14 +20,10 @@ class Pipeline:
     output_directory: Path | None = dataclasses.field(default=None)
 
     tmp_artifacts: list[Artifact] = dataclasses.field(default_factory=list, init=False)
-    created_dirs: list[Artifact] = dataclasses.field(default_factory=list, init=False)
 
     def __post_init__(self):
         if self.output_directory is None:
             self.output_directory = Path(".")
-        if self.workdir is None:
-            self.workdir = Path(tempfile.mkdtemp())
-            self.created_dirs.append(self.workdir)
 
     def _make_tmp_mp4(self):
         fd, tmp = tempfile.mkstemp(suffix=".mp4", dir=self.workdir)
@@ -107,7 +102,5 @@ class Pipeline:
             yield [self._concat_task(f"concat {final}", videos, final)]
 
     def cleanup(self):
-        for d in self.created_dirs:
-            shutil.rmtree(d, ignore_errors=True)
         for artifact in self.tmp_artifacts:
             artifact.cleanup()

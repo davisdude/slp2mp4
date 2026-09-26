@@ -43,11 +43,6 @@ class Collector:
     done: bool = dataclasses.field(default=False, init=False)
     created_dirs: list[Path] = dataclasses.field(default_factory=list, init=False)
 
-    def __post_init__(self):
-        if self.workdir is None:
-            self.workdir = Path(tempfile.mkdtemp())
-            self.created_dirs.append(self.workdir)
-
     def next(self):
         try:
             yield from self._next()
