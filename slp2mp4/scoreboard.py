@@ -77,6 +77,7 @@ class ScoreboardBase:
 
     @property
     def css(self) -> str:
+        # TODO: Custom color, font, etc
         raise NotImplementedError
 
     def _render_image(self):
@@ -156,7 +157,8 @@ class SharedScoreboard(ScoreboardBase):
             </div>
             <div class="filler"></div>
             <img src="{self.logo}" width=80%></img>
-            <div class="filler"></div>"""
+            <div class="filler"></div>
+"""
 
     @property
     def html_footer(self):
@@ -172,7 +174,8 @@ class SharedScoreboard(ScoreboardBase):
             </div>
         </div>
     </body>
-</html>"""
+</html>
+"""
 
     @property
     def html_body_singles(self):
@@ -199,7 +202,8 @@ class SharedScoreboard(ScoreboardBase):
                     </div>
                     <span class="combatant-score">{self.slp.context.data.scores[self.slp.index].slots[1].score}</span>
                 </div>
-            </div>"""
+            </div>
+"""
 
     @property
     def html_body_doubles(self):
@@ -236,9 +240,9 @@ class SharedScoreboard(ScoreboardBase):
                     </div>
                     <span class="combatant-score">{self.slp.context.data.scores[self.slp.index].slots[1].score}</span>
                 </div>
-            </div>"""
+            </div>
+"""
 
-    # TODO: Custom color, font, etc
     @property
     def css(self):
         return f"""
@@ -331,6 +335,292 @@ html, body {{
 }}
 .bracket-data {{
     text-align: center;
+}}
+"""
+
+
+@dataclasses.dataclass
+class SplitScoreboard(ScoreboardBase):
+    logo: Path = dataclasses.field(default=DEFAULT_LOGO_PATH)
+    logo_right: Path = dataclasses.field(default=DEFAULT_LOGO_PATH)
+
+    @property
+    def video_alignment(self):
+        return "x=(ow-iw)/2:y=0"
+
+    @property
+    def html_header(self):
+        return """
+<!DOCTYPE html>
+<html lang="en">
+    <body>
+"""
+
+    @property
+    def html_footer(self):
+        return """
+    </body>
+</html>
+"""
+
+    @property
+    def html_body_singles(self):
+        return f"""
+        <div class="stage">
+            <section class="side left">
+                <div class="info row1">
+                    <div class="info-big">{self.slp.context.data.tournament_name}</div>
+                </div>
+                <div class="row2"><hr></div>
+                <div class="info row3">
+                    <div class="info-medium">{self.slp.context.data.tournament_date.strftime("%B %d, %Y").replace(" 0", " ")}</div>
+                    <div class="info-medium">{self.slp.context.data.tournament_location}</div>
+                </div>
+                <div class="row4"><hr></div>
+                <table class="row5">
+                    <tr>
+                        <td class="combatant-sponsor">{self.slp.context.data.scores[self.slp.index].slots[0].prefixes[0]}</td>
+                        <td class="combatant-score" rowspan="3">{self.slp.context.data.scores[self.slp.index].slots[0].score}</td>
+                    </tr>
+                    <tr>
+                        <td class="combatant-tag">{self.slp.context.data.scores[self.slp.index].slots[0].display_names[0]}</td>
+                    </tr>
+                    <tr>
+                        <td class="combatant-pronouns">{self.slp.context.data.scores[self.slp.index].slots[0].pronouns[0]}</td>
+                    </tr>
+                </table>
+                <div class="row6"><hr></div>
+                <img src="{self.logo}" class="row7">
+            </section>
+
+            <section class="side right">
+                <div class="info row1">
+                    <div class="info-medium">{self.slp.context.data.event_name}</div>
+                    <div class="info-medium">{self.slp.context.data.phase_name}</div>
+                </div>
+                <div class="row2"><hr></div>
+                <div class="info row3">
+                    <div class="info-medium">{self.slp.context.data.round_name}</div>
+                    <div class="info-medium">Best of {self.slp.context.data.best_of}</div>
+                </div>
+                <div class="row4"><hr></div>
+                <table class="row5">
+                    <tr>
+                        <td class="combatant-sponsor">{self.slp.context.data.scores[self.slp.index].slots[1].prefixes[0]}</td>
+                        <td class="combatant-score" rowspan="3">{self.slp.context.data.scores[self.slp.index].slots[1].score}</td>
+                    </tr>
+                    <tr>
+                        <td class="combatant-tag">{self.slp.context.data.scores[self.slp.index].slots[1].display_names[0]}</td>
+                    </tr>
+                    <tr>
+                        <td class="combatant-pronouns">{self.slp.context.data.scores[self.slp.index].slots[1].pronouns[0]}</td>
+                    </tr>
+                </table>
+                <div class="row6"><hr></div>
+                <img src="{self.logo_right}" class="row7">
+            </section>
+        </div>
+"""
+
+    @property
+    def html_body_doubles(self):
+        return f"""
+        <div class="stage">
+            <section class="side left">
+                <div class="info row1">
+                    <div class="info-big">{self.slp.context.data.tournament_name}</div>
+                </div>
+                <div class="row2"><hr></div>
+                <div class="info row3">
+                    <div class="info-medium">{self.slp.context.data.tournament_date.strftime("%B %d, %Y").replace(" 0", " ")}</div>
+                    <div class="info-medium">{self.slp.context.data.tournament_location}</div>
+                </div>
+                <div class="row4"><hr></div>
+                <table class="row5">
+                    <tr>
+                        <td class="combatant-sponsor">{self.slp.context.data.scores[self.slp.index].slots[0].prefixes[0]}</td>
+                        <td class="combatant-score" rowspan="6">{self.slp.context.data.scores[self.slp.index].slots[0].score}</td>
+                    </tr>
+                    <tr>
+                        <td class="combatant-tag">{self.slp.context.data.scores[self.slp.index].slots[0].display_names[0]}</td>
+                    </tr>
+                    <tr>
+                        <td class="combatant-pronouns">{self.slp.context.data.scores[self.slp.index].slots[0].pronouns[0]}</td>
+                    </tr>
+                    <tr>
+                        <td class="combatant-sponsor">{self.slp.context.data.scores[self.slp.index].slots[0].prefixes[1]}</td>
+                    </tr>
+                    <tr>
+                        <td class="combatant-tag">{self.slp.context.data.scores[self.slp.index].slots[0].display_names[1]}</td>
+                    </tr>
+                    <tr>
+                        <td class="combatant-pronouns">{self.slp.context.data.scores[self.slp.index].slots[0].pronouns[1]}</td>
+                </table>
+                <div class="row6"><hr></div>
+                <img src="{self.logo}" class="row7">
+            </section>
+
+            <section class="side right">
+                <div class="info row1">
+                    <div class="info-medium">{self.slp.context.data.event_name}</div>
+                    <div class="info-medium">{self.slp.context.data.phase_name}</div>
+                </div>
+                <div class="row2"><hr></div>
+                <div class="info row3">
+                    <div class="info-medium">{self.slp.context.data.round_name}</div>
+                    <div class="info-medium">Best of {self.slp.context.data.best_of}</div>
+                </div>
+                <div class="row4"><hr></div>
+                <table class="row5">
+                    <tr>
+                        <td class="combatant-sponsor">{self.slp.context.data.scores[self.slp.index].slots[1].prefixes[0]}</td>
+                        <td class="combatant-score" rowspan="6">{self.slp.context.data.scores[self.slp.index].slots[1].score}</td>
+                    </tr>
+                    <tr>
+                        <td class="combatant-tag">{self.slp.context.data.scores[self.slp.index].slots[1].display_names[0]}</td>
+                    </tr>
+                    <tr>
+                        <td class="combatant-pronouns">{self.slp.context.data.scores[self.slp.index].slots[1].pronouns[0]}</td>
+                    </tr>
+                    <tr>
+                        <td class="combatant-sponsor">{self.slp.context.data.scores[self.slp.index].slots[1].prefixes[1]}</td>
+                    </tr>
+                    <tr>
+                        <td class="combatant-tag">{self.slp.context.data.scores[self.slp.index].slots[1].display_names[1]}</td>
+                    </tr>
+                    <tr>
+                        <td class="combatant-pronouns">{self.slp.context.data.scores[self.slp.index].slots[1].pronouns[1]}</td>
+                    </tr>
+                </table>
+                <div class="row6"><hr></div>
+                <img src="{self.logo_right}" class="row7">
+            </section>
+        </div>
+"""
+
+    @property
+    def css(self):
+        return f"""
+* {{
+    box-sizing: border-box;
+}}
+
+html, body {{
+    height: 100%;
+    margin: 0;
+    padding: 0.5vh;
+    color: white;
+    font-family: "Inconsolata", "Consolas", monospace;
+}}
+
+table {{
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}}
+
+td {{
+    padding: 0;
+    vertical-align: middle;
+}}
+
+img {{
+    width: 80%;
+    height: auto;
+    justify-self: center;
+    align-self: end;
+}}
+
+.stage {{
+    width: 100%;
+    height: 100%;
+    display: grid;
+    grid-template-columns: calc({303 / 1080 * self.size[1] - 2}px - 1vh) calc({303 / 1080 * self.size[1] - 2}px - 1vh);
+    grid-template-rows: auto auto auto auto auto auto auto;
+    justify-content: space-between;
+}}
+
+.side {{
+    display: contents;
+}}
+
+.left > * {{
+    grid-column: 1;
+}}
+.right > * {{
+    grid-column: 2;
+}}
+.side > * {{
+    align-self: center;
+}}
+
+.info {{
+    width: 100%;
+    text-align: center;
+}}
+
+.row1 {{
+    grid-row: 1;
+}}
+.row2 {{
+    grid-row: 2;
+}}
+.row3 {{
+    grid-row: 3;
+}}
+.row4 {{
+    grid-row: 4;
+}}
+.row5 {{
+    grid-row: 5;
+}}
+.row6 {{
+    grid-row: 6;
+}}
+.row7 {{
+    grid-row: 7;
+}}
+
+.info-big {{
+    font-size: 6vh;
+}}
+
+.info-medium {{
+    font-size: 3vh;
+}}
+
+.combatant-sponsor,
+.combatant-score,
+.combatant-tag,
+.combatant-pronouns {{
+    font-size: 3vh;
+}}
+.combatant-score {{
+    width: 2em;
+}}
+.combatant-sponsor,
+.combatant-pronouns {{
+    color: lightgray;
+}}
+
+.left table {{
+    direction: ltr;
+}}
+.left .combatant-sponsor,
+.left .combatant-tag,
+.left .combatant-pronouns,
+.left .combatant-score {{
+    text-align: right;
+}}
+
+.right table {{
+    direction: rtl;
+}}
+.right .combatant-sponsor,
+.right .combatant-tag,
+.right .combatant-pronouns,
+.right .combatant-score {{
+    text-align: left;
 }}
 """
 

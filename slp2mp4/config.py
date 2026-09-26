@@ -223,6 +223,15 @@ class SharedScoreboardConfig(BasicScoreboardConfig):
 
 
 @dataclasses.dataclass
+class SplitScoreboardConfig(BasicScoreboardConfig):
+    logo_right: Path | None = dataclasses.field(default=None)
+
+    @classmethod
+    def from_dict(cls, data):
+        return cls(logo=data.get("logo"), logo_right=data.get("logo"))
+
+
+@dataclasses.dataclass
 class CustomScoreboardConfig:
     singles_html: Path | None = dataclasses.field(default=None)
     doubles_html: Path | None = dataclasses.field(default=None)
@@ -254,7 +263,7 @@ class CustomScoreboardConfig:
 class ScoreboardConfig:
     type: ScoreboardType
     shared: SharedScoreboardConfig
-    split: BasicScoreboardConfig
+    split: SplitScoreboardConfig
     minimal: BasicScoreboardConfig
     custom: CustomScoreboardConfig
 
