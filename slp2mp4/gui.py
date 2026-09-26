@@ -79,15 +79,17 @@ class ScrolledTextwrapper:
         return self.widget.insert("1.0", s)
 
 
-def build_widget(variables, parent, key, value, field):
-    if config.is_optional_type(field.type):
-        field.type = config.get_optional_type(field.type)
+def build_widget(variables, parent, key, value, field, field_type=None):
+    if field_type is None:
+        field_type = field.type
+    if config.is_optional_type(field_type):
+        field_type = config.get_optional_type(field_type)
         default_value = None
-        if (field.type is Path) or (field.type is str):
+        if (field_type is Path) or (field_type is str):
             default_value = ""
         value = value if (value is not None) else default_value
-        return build_widget(variables, parent, key, value, field)
-    elif field.type is bool:
+        return build_widget(variables, parent, key, value, field, field_type)
+    elif field_type is bool:
         var = tk.BooleanVar(value=value)
         widget = ttk.Checkbutton(parent, variable=var)
     elif isinstance(value, Enum):
@@ -97,11 +99,11 @@ def build_widget(variables, parent, key, value, field):
         widget = ttk.Combobox(
             parent, textvariable=var, values=options, state="readonly"
         )
-    elif field.type is int:
+    elif field_type is int:
         # TODO: Spinners for some with min/max
         var = tk.IntVar(value=value)
         widget = ttk.Entry(parent, textvariable=var)
-    elif field.type is Path:
+    elif field_type is Path:
         var = tk.StringVar(value=str(value))
         is_directory = field.metadata.get("is_directory")
         widget = create_path_widget(parent, var, is_directory)
@@ -210,10 +212,9 @@ class ConfigDialog(tk.Toplevel):
         if data["paths"]["ffprobe"].strip() == "":
             data["paths"]["ffprobe"] = None
 
-        config_path = Path(config.USER_CONFIG_PATH).expanduser()
         defaults = config.get_default_config().to_dict()
         unique_items = util.get_unique_items(defaults, data)
-
+        config_path = Path(config.USER_CONFIG_PATH).expanduser()
         try:
             with open(config_path, "wb") as f:
                 tomli_w.dump(unique_items, f)

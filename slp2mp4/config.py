@@ -218,13 +218,12 @@ class Config:
             attr = getattr(self, field.name)
             attr.validate()
 
-    def _convert_paths_to_str(self, data: dict, obj=None):
+    def _convert_paths_to_strs(self, data: dict, obj=None):
         if obj is None:
             obj = self
         for field in dataclasses.fields(obj):
             if dataclasses.is_dataclass(field.type):
-                attr = getattr(obj, field.name)
-                self._convert_paths_to_strs(data[field.name], attr)
+                self._convert_paths_to_strs(data[field.name], field.type)
             else:
                 val = data[field.name]
                 if field.type is Path:
