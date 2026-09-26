@@ -1,0 +1,94 @@
+* {
+    box-sizing: border-box;
+}
+html, body {
+    position: absolute;
+    {% if sb.left %}
+    left: 0px;
+    {% else %}
+    right: 0px;
+    {% endif %}
+    color: white;
+    font-family: "Inconsolata", "Consolas", "monospace";
+    height: 100%;
+    width: {{ 606 / 1080 * sb.size[1] }}px;
+    margin: 0 0 0 0;
+    padding: 0.5vh 0.5vh 0.5vh 0.5vh;
+}
+#container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+}
+.tournament {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    align-items: center;
+    align-self: stretch;
+}
+.rule {
+    align-self: stretch;
+    flex-grow: 1;
+}
+.tournament-name, .tournament-location {
+    display: flex;
+    text-align: center;
+}
+.tournament-name {
+    font-size: 6vh;
+}
+.tournament-location {
+    font-size: 3vh;
+}
+.filler {
+    flex-grow: 1;
+}
+.combatants {
+    display: flex;
+    flex-direction: column;
+    align-self: stretch;
+}
+.combatant {
+    font-size: 4vh;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: baseline;
+}
+.combatant-team {
+    flex-direction: column;
+}
+.combatant-info {
+    flex-direction: row;
+}
+.combatant-sponsor, .combatant-tag, .combatant-pronouns {
+    text-align: center;
+}
+.combatant-sponsor, .combatant-pronouns {
+    font-size: 60%;
+    color: LightGray;
+}
+.combatant-score {
+    padding-left: 1vh;
+    text-align: right;
+    flex: 1;
+    align-self: center;
+}
+.bracket {
+    font-size: 3vh;
+    display: flex;
+    flex-direction: column;
+    align-self: stretch;
+}
+.bracket-info {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: baseline;
+}
+.bracket-data {
+    text-align: center;
+}

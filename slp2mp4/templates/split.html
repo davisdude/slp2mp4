@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+    <body>
+        <div class="stage">
+            {% for slot in sb.slp.context.data.scores[sb.slp.index].slots %}
+            <section class="side {{ "left" if loop.first else "right" }}">
+                <div class="info row1">
+                    {% if loop.first %}
+                    <div class="info-big">{{ sb.slp.context.data.tournament_name }}</div>
+                    {% else %}
+                    <div class="info-medium">{{ sb.slp.context.data.event_name }}</div>
+                    <div class="info-medium">{{ sb.slp.context.data.phase_name }}</div>
+                    {% endif %}
+                </div>
+                <div class="row2"><hr></div>
+                <div class="info row3">
+                    {% if loop.first %}
+                    <div class="info-medium">{{ sb.slp.context.data.tournament_date.strftime("%B %d, %Y").replace(" 0", " ") }}</div>
+                    <div class="info-medium">{{ sb.slp.context.data.tournament_location }}</div>
+                    {% else %}
+                    <div class="info-medium">{{ sb.slp.context.data.round_name }}</div>
+                    <div class="info-medium">Best of {{sb.slp.context.data.best_of }}</div>
+                    {% endif %}
+                </div>
+                <div class="row4"><hr></div>
+                <table class="row5">
+                    {% for i in range(slot.prefixes | length) %}
+                    <tr>
+                        <td class="combatant-sponsor">{{ slot.prefixes[i] }}</td>
+                        {% if loop.first %}
+                        <td class="combatant-score" rowspan="{{ 3 * loop.length }}">{{ slot.score }}</td>
+                        {% endif %}
+                    </tr>
+                    <tr>
+                        <td class="combatant-tag">{{ slot.display_names[i] }}</td>
+                    </tr>
+                    <tr>
+                        <td class="combatant-pronouns">{{ slot.pronouns[i] }}</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+                <div class="row6"><hr></div>
+                <img src="{{ sb.logo if loop.first else sb.logo_right }}" class="row7">
+            </section>
+            {% endfor %}
+        </div>
+    </body>
+</html>

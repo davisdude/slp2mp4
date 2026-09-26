@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+    <body>
+        <div id="container">
+            <div class="tournament">
+                <div class="tournament-name">{{ sb.slp.context.data.tournament_name }}</div>
+                <div class="rule"><hr></div>
+                <div class="tournament-location">{{ sb.slp.context.data.tournament_date.strftime("%B %d, %Y").replace(" 0", " ") }}</div>
+                <div class="tournament-location">{{ sb.slp.context.data.tournament_location }}</div>
+                <div class="rule"><hr></div>
+            </div>
+            <div class="filler"></div>
+            <img src="{{ sb.logo }}" width=80%></img>
+            <div class="filler"></div>
+
+            <div class="combatants">
+                {% for slot in sb.slp.context.data.scores[sb.slp.index].slots %}
+                <div class="rule"><hr></div>
+                <div class="combatant">
+                    <div class="combatant-team">
+                        {% for i in range(slot.prefixes | length) %}
+                        <div class="combatant-info">
+                            <span class="combatant-sponsor">{{ slot.prefixes[i] }}</span>
+                            <span class="combatant-tag">{{ slot.display_names[i] }}</span>
+                            <span class="combatant-pronouns">{{ slot.pronouns[i] }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <span class="combatant-score">{{ slot.score }}</span>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="bracket">
+                <div class="rule"><hr></div>
+                <div class="bracket-info">
+                    <span class="bracket-data">{{ sb.slp.context.data.event_name }}</span>
+                    <span class="bracket-data">{{ sb.slp.context.data.phase_name }}</span>
+                    <span class="bracket-data">{{ sb.slp.context.data.round_name_short }}</span>
+                    <span class="bracket-data">Bo{{ sb.slp.context.data.best_of }}</span>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

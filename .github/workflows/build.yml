@@ -28,8 +28,12 @@ jobs:
           pip install ".${{ matrix.pip_install_suffix }}"
 
       - name: Run pyinstaller
-        run: |
-          pyinstaller --name ${{ matrix.name }} --add-data "slp2mp4/defaults.toml:slp2mp4/" --add-data "slp2mp4/logo.svg:slp2mp4/" --onefile ${{ matrix.script }}
+        run: >-
+          pyinstaller --name ${{ matrix.name }}
+            --add-data "slp2mp4/defaults.toml:slp2mp4/"
+            --add-data "slp2mp4/logo.svg:slp2mp4/"
+            --add-data "slp2mp4/templates/:slp2mp4/templates/"
+            --onefile ${{ matrix.script }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

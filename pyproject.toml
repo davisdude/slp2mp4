@@ -23,6 +23,7 @@ dependencies = [
     "watchdog",
     "psutil",
     "html2image",
+    "jinja2",
 ]
 dynamic = [
     "version",
