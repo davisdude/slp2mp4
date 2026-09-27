@@ -252,6 +252,7 @@ class MinimalScoreboardConfig:
 @dataclasses.dataclass
 class CustomScoreboardConfig:
     alignment: str
+    ratio: float | None = dataclasses.field(default=None)
     html_path: Path | None = dataclasses.field(default=None)
     css_path: Path | None = dataclasses.field(default=None)
 
@@ -259,6 +260,7 @@ class CustomScoreboardConfig:
     def from_dict(cls, data):
         return cls(
             alignment=data["alignment"],
+            ratio=data.get("ratio"),
             html_path=data.get("html_path"),
             css_path=data.get("css_path"),
         )

@@ -62,6 +62,13 @@ class ScoreboardBase:
 
     @property
     def size(self) -> tuple[int, int]:
+        return (
+            round(self.aspect_ratio * self.output_video_height / 2) * 2,
+            self.output_video_height,
+        )
+
+    @property
+    def aspect_ratio(self):
         raise NotImplementedError
 
     @property
@@ -141,8 +148,8 @@ class SharedScoreboard(ScoreboardBase):
             raise RuntimeError("Shared scoreboard must not be widescreen")
 
     @property
-    def size(self):
-        return (int(self.output_video_height * 16 / 9), self.output_video_height)
+    def aspect_ratio(self):
+        return 16 / 9
 
     @property
     def video_alignment(self):
@@ -174,8 +181,8 @@ class SplitScoreboard(ScoreboardBase):
             raise RuntimeError("Split scoreboard must not be widescreen")
 
     @property
-    def size(self):
-        return (int(self.output_video_height * 16 / 9), self.output_video_height)
+    def aspect_ratio(self):
+        return 16 / 9
 
     @property
     def video_alignment(self):
@@ -193,11 +200,8 @@ class SplitScoreboard(ScoreboardBase):
 @dataclasses.dataclass
 class MinimalScoreboard(ScoreboardBase):
     @property
-    def size(self):
-        return (
-            round(self.input_aspect_ratio * self.output_video_height / 2) * 2,
-            self.output_video_height,
-        )
+    def aspect_ratio(self):
+        return self.input_aspect_ratio
 
     @property
     def video_alignment(self):
@@ -215,8 +219,13 @@ class MinimalScoreboard(ScoreboardBase):
 @dataclasses.dataclass
 class CustomScoreboard(ScoreboardBase):
     alignment: str
+    ratio: float | None
     html_path: Path
     css_path: Path
+
+    @property
+    def aspect_ratio(self):
+        return self.ratio or self.input_aspect_ratio
 
     @property
     def video_alignment(self):
