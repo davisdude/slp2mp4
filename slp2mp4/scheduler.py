@@ -121,7 +121,7 @@ class Scheduler:
             if producer:
                 yield from self.walk_tree(producer, nest + 1)
             else:
-                yield nest + 1, i
+                yield nest, i
 
     def is_pipeline_empty(self):
         with self.lock:
