@@ -99,8 +99,8 @@ class FfmpegRunner:
                 "0",
                 "-i",
                 concat_file.name,
-                # "-c",  TODO
-                # "copy",
+                "-c",
+                "copy",
                 "-xerror",
                 str(output_file),
             )

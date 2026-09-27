@@ -120,13 +120,19 @@ class ScoreboardBase:
                 # Pad to output resolution
                 f"pad=w={self.size[0]}:h={self.size[1]}:{self.video_alignment}[scaled];"
                 # Overlay
-                "[scaled][1:v]overlay"
+                "[scaled][1:v]overlay,"
+                # Bookkeeping
+                "setsar=1,setpts=PTS-STARTPTS"
             ),
             "-c:v",
             "libx264",  # TODO
             "-c:a",
             "copy",
             "-shortest",
+            "-avoid_negative_ts",
+            "make_zero",
+            "-bf",
+            "0",
             str(self.output_video.path),
         ]
 
