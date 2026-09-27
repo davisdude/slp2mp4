@@ -119,3 +119,19 @@ class FfmpegRunner:
         )
         proc = self._run(args)
         return float(proc.stdout)
+
+    def get_video_dimensions(self, video: Path):
+        args = (
+            str(self.ffprobe_path),
+            "-v",
+            "quiet",
+            "-select_streams",
+            "v:0",
+            "-show_entries",
+            "stream=width,height",
+            "-of",
+            "csv=p=0",
+            str(video),
+        )
+        proc = self._run(args)
+        return [int(v) for v in proc.stdout.split(b",")]
