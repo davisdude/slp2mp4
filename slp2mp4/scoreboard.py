@@ -37,6 +37,7 @@ class ScoreboardBase:
     tmp_paths: list[Path] = dataclasses.field(default_factory=list, init=False)
 
     def __post_init__(self):
+        # TODO: Handle empty / missing context.json
         if self.image_path is None:
             fd, tmp = tempfile.mkstemp(suffix=".png", dir=self.workdir)
             os.close(fd)
