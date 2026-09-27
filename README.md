@@ -8,6 +8,7 @@ Convert Slippi replay files (`.slp`) to video files (`.mp4`) with ease.
 - GUI for easy configuration and operation
 - Customizable output resolution and bitrate
 - Optionally combine all videos for easier upload
+- Optionally generate scoreboards
 - Cross-platform support for Windows, Linux
     - Dolphin on Mac does not support framedumping
 
@@ -178,6 +179,50 @@ The default settings can be found [here][default-settings].
 - `use_context_json`: Use `context.json` files (if found) for file names / ordering
 - `exclude_streamed_sets`: Use `context.json` to exclude files marked for stream
 
+#### Scoreboard Settings
+
+- `type`: Type of scoreboard (`None`, `Shared`, `Split`, `Minimal`, `Custom`)
+
+##### Shared Scoreboard
+
+A scoreboard where all the info is in one block. Does not support widescreen.
+
+- `logo`: Path to logo; defaults to `slp2mp4` logo
+- `left`: Whether scoreboard should be on the left or right
+
+![](images/shared.jpg)
+
+##### Split Scoreboard
+
+A scoreboard where the gameplay is cenetered and info is on either side. Does
+not support widescreen.
+
+- `logo`: Path to logo; defaults to `slp2mp4` logo
+- `logo_right`: Path to secondary logo
+
+![](images/split.jpg)
+
+##### Minimal Scoreboard
+
+A minimalistic scoreboard. Supports widescreen.
+
+No settings.
+
+![](images/minimal.jpg)
+
+![](images/minimal-ws.jpg)
+
+##### Custom Scoreboard
+
+Allows for custom scoreboards. Uses [jinja][jinja] for templating. See
+[templates][templates] for examples.
+
+- `alignment`: ffmpeg [pad filter][pad-filter] x/y settings; controls video
+  position
+- `ratio`: Desired output aspect ratio; if blank, use input aspect ratio
+- `html_path`: Path to the HTML template file
+- `css_path`: Path to the CSS template file
+
 ### Example Configuration
 
 Windows:
@@ -232,6 +277,18 @@ parallel = 0
 * Does not play nicely with WSL, since dolphin expects all paths to be relative
   to Windows.
 
+* By default, Dolphin's video output does not exactly match the requested
+  resolution. Instead, the output size is the first resolution beyond the
+  requested resolution.
+
+    * Videos are shrunk down to the expected resolution for scoreboard
+      generation, as this improves render times and requires re-muxing the
+      video anyways.
+
+* If generated scoreboards have extra space at the bottom, try the
+  dependencies-included build, which has a version of Chrome included that
+  should work better. See [here][chrome-bug] for more.
+
 ## Tests
 
 * `pytest` is required for running all tests
@@ -244,9 +301,13 @@ This project is licensed under the MIT License - see the [license](LICENSE.md)
 file for details.
 
 
+[chrome-bug]: https://issues.chromium.org/issues/405165895
 [default-settings]: ./src/slp2mp4/defaults.toml
 [dolphin-video-backends-src]: https://github.com/dolphin-emu/dolphin/tree/master/Source/Core/VideoBackends
 [dolphin-video-backends]: https://wiki.dolphin-emu.org/index.php?title=Configuration_Guide#Video_Backend
+[jinja]: https://jinja.palletsprojects.com/en/stable/
+[pad-filter]: https://ffmpeg.org/ffmpeg-filters.html#pad-1
 [releases]: ../../releases
 [replay-manager]: https://github.com/jmlee337/replay-manager-for-slippi
+[templates]: slp2mp4/templates/
 [toml]: https://toml.io/en/
