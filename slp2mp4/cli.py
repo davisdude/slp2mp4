@@ -106,9 +106,9 @@ def main():
     stop_event = Event()
     kill_event = Event()
     conf = config.get_config()
-    conf.validate()
     logger = log.update_logger(args.debug)
     update_conf_from_args(args, conf)
+    conf.validate()
 
     signal.signal(signal.SIGINT, make_sigint_handler(logger, stop_event, kill_event))
 

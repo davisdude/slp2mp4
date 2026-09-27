@@ -94,8 +94,8 @@ class PathsConfig:
 
     def validate(self):
         assert shutil.which(self.ffmpeg) is not None
-        assert self.slippi_playback.expanduser().is_file()
-        assert self.ssbm_iso.expanduser().is_file()
+        assert self.slippi_playback.expanduser().exists()
+        assert self.ssbm_iso.expanduser().exists()
 
     def get_ffprobe(self):
         if self.ffprobe is not None:
@@ -103,7 +103,7 @@ class PathsConfig:
         # Assume it's relative to ffmpeg
         suffix = self.ffmpeg.suffix
         ffprobe = self.ffmpeg.parent / f"ffprobe{suffix}"
-        if ffprobe.is_file():
+        if ffprobe.exists():
             return ffprobe
         # Try to find in path
         ffprobe = shutil.which("ffprobe")
@@ -215,7 +215,7 @@ class BasicScoreboardConfig:
             self.logo = Path(self.logo)
 
     def validate(self):
-        assert (self.logo is None) or self.logo.is_file()
+        assert (self.logo is None) or self.logo.exists()
 
 
 @dataclasses.dataclass
@@ -253,11 +253,18 @@ class CustomScoreboardConfig:
             css_path=data.get("css_path"),
         )
 
+    def __post_init__(self):
+        if self.html_path is not None:
+            self.html_path = Path(self.html_path)
+        if self.css_path is not None:
+            self.css_path = Path(self.css_path)
+
     def validate(self):
+        print(self.html_path)
         assert self.html_path is not None
-        assert self.html_path.is_file()
+        assert self.html_path.expanduser().exists()
         assert self.css_path is not None
-        assert self.css_path.is_file()
+        assert self.css_path.expanduser().exists()
 
 
 @dataclasses.dataclass
@@ -275,6 +282,9 @@ class ScoreboardTheme:
             secondary_color=data["secondary_color"],
             background_color=data["background_color"],
         )
+
+    def validate(self):
+        pass
 
 
 @dataclasses.dataclass
@@ -301,9 +311,9 @@ class ScoreboardConfig:
     def scoreboard(self):
         if self.type == ScoreboardType.SHARED:
             return self.shared
-        if self.type == ScoreboardType.SPLIT:
+        elif self.type == ScoreboardType.SPLIT:
             return self.split
-        if self.type == ScoreboardType.MINIMAL:
+        elif self.type == ScoreboardType.MINIMAL:
             return self.minimal
         elif self.type == ScoreboardType.CUSTOM:
             return self.custom
