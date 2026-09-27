@@ -11,7 +11,6 @@ from types import UnionType
 
 import slp2mp4
 from slp2mp4 import log, util
-from slp2mp4.scoreboard import ScoreboardType
 
 DEFAULT_CONFIG_PATH = importlib.resources.files(slp2mp4).joinpath("defaults.toml")
 USER_CONFIG_PATH = Path("~/.slp2mp4.toml").expanduser()
@@ -57,6 +56,14 @@ class CombineMode(Enum):
     ALL = "All"
     BY_INPUT = "By Input"
     BY_PHASE = "By Phase"
+
+
+class ScoreboardType(Enum):
+    NONE = "None"
+    SHARED = "Shared"
+    SPLIT = "Split"
+    MINIMAL = "Minimal"
+    CUSTOM = "Custom"
 
 
 @dataclasses.dataclass
@@ -254,8 +261,26 @@ class CustomScoreboardConfig:
 
 
 @dataclasses.dataclass
+class ScoreboardTheme:
+    font_spec: str
+    primary_color: str
+    secondary_color: str
+    background_color: str
+
+    @classmethod
+    def from_dict(cls, data):
+        return cls(
+            font_spec=data["font_spec"],
+            primary_color=data["primary_color"],
+            secondary_color=data["secondary_color"],
+            background_color=data["background_color"],
+        )
+
+
+@dataclasses.dataclass
 class ScoreboardConfig:
     type: ScoreboardType
+    theme: ScoreboardTheme
     shared: SharedScoreboardConfig
     split: BasicScoreboardConfig
     minimal: MinimalScoreboardConfig
@@ -265,6 +290,7 @@ class ScoreboardConfig:
     def from_dict(cls, data):
         return cls(
             type=ScoreboardType(data["type"]),
+            theme=ScoreboardTheme.from_dict(data["theme"]),
             shared=SharedScoreboardConfig.from_dict(data["shared"]),
             split=BasicScoreboardConfig.from_dict(data["split"]),
             minimal=MinimalScoreboardConfig.from_dict(data["minimal"]),

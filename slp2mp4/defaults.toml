@@ -49,6 +49,12 @@ exclude_streamed_sets = false
 [scoreboard]
 type = "Minimal"
 
+[scoreboard.theme]
+font_spec = 'Inconsolata, Consolas, monospace'
+primary_color = "White"
+secondary_color = "LightGray"
+background_color = "Black"
+
 [scoreboard.shared]
 left = true
 

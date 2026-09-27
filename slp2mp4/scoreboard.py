@@ -2,7 +2,6 @@ import dataclasses
 import importlib
 import os
 import tempfile
-from enum import Enum
 from pathlib import Path
 
 from html2image import Html2Image
@@ -10,18 +9,11 @@ from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoes
 
 import slp2mp4
 from slp2mp4.artifact import Mp4Artifact, SlippiArtifact
+from slp2mp4.config import ScoreboardTheme, ScoreboardType
 
 DEFAULT_LOGO_PATH = importlib.resources.files(slp2mp4).joinpath("logo.svg")
 TEMPLATES_DIR = importlib.resources.files(slp2mp4).joinpath("templates")
 MELEE_ASPECT_RATIO = 73 / 60
-
-
-class ScoreboardType(Enum):
-    NONE = "None"
-    SHARED = "Shared"
-    SPLIT = "Split"
-    MINIMAL = "Minimal"
-    CUSTOM = "Custom"
 
 
 @dataclasses.dataclass(kw_only=True)
@@ -31,6 +23,7 @@ class ScoreboardBase:
     output_video: Mp4Artifact
     input_video_dimensions: tuple[int, int]
     output_video_height: int
+    theme: ScoreboardTheme
     workdir: Path | None = dataclasses.field(default=None)
     image_path: Path | None = dataclasses.field(default=None)
 
@@ -81,7 +74,6 @@ class ScoreboardBase:
 
     @property
     def css_template(self) -> str:
-        # TODO: Custom color, font, etc
         raise NotImplementedError
 
     def render_image(self):
@@ -112,7 +104,7 @@ class ScoreboardBase:
             # Scale video down
             f"[0]scale={self.size[0]}:{self.size[1]}:force_original_aspect_ratio=decrease,"
             # Pad to output resolution
-            f"pad=w={self.size[0]}:h={self.size[1]}:{self.video_alignment}"
+            f"pad=w={self.size[0]}:h={self.size[1]}:{self.video_alignment}:color={self.theme.background_color}"
             # Overlay
             f"{'[scaled];[scaled][1:v]overlay,' if self.slp.context is not None else ','}"
             # Bookkeeping

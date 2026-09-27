@@ -8,12 +8,16 @@ html, body {
     {% else %}
     right: 0px;
     {% endif %}
-    color: white;
-    font-family: "Inconsolata", "Consolas", "monospace";
     height: 100%;
     width: {{ 606 / 1080 * sb.size[1] }}px;
     margin: 0 0 0 0;
     padding: 0.5vh 0.5vh 0.5vh 0.5vh;
+    color: {{ sb.theme.primary_color }};
+    font-family: {{ sb.theme.font_spec }};
+}
+hr {
+    border: 0;
+    border-top: 1px solid {{ sb.theme.primary_color }};
 }
 #container {
     height: 100%;
@@ -69,7 +73,7 @@ html, body {
 }
 .combatant-sponsor, .combatant-pronouns {
     font-size: 60%;
-    color: LightGray;
+    color: {{ sb.theme.secondary_color }};
 }
 .combatant-score {
     padding-left: 1vh;

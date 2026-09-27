@@ -6,8 +6,8 @@ html, body {
     height: 100%;
     margin: 0;
     padding: 0.5vh;
-    color: white;
-    font-family: "Inconsolata", "Consolas", monospace;
+    color: {{ sb.theme.primary_color }};
+    font-family: {{ sb.theme.font_spec }};
 }
 
 img {
@@ -15,6 +15,11 @@ img {
     height: auto;
     justify-self: center;
     align-self: end;
+}
+
+hr {
+    border: 0;
+    border-top: 1px solid {{ sb.theme.primary_color }};
 }
 
 .stage {
@@ -92,5 +97,5 @@ img {
 
 .combatant-sponsor, .combatant-pronouns {
     font-size: 60%;
-    color: LightGray;
+    color: {{ sb.theme.secondary_color }};
 }

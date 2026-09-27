@@ -2,17 +2,17 @@
     box-sizing: border-box;
 }
 html, body {
-    color: white;
-    font-family: "Inconsolata", "Consolas", "monospace";
+    color: {{ sb.theme.primary_color }};
+    font-family: {{ sb.theme.font_spec }};
     width: 100%;
     height: 100%;
 }
 
 .box {
-    background: black;
+    background: {{ sb.theme.background_color }};
     border-width: 1;
     border-style: solid;
-    border-color: white;
+    border-color: {{ sb.theme.primary_color }};
     padding: 1vh;
     font-size: 3vh;
 }
@@ -54,12 +54,12 @@ html, body {
 
 .small {
     font-size: 60%;
-    color: LightGray;
+    color: {{ sb.theme.secondary_color }};
 }
 
 .medium {
     font-size: 80%;
-    color: LightGray;
+    color: {{ sb.theme.secondary_color }};
 }
 
 .score {

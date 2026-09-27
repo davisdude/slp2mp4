@@ -7,8 +7,7 @@ from collections import defaultdict
 from pathlib import Path
 
 from slp2mp4.artifact import Artifact, Mp4Artifact, SlippiArtifact
-from slp2mp4.config import CombineMode, ScoreboardConfig
-from slp2mp4.scoreboard import ScoreboardType
+from slp2mp4.config import CombineMode, ScoreboardConfig, ScoreboardType
 from slp2mp4.task import ConcatVideosTask, RenderGameTask, RenderScoreboardTask, Task
 
 Phase = tuple[str, str, str, int, int]
