@@ -37,7 +37,6 @@ class ScoreboardBase:
     tmp_paths: list[Path] = dataclasses.field(default_factory=list, init=False)
 
     def __post_init__(self):
-        # TODO: Handle empty / missing context.json
         if self.image_path is None:
             fd, tmp = tempfile.mkstemp(suffix=".png", dir=self.workdir)
             os.close(fd)
@@ -87,55 +86,55 @@ class ScoreboardBase:
 
     def render_image(self):
         # TODO: provide browser_executable
-        hti = Html2Image(
-            custom_flags=[
-                "--no-sandbox",
-                "--default-background-color=00000000",
-                "--hide-scrollbars",
-            ],
-            output_path=self.image_path.parent,
-            disable_logging=True,
-        )
-        hti.screenshot(
-            html_str=self.html,
-            css_str=self.css,
-            save_as=self.image_path.name,
-            size=self.size,
-        )
+        if self.slp.context is not None:
+            hti = Html2Image(
+                custom_flags=[
+                    "--no-sandbox",
+                    "--default-background-color=00000000",
+                    "--hide-scrollbars",
+                ],
+                output_path=self.image_path.parent,
+                disable_logging=True,
+            )
+            hti.screenshot(
+                html_str=self.html,
+                css_str=self.css,
+                save_as=self.image_path.name,
+                size=self.size,
+            )
 
     def get_ffmpeg_command(self) -> list[str]:
-        return [
-            "-y",
-            "-i",
-            str(self.input_video.path),
-            "-framerate",
-            "60",
-            "-loop",
-            "1",
-            "-i",
-            str(self.image_path),
-            "-filter_complex",
-            (
-                # Scale video down
-                f"[0]scale={self.size[0]}:{self.size[1]}:force_original_aspect_ratio=decrease,"
-                # Pad to output resolution
-                f"pad=w={self.size[0]}:h={self.size[1]}:{self.video_alignment}[scaled];"
-                # Overlay
-                "[scaled][1:v]overlay,"
-                # Bookkeeping
-                "setsar=1,setpts=PTS-STARTPTS"
-            ),
-            "-c:v",
-            "libx264",  # TODO
-            "-c:a",
-            "copy",
-            "-shortest",
-            "-avoid_negative_ts",
-            "make_zero",
-            "-bf",
-            "0",
-            str(self.output_video.path),
-        ]
+        args = ["-y", "-i", str(self.input_video.path)]
+        if self.slp.context:
+            args.extend(["-i", str(self.image_path), "-framerate", "60", "-loop", "1"])
+
+        filter_str = (
+            # Scale video down
+            f"[0]scale={self.size[0]}:{self.size[1]}:force_original_aspect_ratio=decrease,"
+            # Pad to output resolution
+            f"pad=w={self.size[0]}:h={self.size[1]}:{self.video_alignment}"
+            # Overlay
+            f"{'[scaled];[scaled][1:v]overlay,' if self.slp.context is not None else ','}"
+            # Bookkeeping
+            "setsar=1,setpts=PTS-STARTPTS"
+        )
+        args.extend(
+            [
+                "-filter_complex",
+                filter_str,
+                "-c:v",
+                "libx264",  # TODO
+                "-c:a",
+                "copy",
+                "-shortest",
+                "-avoid_negative_ts",
+                "make_zero",
+                "-bf",
+                "0",
+                str(self.output_video.path),
+            ]
+        )
+        return args
 
     def cleanup(self):
         for artifact in self.tmp_paths:
