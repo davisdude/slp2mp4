@@ -62,6 +62,26 @@ class RenderGameTask(VideoTask):
 
 
 @dataclasses.dataclass(eq=False)
+class RenderScoreboardTask(RenderGameTask):
+    video_in: Mp4Artifact = dataclasses.field(init=False)
+
+    def __post_init__(self):
+        super().__post_init__()
+        vids = [i for i in self.inputs if isinstance(i, Mp4Artifact)]
+        assert len(vids) == 1
+        self.video_in = vids[0]
+
+    # TODO: Change based on hardware
+    @property
+    def resources(self):
+        return {"cpu": 1.0}
+
+    @property
+    def short_name(self):
+        return "scoreboard"
+
+
+@dataclasses.dataclass(eq=False)
 class ConcatVideosTask(VideoTask):
     timestamps: list[int] = dataclasses.field(init=False, default_factory=list)
 

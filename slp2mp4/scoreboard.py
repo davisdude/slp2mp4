@@ -13,6 +13,7 @@ from slp2mp4.artifact import Mp4Artifact, SlippiArtifact
 
 DEFAULT_LOGO_PATH = importlib.resources.files(slp2mp4).joinpath("logo.svg")
 TEMPLATES_DIR = importlib.resources.files(slp2mp4).joinpath("templates")
+MELEE_ASPECT_RATIO = 73 / 60
 
 
 class ScoreboardType(Enum):
@@ -28,6 +29,8 @@ class ScoreboardBase:
     slp: SlippiArtifact
     input_video: Mp4Artifact
     output_video: Mp4Artifact
+    input_video_dimensions: tuple[int, int]
+    output_video_height: int
     workdir: Path | None = dataclasses.field(default=None)
     image_path: Path | None = dataclasses.field(default=None)
 
@@ -46,17 +49,20 @@ class ScoreboardBase:
         )
 
     @property
-    def size(self) -> tuple[int, int]:
-        # TODO: get size based on input video
-        return (1280, 720)
-
-    @property
     def html(self):
         return self.html_template.render(sb=self)
 
     @property
     def css(self):
         return self.css_template.render(sb=self)
+
+    @property
+    def input_aspect_ratio(self):
+        return self.input_video_dimensions[0] / self.input_video_dimensions[1]
+
+    @property
+    def size(self) -> tuple[int, int]:
+        raise NotImplementedError
 
     @property
     def video_alignment(self) -> str:
@@ -80,6 +86,7 @@ class ScoreboardBase:
                 "--hide-scrollbars",
             ],
             output_path=self.image_path.parent,
+            disable_logging=True,
         )
         hti.screenshot(
             html_str=self.html,
@@ -90,6 +97,7 @@ class ScoreboardBase:
 
     def get_ffmpeg_command(self) -> list[str]:
         return [
+            "-y",
             "-i",
             str(self.input_video.path),
             "-framerate",
@@ -122,8 +130,19 @@ class ScoreboardBase:
 
 @dataclasses.dataclass
 class SharedScoreboard(ScoreboardBase):
-    logo: Path = dataclasses.field(default=DEFAULT_LOGO_PATH)
+    logo: Path = dataclasses.field(default=None)
     left: bool = dataclasses.field(default=True)
+
+    def __post_init__(self):
+        super().__post_init__()
+        if self.logo is None:
+            self.logo = DEFAULT_LOGO_PATH
+        if abs(self.input_aspect_ratio - MELEE_ASPECT_RATIO) > 1e-3:
+            raise RuntimeError("Shared scoreboard must not be widescreen")
+
+    @property
+    def size(self):
+        return (int(self.output_video_height * 16 / 9), self.output_video_height)
 
     @property
     def video_alignment(self):
@@ -142,8 +161,21 @@ class SharedScoreboard(ScoreboardBase):
 
 @dataclasses.dataclass
 class SplitScoreboard(ScoreboardBase):
-    logo: Path = dataclasses.field(default=DEFAULT_LOGO_PATH)
-    logo_right: Path = dataclasses.field(default=DEFAULT_LOGO_PATH)
+    logo: Path = dataclasses.field(default=None)
+    logo_right: Path = dataclasses.field(default=None)
+
+    def __post_init__(self):
+        super().__post_init__()
+        if self.logo is None:
+            self.logo = DEFAULT_LOGO_PATH
+        if self.logo_right is None:
+            self.logo_right = DEFAULT_LOGO_PATH
+        if abs(self.input_aspect_ratio - MELEE_ASPECT_RATIO) > 1e-3:
+            raise RuntimeError("Split scoreboard must not be widescreen")
+
+    @property
+    def size(self):
+        return (int(self.output_video_height * 16 / 9), self.output_video_height)
 
     @property
     def video_alignment(self):
@@ -161,8 +193,15 @@ class SplitScoreboard(ScoreboardBase):
 @dataclasses.dataclass
 class MinimalScoreboard(ScoreboardBase):
     @property
+    def size(self):
+        return (
+            round(self.input_aspect_ratio * self.output_video_height / 2) * 2,
+            self.output_video_height,
+        )
+
+    @property
     def video_alignment(self):
-        return "x=(ow-iw)/2:y=0"
+        return "x=0:y=0"
 
     @property
     def html_template(self):
@@ -194,4 +233,9 @@ class CustomScoreboard(ScoreboardBase):
         return self.jinja_env.from_string(css)
 
 
-# TODO: some scoreboards should enforce widescreen expectations
+SCOREBOARD_MAPPING = {
+    ScoreboardType.SHARED: SharedScoreboard,
+    ScoreboardType.SPLIT: SplitScoreboard,
+    ScoreboardType.MINIMAL: MinimalScoreboard,
+    ScoreboardType.CUSTOM: CustomScoreboard,
+}

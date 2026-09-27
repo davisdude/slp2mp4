@@ -13,7 +13,14 @@ from slp2mp4.artifact import Mp4Artifact, SlippiArtifact
 from slp2mp4.config import Config
 from slp2mp4.dolphin.runner import DolphinRunner
 from slp2mp4.ffmpeg import FfmpegRunner
-from slp2mp4.task import ConcatVideosTask, MoveFileTask, RenderGameTask, Task
+from slp2mp4.scoreboard import SCOREBOARD_MAPPING
+from slp2mp4.task import (
+    ConcatVideosTask,
+    MoveFileTask,
+    RenderGameTask,
+    RenderScoreboardTask,
+    Task,
+)
 
 
 @dataclasses.dataclass
@@ -45,6 +52,10 @@ class Worker:
             self.render_slp(i, o)
 
     @_submit.register
+    def _(self, task: RenderScoreboardTask):
+        self.render_scoreboard(task.slp, task.video_in, task.video)
+
+    @_submit.register
     def _(self, task: ConcatVideosTask):
         self.combine_mp4s(task.inputs, task.video, task)
 
@@ -71,6 +82,30 @@ class Worker:
             if not success:
                 raise RuntimeError(f"Failed to render '{slp.path}'")
             self.logger.info(f"Done rendering '{slp.path}'")
+
+    def render_scoreboard(
+        self, slp: SlippiArtifact, video_in: Mp4Artifact, video_out: Mp4Artifact
+    ):
+        self.logger.info(f"Scoreboarding '{video_in.path}' to '{video_out.path}'")
+        conf_data = dataclasses.asdict(self.conf.scoreboard.scoreboard)
+        sb_class = SCOREBOARD_MAPPING[self.conf.scoreboard.type]
+        video_in_dims = self.ffmpeg.get_video_dimensions(video_in.path)
+        resolution = self.conf.dolphin.resolution.display_name
+        video_out_height = int(resolution.removesuffix("p"))
+        scoreboard = sb_class(
+            slp=slp,
+            input_video=video_in,
+            output_video=video_out,
+            input_video_dimensions=video_in_dims,
+            output_video_height=video_out_height,
+            **conf_data,
+        )
+        scoreboard.render_image()
+        cmd = scoreboard.get_ffmpeg_command()
+        success = self.ffmpeg.run(cmd)
+        if not success:
+            raise RuntimeError(f"Failed to scoreboard '{video_in.path}'")
+        self.logger.info(f"Done scoreboarding '{slp.path}'")
 
     def combine_mp4s(
         self,

@@ -7,8 +7,9 @@ from collections import defaultdict
 from pathlib import Path
 
 from slp2mp4.artifact import Artifact, Mp4Artifact, SlippiArtifact
-from slp2mp4.config import CombineMode
-from slp2mp4.task import ConcatVideosTask, RenderGameTask, Task
+from slp2mp4.config import CombineMode, ScoreboardConfig
+from slp2mp4.scoreboard import ScoreboardType
+from slp2mp4.task import ConcatVideosTask, RenderGameTask, RenderScoreboardTask, Task
 
 Phase = tuple[str, str, str, int, int]
 PhaseGroup = tuple[str, str, str]
@@ -82,6 +83,21 @@ class Pipeline:
             output = self._make_tmp_mp4()
             name = slp.path.with_suffix(".mp4").name
             yield RenderGameTask(f"render {slp}", [slp], [output], Path(name))
+
+    def get_scoreboard_tasks(
+        self,
+        conf: ScoreboardConfig,
+        slps: list[SlippiArtifact],
+        videos: list[Mp4Artifact],
+    ):
+        if conf.type == ScoreboardType.NONE:
+            return
+        for slp, video in zip(slps, videos):
+            out = self._make_tmp_mp4()
+            name = slp.path.with_suffix(".mp4").name
+            yield RenderScoreboardTask(
+                f"scoreboard {video}", [slp, video], [out], Path(name)
+            )
 
     def get_concat_tasks(self, videos: list[Mp4Artifact], path: Path):
         if len(videos) > 1:

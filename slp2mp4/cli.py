@@ -44,6 +44,7 @@ def enum_parser(enum_type, display_values):
     return parse
 
 
+# TODO: Nested fields don't work very well
 def add_config_option_to_parser(parser, config_type, prefix=""):
     for field in dataclasses.fields(config_type):
         field_type = field.type

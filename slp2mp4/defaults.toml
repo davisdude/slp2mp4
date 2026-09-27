@@ -47,7 +47,7 @@ exclude_streamed_sets = false
 '"' = "＂"
 
 [scoreboard]
-type = "Shared"
+type = "Minimal"
 
 [scoreboard.shared]
 left = true
