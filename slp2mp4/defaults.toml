@@ -57,4 +57,4 @@ left = true
 [scoreboard.minimal]
 
 [scoreboard.custom]
-video_alignment = "x=(ow-iw)/2:y=0"
+alignment = "x=(ow-iw)/2:y=0"
