@@ -15,7 +15,9 @@
 
             <div class="combatants">
                 {% for slot in sb.slp.context.data.scores[sb.slp.index].slots %}
+                {% if loop.first %}
                 <div class="rule"><hr></div>
+                {% endif %}
                 <div class="combatant">
                     <div class="combatant-team">
                         {% for i in range(slot.prefixes | length) %}

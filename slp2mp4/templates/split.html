@@ -8,39 +8,38 @@
                     {% if loop.first %}
                     <div class="info-big">{{ sb.slp.context.data.tournament_name }}</div>
                     {% else %}
-                    <div class="info-medium">{{ sb.slp.context.data.event_name }}</div>
-                    <div class="info-medium">{{ sb.slp.context.data.phase_name }}</div>
+                    <img src="{{ sb.logo }}">
                     {% endif %}
                 </div>
                 <div class="row2"><hr></div>
-                <div class="info row3">
+                <div class="info info-small row3">
                     {% if loop.first %}
-                    <div class="info-medium">{{ sb.slp.context.data.tournament_date.strftime("%B %d, %Y").replace(" 0", " ") }}</div>
-                    <div class="info-medium">{{ sb.slp.context.data.tournament_location }}</div>
+                    <div>{{ sb.slp.context.data.tournament_date.strftime("%b %d, %Y").replace(" 0", " ") }}</div>
                     {% else %}
-                    <div class="info-medium">{{ sb.slp.context.data.round_name }}</div>
-                    <div class="info-medium">Best of {{sb.slp.context.data.best_of }}</div>
+                    <div>{{ sb.slp.context.data.tournament_location }}</div>
                     {% endif %}
                 </div>
                 <div class="row4"><hr></div>
-                <table class="row5">
+                <div class="info info-medium">
                     {% for i in range(slot.prefixes | length) %}
-                    <tr>
-                        <td class="combatant-sponsor">{{ slot.prefixes[i] }}</td>
-                        {% if loop.first %}
-                        <td class="combatant-score" rowspan="{{ 3 * loop.length }}">{{ slot.score }}</td>
-                        {% endif %}
-                    </tr>
-                    <tr>
-                        <td class="combatant-tag">{{ slot.display_names[i] }}</td>
-                    </tr>
-                    <tr>
-                        <td class="combatant-pronouns">{{ slot.pronouns[i] }}</td>
-                    </tr>
+                    <div class="combatant row{{ 5 + i }}">
+                        <div class="combatant-sponsor">{{ slot.prefixes[i] }}</div>
+                        <div class="combatant-tag">{{ slot.display_names[i] }}</div>
+                        <div class="combatant-pronouns">{{ slot.pronouns[i] }}</div>
+                    </div>
                     {% endfor %}
-                </table>
-                <div class="row6"><hr></div>
-                <img src="{{ sb.logo if loop.first else sb.logo_right }}" class="row7">
+                    <div class="combatant-score row7">{{ slot.score }}</div>
+                </div>
+                <div class="row8"><hr></div>
+                <div class="info info-small row9">
+                    {% if loop.first %}
+                    <div>{{ sb.slp.context.data.phase_name }}</div>
+                    {% else %}
+                    <span>{{ sb.slp.context.data.round_name_short }}</span>
+                    /
+                    <span>Bo{{sb.slp.context.data.best_of }}</span>
+                    {% endif %}
+                </div>
             </section>
             {% endfor %}
         </div>

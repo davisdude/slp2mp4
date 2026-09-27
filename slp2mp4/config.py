@@ -220,25 +220,6 @@ class SharedScoreboardConfig(BasicScoreboardConfig):
         return cls(left=data["left"], logo=data.get("logo"))
 
 
-@dataclasses.dataclass
-class SplitScoreboardConfig(BasicScoreboardConfig):
-    logo_right: Path | None = dataclasses.field(default=None)
-
-    @classmethod
-    def from_dict(cls, data):
-        return cls(logo=data.get("logo"), logo_right=data.get("logo_right"))
-
-    def __post_init__(self):
-        if self.logo is not None:
-            self.logo = Path(self.logo)
-        if self.logo_right is not None:
-            self.logo_right = Path(self.logo_right)
-
-    def validate(self):
-        assert (self.logo is None) or self.logo.is_file()
-        assert (self.logo_right is None) or self.logo_right.is_file()
-
-
 @dataclasses.dataclass(kw_only=True)
 class MinimalScoreboardConfig:
     @classmethod
@@ -276,7 +257,7 @@ class CustomScoreboardConfig:
 class ScoreboardConfig:
     type: ScoreboardType
     shared: SharedScoreboardConfig
-    split: SplitScoreboardConfig
+    split: BasicScoreboardConfig
     minimal: MinimalScoreboardConfig
     custom: CustomScoreboardConfig
 
@@ -285,7 +266,7 @@ class ScoreboardConfig:
         return cls(
             type=ScoreboardType(data["type"]),
             shared=SharedScoreboardConfig.from_dict(data["shared"]),
-            split=SplitScoreboardConfig.from_dict(data["split"]),
+            split=BasicScoreboardConfig.from_dict(data["split"]),
             minimal=MinimalScoreboardConfig.from_dict(data["minimal"]),
             custom=CustomScoreboardConfig.from_dict(data["custom"]),
         )
