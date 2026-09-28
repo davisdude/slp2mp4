@@ -58,6 +58,11 @@ class CombineMode(Enum):
     BY_PHASE = "By Phase"
 
 
+def _check_file(path: Path):
+    p = path.expanduser().resolve()
+    return p.is_file() and p.exists()
+
+
 @dataclasses.dataclass
 class PathsConfig:
     # Paths are un-altered so saving works properly
@@ -80,9 +85,10 @@ class PathsConfig:
             self.ffprobe = Path(self.ffprobe)
 
     def validate(self):
-        assert shutil.which(self.ffmpeg) is not None
-        assert self.slippi_playback.expanduser().is_file()
-        assert self.ssbm_iso.expanduser().is_file()
+        assert _check_file(shutil.which(self.ffmpeg))
+        assert _check_file(self.slippi_playback)
+        assert _check_file(self.ssbm_iso)
+        assert _check_file(self.get_ffprobe)
 
     def get_ffprobe(self):
         if self.ffprobe is not None:
