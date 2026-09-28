@@ -83,7 +83,6 @@ class PathsConfig:
         # Assume it's relative to ffmpeg
         suffix = self.ffmpeg.suffix
         ffprobe = self.ffmpeg_path.parent / f"ffprobe{suffix}"
-        print(f"{ffprobe = }")
         if _check_file(ffprobe):
             return ffprobe
         # Try to find in path
