@@ -53,7 +53,7 @@ class Worker:
         for i, o in zip(task.inputs, task.outputs):
             self.logger.info(f"Moving '{i.path}' to '{o.path}'")
             o.path.parent.mkdir(parents=True, exist_ok=True)
-            i.path.move(o.path)
+            i.path.replace(o.path)
 
     def render_slp(self, slp: SlippiArtifact, mp4: Mp4Artifact):
         self.logger.info(f"Rendering '{slp.path}' to '{mp4.path}'")
