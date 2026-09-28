@@ -184,8 +184,12 @@ class Orchestrator:
                 try:
                     if not self.dry_run:
                         self.worker.submit(task)
-                finally:
                     self.scheduler.finish(task)
+                except Exception:  # noqa: BLE001
+                    self.log.error(
+                        f"Worker encountered exception in task '{task.name}': {traceback.format_exc()}"
+                    )
+                    self.scheduler.mark_failed(task)
             else:
                 if self.collector.done and self.scheduler.is_pipeline_empty():
                     break
