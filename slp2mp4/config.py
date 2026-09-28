@@ -292,7 +292,9 @@ def get_config(config_files: list[Path] | None = None):
 
 def is_optional_type(field_type):
     t = typing.get_origin(field_type)
-    return t in [typing.Union, UnionType]
+    return (t in [typing.Union, UnionType]) and (
+        type(None) in typing.get_args(field_type)
+    )
 
 
 def get_optional_type(field_type):
