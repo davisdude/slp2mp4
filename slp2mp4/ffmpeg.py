@@ -117,4 +117,6 @@ class FfmpegRunner:
             "csv=p=0",
         )
         proc = self._run(args)
+        if proc.returncode != 0:
+            raise RuntimeError(f"Failed to get duration of '{video}'")
         return float(proc.stdout)
