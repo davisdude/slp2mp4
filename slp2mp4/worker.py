@@ -20,12 +20,12 @@ from slp2mp4.task import ConcatVideosTask, MoveFileTask, RenderGameTask, Task
 class Worker:
     conf: Config
     kill_event: Event
-    logger: Logger = dataclasses.field(default=None, init=False)
+    log: Logger = dataclasses.field(default=None, init=False)
     ffmpeg: FfmpegRunner = dataclasses.field(default=None, init=False)
     dolphin: DolphinRunner = dataclasses.field(default=None, init=False)
 
     def __post_init__(self):
-        self.logger = log.get_logger()
+        self.log = log.get_logger()
         self.ffmpeg = FfmpegRunner(self.conf)
         self.dolphin = DolphinRunner(self.conf)
 
@@ -51,12 +51,12 @@ class Worker:
     @_submit.register
     def _(self, task: MoveFileTask):
         for i, o in zip(task.inputs, task.outputs):
-            self.logger.info(f"Moving '{i.path}' to '{o.path}'")
+            self.log.info(f"Moving '{i.path}' to '{o.path}'")
             o.path.parent.mkdir(parents=True, exist_ok=True)
             i.path.replace(o.path)
 
     def render_slp(self, slp: SlippiArtifact, mp4: Mp4Artifact):
-        self.logger.info(f"Rendering '{slp.path}' to '{mp4.path}'")
+        self.log.info(f"Rendering '{slp.path}' to '{mp4.path}'")
         with TemporaryDirectory() as tmpdir_str:
             tmpdir = Path(tmpdir_str)
             audio_file, video_path = self.dolphin.run(slp.path, tmpdir, self.kill_event)
@@ -70,7 +70,7 @@ class Worker:
             )
             if not success:
                 raise RuntimeError(f"Failed to render '{slp.path}'")
-            self.logger.info(f"Done rendering '{slp.path}'")
+            self.log.info(f"Done rendering '{slp.path}'")
 
     def combine_mp4s(
         self,
@@ -79,12 +79,12 @@ class Worker:
         task: Task | None = None,
     ):
         input_paths = [i.path for i in inputs]
-        self.logger.info(f"Combining '{input_paths}' to '{output.path}'")
+        self.log.info(f"Combining '{input_paths}' to '{output.path}'")
         success = self.ffmpeg.concat_videos(input_paths, output.path)
         if not success:
             raise RuntimeError(f"Failed to create '{output.path}'")
-        self.logger.info(f"Done combining '{output.path}'")
+        self.log.info(f"Done combining '{output.path}'")
         if task:
-            self.logger.info(f"Getting timestamps for '{output.path}'")
+            self.log.info(f"Getting timestamps for '{output.path}'")
             durations = [self.ffmpeg.get_video_duration(path) for path in input_paths]
             task.timestamps = itertools.accumulate(durations[:-1], initial=0)
