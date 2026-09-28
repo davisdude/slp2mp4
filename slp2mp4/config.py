@@ -265,6 +265,7 @@ class RuntimeOptions:
         metadata={
             "short": "t",
             "help": "Where to write temp videos; leave blank for system default",
+            "is_directory": True,
         },
     )
     output_directory: Path = dataclasses.field(
