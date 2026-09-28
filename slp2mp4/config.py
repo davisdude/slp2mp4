@@ -6,6 +6,7 @@ import shutil
 import tomllib
 import typing
 from enum import Enum
+from functools import cached_property
 from pathlib import Path
 from types import UnionType
 
@@ -71,6 +72,26 @@ class PathsConfig:
     ssbm_iso: Path
     ffprobe: Path | None = dataclasses.field(default=None)
 
+    @cached_property
+    def ffmpeg_path(self):
+        return Path(shutil.which(self.ffmpeg))
+
+    @cached_property
+    def ffprobe_path(self):
+        if self.ffprobe is not None:
+            return self.ffprobe
+        # Assume it's relative to ffmpeg
+        suffix = self.ffmpeg.suffix
+        ffprobe = self.ffmpeg_path.parent / f"ffprobe{suffix}"
+        print(f"{ffprobe = }")
+        if _check_file(ffprobe):
+            return ffprobe
+        # Try to find in path
+        ffprobe = shutil.which("ffprobe")
+        if ffprobe is not None:
+            return Path(ffprobe)
+        raise RuntimeError("Could not find ffprobe.")
+
     @classmethod
     def from_dict(cls, data):
         return cls(
@@ -85,24 +106,10 @@ class PathsConfig:
             self.ffprobe = Path(self.ffprobe)
 
     def validate(self):
-        assert _check_file(shutil.which(self.ffmpeg))
+        assert _check_file(self.ffmpeg_path)
         assert _check_file(self.slippi_playback)
         assert _check_file(self.ssbm_iso)
-        assert _check_file(self.get_ffprobe)
-
-    def get_ffprobe(self):
-        if self.ffprobe is not None:
-            return self.ffprobe
-        # Assume it's relative to ffmpeg
-        suffix = self.ffmpeg.suffix
-        ffprobe = self.ffmpeg.parent / f"ffprobe{suffix}"
-        if ffprobe.is_file():
-            return ffprobe
-        # Try to find in path
-        ffprobe = shutil.which("ffprobe")
-        if ffprobe is not None:
-            return Path(ffprobe)
-        raise RuntimeError("Could not find ffprobe.")
+        assert _check_file(self.ffprobe_path)
 
 
 @dataclasses.dataclass

@@ -1,7 +1,6 @@
 # Logic for joining audio / video files
 
 import shlex
-import shutil
 import subprocess
 import tempfile
 from pathlib import Path
@@ -12,8 +11,6 @@ from slp2mp4 import log
 class FfmpegRunner:
     def __init__(self, config):
         self.config = config
-        self.ffmpeg_path = shutil.which(config.paths.ffmpeg)
-        self.ffprobe_path = config.paths.get_ffprobe()
         self.audio_args = shlex.split(config.ffmpeg.audio_args)
         self.log = log.get_logger()
 
@@ -35,7 +32,7 @@ class FfmpegRunner:
     def reencode_audio(self, audio_file_path: Path):
         reencoded_path = audio_file_path.parent / "fixed.out"
         args = (
-            self.ffmpeg_path,
+            self.config.paths.ffmpeg_path,
             "-y",
             "-i",
             audio_file_path,
@@ -57,7 +54,7 @@ class FfmpegRunner:
         output_file: Path,
     ):
         args = (
-            self.ffmpeg_path,
+            self.config.paths.ffmpeg_path,
             "-y",
             "-i",
             audio_file,
@@ -88,7 +85,7 @@ class FfmpegRunner:
             concat_file.write(files)
             concat_file.flush()
             args = (
-                self.ffmpeg_path,
+                self.config.paths.ffmpeg_path,
                 "-y",
                 "-f",
                 "concat",
@@ -106,7 +103,7 @@ class FfmpegRunner:
 
     def get_video_duration(self, video: Path):
         args = (
-            self.ffprobe_path,
+            self.config.paths.ffprobe_path,
             "-i",
             str(video),
             "-show_entries",
