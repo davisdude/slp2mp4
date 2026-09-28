@@ -3,8 +3,10 @@
 import copy
 import dataclasses
 from collections import deque
+from logging import Logger
 from threading import RLock
 
+from slp2mp4 import log
 from slp2mp4.artifact import Artifact, ExistingFileArtifact
 from slp2mp4.task import Task
 
@@ -28,9 +30,11 @@ class Scheduler:
     full_resources: dict[str, float] = dataclasses.field(
         default_factory=dict, init=False
     )
+    log: Logger = dataclasses.field(init=False)
 
     def __post_init__(self):
         self.full_resources = copy.deepcopy(self.available_resources)
+        self.log = log.get_logger()
 
     def submit(self, tasks: list[Task]):
         with self.lock:
@@ -63,7 +67,7 @@ class Scheduler:
                     if upstream is None:
                         raise RuntimeError(f"No producer found for artifact '{i}'.")
                     if upstream in self.failed_tasks:
-                        self.logger.error(
+                        self.log.error(
                             f"Parent task {upstream} failed to produce {i} - skipping {task}"
                         )
                         self.mark_failed(task)
@@ -114,6 +118,7 @@ class Scheduler:
             task.cleanup()
 
     def mark_failed(self, task: Task):
+        self.log.info(f"Marking task '{task.name}' as failed")
         with self.lock:
             self.failed_tasks.add(task)
             if task in self.running_tasks:
