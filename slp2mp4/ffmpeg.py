@@ -18,13 +18,12 @@ class FfmpegRunner:
         self.log = log.get_logger()
 
     # TODO: Pass kill_event
-    def _run(self, args, kwargs=None):
-        if kwargs is None:
-            kwargs = {
-                "stdin": subprocess.DEVNULL,
-                "stdout": subprocess.PIPE,
-                "stderr": subprocess.STDOUT,
-            }
+    def _run(self, args):
+        kwargs = {
+            "stdin": subprocess.DEVNULL,
+            "stdout": subprocess.PIPE,
+            "stderr": subprocess.STDOUT,
+        }
         proc = subprocess.run(args, check=False, **kwargs)
         stdout = proc.stdout.decode(errors="backslashreplace")
         if proc.returncode != 0:
