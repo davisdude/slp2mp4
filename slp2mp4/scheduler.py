@@ -18,6 +18,7 @@ class Scheduler:
     ready_tasks: deque[Task] = dataclasses.field(default_factory=deque)
     running_tasks: set[Task] = dataclasses.field(default_factory=set)
     completed_tasks: set[Task] = dataclasses.field(default_factory=set)
+    failed_tasks: set[Task] = dataclasses.field(default_factory=set)
 
     waiting_on: dict[Task, set[Task]] = dataclasses.field(default_factory=dict)
     dependents: dict[Task, set[Task]] = dataclasses.field(default_factory=dict)
@@ -52,12 +53,22 @@ class Scheduler:
                 self.dependents[task] = set()
 
             for task in tasks:
+                task_failed = False
                 for i in task.inputs:
+                    if task_failed:
+                        continue
                     if isinstance(i, ExistingFileArtifact):
                         continue
                     upstream = self.producers.get(i)
                     if upstream is None:
                         raise RuntimeError(f"No producer found for artifact '{i}'.")
+                    if upstream in self.failed_tasks:
+                        self.logger.error(
+                            f"Parent task {upstream} failed to produce {i} - skipping {task}"
+                        )
+                        self.mark_failed(task)
+                        task_failed = True
+                        continue
                     self.dependents[upstream].add(task)
                     if upstream in self.completed_tasks:
                         continue
@@ -100,6 +111,17 @@ class Scheduler:
                     self.ready_tasks.appendleft(dependent)
             self.running_tasks.remove(task)
             self.completed_tasks.add(task)
+            task.cleanup()
+
+    def mark_failed(self, task: Task):
+        with self.lock:
+            self.failed_tasks.add(task)
+            if task in self.running_tasks:
+                self.running_tasks.remove(task)
+            if task in self.ready_tasks:
+                self.ready_tasks.remove(task)
+            for dependent in self.dependents[task]:
+                self.mark_failed(dependent)
             task.cleanup()
 
     def get_leaves(self):
