@@ -135,4 +135,6 @@ class FfmpegRunner:
             str(video),
         )
         proc = self._run(args)
+        if proc.returncode != 0:
+            raise RuntimeError(f"Failed to get dimensions of '{video}'")
         return [int(v) for v in proc.stdout.split(b",")]

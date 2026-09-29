@@ -103,8 +103,8 @@ class Worker:
         )
         scoreboard.render_image()
         cmd = scoreboard.get_ffmpeg_command()
-        success = self.ffmpeg.run(cmd)
-        if not success:
+        proc = self.ffmpeg.run(cmd)
+        if not proc.returncode == 0:
             raise RuntimeError(f"Failed to scoreboard '{video_in.path}'")
         self.log.info(f"Done scoreboarding '{slp.path}'")
 
