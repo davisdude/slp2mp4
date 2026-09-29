@@ -6,8 +6,8 @@ html, body {
     height: 100%;
     margin: 0;
     padding: 0.5vh;
-    color: {{ sb.theme.primary_color }};
-    font-family: {{ sb.theme.font_spec }};
+    color: {{ sb.user_data.primary_color }};
+    font-family: {{ sb.user_data.font_spec }};
 }
 
 img {
@@ -19,7 +19,7 @@ img {
 
 hr {
     border: 0;
-    border-top: 1px solid {{ sb.theme.primary_color }};
+    border-top: 1px solid {{ sb.user_data.primary_color }};
 }
 
 .stage {
@@ -97,5 +97,5 @@ hr {
 
 .combatant-sponsor, .combatant-pronouns {
     font-size: 60%;
-    color: {{ sb.theme.secondary_color }};
+    color: {{ sb.user_data.secondary_color }};
 }

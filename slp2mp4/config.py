@@ -9,6 +9,7 @@ from enum import Enum
 from functools import cached_property
 from pathlib import Path
 from types import UnionType
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import slp2mp4
 from slp2mp4 import log, util
@@ -277,11 +278,16 @@ class CustomScoreboardConfig:
 
 
 @dataclasses.dataclass
-class ScoreboardTheme:
+class ScoreboardUserData:
     font_spec: str
     primary_color: str
     secondary_color: str
     background_color: str
+    timezone: str = dataclasses.field(
+        metadata={
+            "help": "IANA timezone; Used for to get date for scoreboards; blank = local timezone"
+        }
+    )
 
     @classmethod
     def from_dict(cls, data):
@@ -290,16 +296,26 @@ class ScoreboardTheme:
             primary_color=data["primary_color"],
             secondary_color=data["secondary_color"],
             background_color=data["background_color"],
+            timezone=data["timezone"],
         )
 
+    @property
+    def tzinfo(self):
+        if self.timezone == "":
+            return None
+        try:
+            return ZoneInfo(self.timezone)
+        except (ZoneInfoNotFoundError, ValueError, TypeError):
+            raise ValueError(f"Invalid timezone '{self.timezone}'")
+
     def validate(self):
-        pass
+        assert (self.tzinfo is None) or isinstance(self.tzinfo, ZoneInfo)
 
 
 @dataclasses.dataclass
 class ScoreboardConfig:
     type: ScoreboardType
-    theme: ScoreboardTheme
+    user_data: ScoreboardUserData
     shared: SharedScoreboardConfig
     split: BasicScoreboardConfig
     minimal: MinimalScoreboardConfig
@@ -309,7 +325,7 @@ class ScoreboardConfig:
     def from_dict(cls, data):
         return cls(
             type=ScoreboardType(data["type"]),
-            theme=ScoreboardTheme.from_dict(data["theme"]),
+            user_data=ScoreboardUserData.from_dict(data["user_data"]),
             shared=SharedScoreboardConfig.from_dict(data["shared"]),
             split=BasicScoreboardConfig.from_dict(data["split"]),
             minimal=MinimalScoreboardConfig.from_dict(data["minimal"]),
@@ -328,6 +344,7 @@ class ScoreboardConfig:
             return self.custom
 
     def validate(self):
+        self.user_data.validate()
         self.scoreboard.validate()
 
 

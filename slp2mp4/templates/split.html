@@ -14,7 +14,7 @@
                 <div class="row2"><hr></div>
                 <div class="info info-small row3">
                     {% if loop.first %}
-                    <div>{{ sb.slp.context.data.tournament_date.strftime("%b %d, %Y").replace(" 0", " ") }}</div>
+                    <div>{{ sb.slp.context.data.tournament_date(sb.user_data.tzinfo).strftime("%b %d, %Y").replace(" 0", " ") }}</div>
                     {% else %}
                     <div>{{ sb.slp.context.data.tournament_location }}</div>
                     {% endif %}

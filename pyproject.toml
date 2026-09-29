@@ -24,6 +24,7 @@ dependencies = [
     "psutil",
     "html2image",
     "jinja2",
+    "tzdata",
 ]
 dynamic = [
     "version",

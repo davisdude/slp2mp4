@@ -1,8 +1,8 @@
 import dataclasses
 import json
-from datetime import datetime
 from enum import Enum
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 from slp2mp4 import util
 
@@ -221,12 +221,8 @@ class ContextData:
             },
         )
 
-    @property
-    def tournament_date(self):
-        # TODO: Detecting time zone from location is hard and fragile; assume local
-        # timezone or read from config
-        timezone = datetime.now().astimezone().tzinfo
-        return datetime.fromtimestamp(self.start_ms / 1000, tz=timezone)
+    def tournament_date(self, timezone: ZoneInfo | None):
+        return util.utc_to_datetime(self.start_ms, timezone)
 
     @property
     def platform(self):

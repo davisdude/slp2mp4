@@ -48,11 +48,12 @@ exclude_streamed_sets = false
 [scoreboard]
 type = "Minimal"
 
-[scoreboard.theme]
+[scoreboard.user_data]
 font_spec = 'Inconsolata, Consolas, monospace'
 primary_color = "White"
 secondary_color = "LightGray"
 background_color = "Black"
+timezone = ""
 
 [scoreboard.shared]
 left = true
