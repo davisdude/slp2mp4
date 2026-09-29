@@ -54,20 +54,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Update defaults.toml to use bundled FFmpeg
-        run: |
-          (Get-Content slp2mp4/defaults.toml) `
-            -replace 'ffmpeg = "ffmpeg"', 'ffmpeg = "_internal/slp2mp4/lib/ffmpeg/ffmpeg.exe"`r`nffprobe = "_internal/slp2mp4/lib/ffmpeg/ffprobe.exe"' |
-            Set-Content slp2mp4/defaults.toml
-        shell: pwsh
-
-      - name: Update util.py to make `get_env` bundled by default
-        run: |
-          (Get-Content slp2mp4/util.py) `
-            -replace 'def get_env(bundled=False):', 'def get_env(bundled=True):' |
-            Set-Content slp2mp4/util.py
-        shell: pwsh
-
       - name: Set up python
         uses: actions/setup-python@v4
         with:
@@ -82,6 +68,20 @@ jobs:
         run: |
           Invoke-WebRequest -Uri "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-full.7z" -OutFile "ffmpeg-release-full.7z"
           7z e ffmpeg-release-full.7z -olib/ffmpeg "*/bin/ffmpeg.exe" "*/bin/ffprobe.exe" "*/LICENSE" "*/README.txt"
+
+      - name: Update defaults.toml to use bundled FFmpeg
+        run: |
+          (Get-Content slp2mp4/defaults.toml) `
+            -replace 'ffmpeg = "ffmpeg"', 'ffmpeg = "_internal/slp2mp4/lib/ffmpeg/ffmpeg.exe"`r`nffprobe = "_internal/slp2mp4/lib/ffmpeg/ffprobe.exe"' |
+            Set-Content slp2mp4/defaults.toml
+        shell: pwsh
+
+      - name: Update util.py to make `get_env` bundled by default
+        run: |
+          (Get-Content slp2mp4/util.py) `
+            -replace 'def get_env(bundled=False):', 'def get_env(bundled=True):' |
+            Set-Content slp2mp4/util.py
+        shell: pwsh
 
       - name: Run pyinstaller
         run: |
