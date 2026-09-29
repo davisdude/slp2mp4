@@ -33,6 +33,7 @@ except ImportError:
 HOME_PAGE = "https://github.com/davisdude/slp2mp4"
 LICENSE_PAGE = f"{HOME_PAGE}/blob/master/LICENSE.md"
 FFMPEG_LICENSE_PATH = Path("_internal/lib/ffmpeg/LICENSE")
+CHROME_ABOUT_PATH = Path("_internal/lib/chrome/ABOUT")
 
 
 def build_notebook(variables, parent, obj, prefix=None):
@@ -283,6 +284,10 @@ class AboutDialog(tk.Toplevel):
             ("license_page", LICENSE_PAGE),
             ("ffmpeg", "https://ffmpeg.org/"),
             ("ffmpeg_license", str(FFMPEG_LICENSE_PATH)),
+            (
+                "chrome-headless-shell",
+                "https://googlechromelabs.github.io/chrome-for-testing/",
+            ),
         )
         text = tk.Text(self, borderwidth=0, wrap=tk.WORD)
         text.grid(row=0, column=0, sticky="ew")
@@ -297,6 +302,11 @@ class AboutDialog(tk.Toplevel):
             text.insert("end", "FFmpeg", "ffmpeg")
             text.insert("end", ". Its license can be found at ")
             text.insert("end", str(FFMPEG_LICENSE_PATH), "ffmpeg_license")
+
+        if CHROME_ABOUT_PATH.exists():
+            text.insert("end", "\n\nThis build includes a bundled version of ")
+            text.insert("end", "chrome-headless-shell", "chrome-headless-shell")
+            text.insert("end", ".")
 
         for link_tag, link_location in links:
             text.tag_config(link_tag, foreground="blue", underline=True)
