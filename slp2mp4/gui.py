@@ -232,15 +232,13 @@ class ConfigDialog(tk.Toplevel):
             data["paths"]["ffprobe"] = None
         if data["paths"]["chrome"].strip() == "":
             data["paths"]["chrome"] = None
-        for t in ("shared", "split", "minimal"):
+        for t in ("shared", "split"):
             if data["scoreboard"][t]["logo"].strip() == "":
                 data["scoreboard"][t]["logo"] = None
-        if data["scoreboard"]["custom"]["singles_html"].strip() == "":
-            data["scoreboard"]["custom"]["singles_html"] = None
-        if data["scoreboard"]["custom"]["doubles_html"].strip() == "":
-            data["scoreboard"]["custom"]["doubles_html"] = None
-        if data["scoreboard"]["custom"]["css"].strip() == "":
-            data["scoreboard"]["custom"]["css"] = None
+        if data["scoreboard"]["custom"]["html_path"].strip() == "":
+            data["scoreboard"]["custom"]["html_path"] = None
+        if data["scoreboard"]["custom"]["css_path"].strip() == "":
+            data["scoreboard"]["custom"]["css_path"] = None
 
         defaults = config.get_default_config().to_dict()
         unique_items = util.get_unique_items(defaults, data)
