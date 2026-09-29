@@ -114,7 +114,9 @@ def main():
 
     if args.monitor:
         logger.info("Monitoring enabled - use CTRL-C to stop monitoring.")
-        logger.info("Note that queued replays are still rendered; CTRL-C again to kill.")
+        logger.info(
+            "Note that queued replays are still rendered; CTRL-C again to kill."
+        )
 
     collector = Collector(
         inputs=args.inputs,
