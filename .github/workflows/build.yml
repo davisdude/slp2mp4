@@ -78,9 +78,9 @@ jobs:
 
       - name: Update util.py to make `get_env` bundled by default
         run: |
-          (Get-Content slp2mp4/utils.py) `
+          (Get-Content slp2mp4/util.py) `
             -replace 'def get_env(bundled=False):', 'def get_env(bundled=True):' |
-            Set-Content slp2mp4/utils.py
+            Set-Content slp2mp4/util.py
         shell: pwsh
 
       - name: Run pyinstaller
