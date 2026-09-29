@@ -1,6 +1,9 @@
 # Misc. utilities
 
+import ctypes
+import os
 import re
+import sys
 
 
 def update_dict(d1: dict, d2: dict):
@@ -56,3 +59,25 @@ def enum_to_display(enum_value):
 
 def get_enum_display_values(enum_type):
     return [enum_to_display(member) for member in enum_type]
+
+
+# Workaround for pyinstaller
+# https://pyinstaller.org/en/stable/common-issues-and-pitfalls.html#launching-external-programs-from-the-frozen-application
+def get_env(bundled=False):
+    env = os.environ.copy()
+
+    # Unfrozen means running standalone
+    # If running bundled, we don't want these overrides
+    # (`bundled` is set to true in build.yml)
+    if not getattr(sys, "frozen", False) or bundled:
+        return env
+
+    if sys.platform == "win32":
+        ctypes.windll.kernel32.SetDllDirectoryW(None)
+    else:
+        orig = env.pop("LD_LIBRARY_PATH_ORIG", None)
+        if orig is None:
+            env.pop("LD_LIBRARY_PATH", None)
+        else:
+            env["LD_LIBRARY_PATH"] = orig
+    return env
