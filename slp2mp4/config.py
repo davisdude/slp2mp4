@@ -5,12 +5,12 @@ import importlib.resources
 import shutil
 import tomllib
 import typing
-from datetime import datetime, tzinfo
+from datetime import datetime
 from enum import Enum
 from functools import cached_property
 from pathlib import Path
 from types import UnionType
-from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+from zoneinfo import ZoneInfo, available_timezones
 
 import slp2mp4
 from slp2mp4 import log, util
@@ -67,6 +67,21 @@ class ScoreboardType(Enum):
     SPLIT = "Split"
     MINIMAL = "Minimal"
     CUSTOM = "Custom"
+
+
+class _ZoneInfo(Enum):
+    @cached_property
+    def tzinfo(self):
+        if self.value == "local":
+            return datetime.now().astimezone().tzinfo
+        return ZoneInfo(self.value)
+
+    def __str__(self):
+        return self.value
+
+
+_values = {name: name for name in ["local"] + sorted(available_timezones())}
+TzEnum = Enum("TzEnum", _values, type=_ZoneInfo)
 
 
 def _check_file(path: Path):
@@ -301,7 +316,7 @@ class ScoreboardUserData:
 @dataclasses.dataclass
 class ScoreboardConfig:
     type: ScoreboardType
-    timezone: str = dataclasses.field(
+    timezone: TzEnum = dataclasses.field(
         metadata={
             "help": "IANA timezone; Used for to get date for scoreboards; blank = local timezone"
         }
@@ -316,7 +331,7 @@ class ScoreboardConfig:
     def from_dict(cls, data):
         return cls(
             type=ScoreboardType(data["type"]),
-            timezone=data["timezone"],
+            timezone=TzEnum(data["timezone"]),
             theme=ScoreboardUserData.from_dict(data["theme"]),
             shared=SharedScoreboardConfig.from_dict(data["shared"]),
             split=BasicScoreboardConfig.from_dict(data["split"]),
@@ -324,18 +339,8 @@ class ScoreboardConfig:
             custom=CustomScoreboardConfig.from_dict(data["custom"]),
         )
 
-    @cached_property
-    def tzinfo(self):
-        if self.timezone == "":
-            return datetime.now().astimezone().tzinfo
-        try:
-            return ZoneInfo(self.timezone)
-        except (ZoneInfoNotFoundError, ValueError, TypeError):
-            raise ValueError(f"Invalid timezone '{self.timezone}'")
-
     @property
     def scoreboard(self):
-        assert isinstance(self.tzinfo, tzinfo)
         if self.type == ScoreboardType.SHARED:
             return self.shared
         elif self.type == ScoreboardType.SPLIT:
@@ -373,6 +378,7 @@ class Config:
         data["dolphin"]["backend"] = data["dolphin"]["backend"].value
         data["dolphin"]["resolution"] = data["dolphin"]["resolution"].display_name
         data["scoreboard"]["type"] = data["scoreboard"]["type"].value
+        data["scoreboard"]["timezone"] = data["scoreboard"]["timezone"].value
         self._convert_paths_to_strs(data)
         return data
 

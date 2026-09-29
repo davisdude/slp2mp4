@@ -19,6 +19,7 @@ from slp2mp4.config import (
     DolphinBackend,
     DolphinResolution,
     ScoreboardType,
+    TzEnum,
 )
 from slp2mp4.orchestrator import Orchestrator
 
@@ -226,6 +227,7 @@ class ConfigDialog(tk.Toplevel):
             "custom_gecko_codes"
         ].strip()
         data["scoreboard"]["type"] = ScoreboardType(data["scoreboard"]["type"]).value
+        data["scoreboard"]["timezone"] = TzEnum(data["scoreboard"]["timezone"]).value
 
         if data["paths"]["ffprobe"].strip() == "":
             data["paths"]["ffprobe"] = None

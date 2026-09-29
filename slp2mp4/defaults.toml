@@ -47,7 +47,7 @@ exclude_streamed_sets = false
 
 [scoreboard]
 type = "Minimal"
-timezone = ""
+timezone = "local"
 
 [scoreboard.theme]
 font_spec = 'Inconsolata, Consolas, monospace'
