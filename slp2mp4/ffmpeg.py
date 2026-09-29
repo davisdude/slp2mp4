@@ -5,7 +5,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-from slp2mp4 import log
+from slp2mp4 import log, util
 
 
 class FfmpegRunner:
@@ -21,7 +21,8 @@ class FfmpegRunner:
             "stdout": subprocess.PIPE,
             "stderr": subprocess.STDOUT,
         }
-        proc = subprocess.run(args, check=False, **kwargs)
+        env = util.get_env()
+        proc = subprocess.run(args, check=False, env=env, **kwargs)
         stdout = proc.stdout.decode(errors="backslashreplace")
         if proc.returncode != 0:
             self.log.error(f"{args = }: {stdout}")
