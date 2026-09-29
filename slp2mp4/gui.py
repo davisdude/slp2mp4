@@ -412,6 +412,5 @@ def main():
 
 if __name__ == "__main__":
     # https://pyinstaller.org/en/stable/common-issues-and-pitfalls.html#multi-processing
-    # ttk internally uses multiprocessing
     freeze_support()
     main()
