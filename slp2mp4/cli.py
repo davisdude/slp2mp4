@@ -49,7 +49,9 @@ def add_config_option_to_parser(parser, config_type, prefix=""):
     for field in dataclasses.fields(config_type):
         metadata = getattr(field, "metadata", {})
         kwargs = {}
+        name = field.name.replace("_", "-")
         if dataclasses.is_dataclass(field.type):
+            add_config_option_to_parser(parser, field.type, f"{prefix}-{name}")
             continue
         if (default := field.default) is not None:
             kwargs["default"] = default
@@ -69,7 +71,6 @@ def add_config_option_to_parser(parser, config_type, prefix=""):
             kwargs["metavar"] = "{" + ",".join(display_values) + "}"
         else:
             kwargs["type"] = field.type
-        name = field.name.replace("_", "-")
         args = []
         if short := metadata.get("short"):
             args.append(f"-{short}")
@@ -80,18 +81,20 @@ def add_config_option_to_parser(parser, config_type, prefix=""):
             parser.add_argument(*args, **kwargs)
 
 
-def update_conf_from_args(args, conf):
-    for top_field in dataclasses.fields(Config):
-        prefix = top_field.name
-        current = getattr(conf, top_field.name)
-        for field in dataclasses.fields(top_field.type):
-            field_name = field.name
-            name = f"{prefix}_{field_name}"
-            if not hasattr(args, name):
-                continue
-            val = getattr(args, name)
-            if val is not dataclasses.MISSING:
-                setattr(current, field_name, val)
+def update_conf_from_args(args, conf, obj=None, prefix=""):
+    if obj is None:
+        obj = conf
+    for field in dataclasses.fields(obj):
+        value = getattr(obj, field.name)
+        arg_name = f"{prefix}_{field.name}" if prefix else field.name
+        if dataclasses.is_dataclass(value):
+            update_conf_from_args(args, conf, value, arg_name)
+            continue
+        if not hasattr(args, arg_name):
+            continue
+        arg_value = getattr(args, arg_name)
+        if arg_value is not dataclasses.MISSING:
+            setattr(obj, field.name, arg_value)
 
 
 def main():
