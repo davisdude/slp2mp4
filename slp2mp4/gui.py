@@ -4,6 +4,7 @@ import dataclasses
 import threading
 import tkinter as tk
 import webbrowser
+import math
 from enum import Enum
 from multiprocessing import Event
 from pathlib import Path
@@ -28,13 +29,16 @@ HOME_PAGE = "https://github.com/davisdude/slp2mp4"
 LICENSE_PAGE = f"{HOME_PAGE}/blob/master/LICENSE.md"
 
 
-def build_dataclass(variables, parent, obj, prefix=None):
-    row = 0
-    for field in dataclasses.fields(obj):
+def build_dataclass(variables, parent, obj, prefix=None, cols=1):
+    fields = dataclasses.fields(obj)
+    rows_per_column = math.ceil(len(fields) / cols)
+    for i, field in enumerate(fields):
+        row = 2 * (i % rows_per_column)
+        col = 2 * math.floor(i / rows_per_column)
         value = getattr(obj, field.name)
         key = (prefix or ()) + (field.name,)
         ttk.Label(parent, text=field.name.replace("_", " ").title()).grid(
-            row=row, column=0, sticky="w"
+            row=row, column=col, sticky="w"
         )
         widget = build_widget(
             variables=variables,
@@ -43,13 +47,10 @@ def build_dataclass(variables, parent, obj, prefix=None):
             value=value,
             field=field,
         )
-        widget.grid(row=row, column=1, sticky="ew")
-        row += 1
-
+        widget.grid(row=row, column=col + 1, sticky="ew")
         if (metadata := field.metadata) and (help_text := metadata.get("help")):
             label = ttk.Label(parent, text=help_text, foreground="gray40")
-            label.grid(row=row, column=0, columnspan=2, sticky="w")
-            row += 1
+            label.grid(row=row + 1, column=col, columnspan=2, sticky="w")
 
 
 def is_dict_of_type(d, t):
@@ -321,7 +322,7 @@ class Application(tk.Tk):
     def make_runtime_options(self):
         frame = ttk.LabelFrame(self, text="Runtime")
         frame.pack(fill="both", expand=True, padx=10, pady=10)
-        build_dataclass(self.variables, frame, self.runtime_options, prefix=())
+        build_dataclass(self.variables, frame, self.runtime_options, prefix=(), cols=2)
 
     def make_actions(self):
         frame = ttk.LabelFrame(self, text="Actions")
