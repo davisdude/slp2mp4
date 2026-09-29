@@ -5,6 +5,7 @@ import importlib.resources
 import shutil
 import tomllib
 import typing
+from datetime import datetime, tzinfo
 from enum import Enum
 from functools import cached_property
 from pathlib import Path
@@ -326,7 +327,7 @@ class ScoreboardConfig:
     @cached_property
     def tzinfo(self):
         if self.timezone == "":
-            return None
+            return datetime.now().astimezone().tzinfo
         try:
             return ZoneInfo(self.timezone)
         except (ZoneInfoNotFoundError, ValueError, TypeError):
@@ -334,7 +335,7 @@ class ScoreboardConfig:
 
     @property
     def scoreboard(self):
-        _ = self.tzinfo
+        assert isinstance(self.tzinfo, tzinfo)
         if self.type == ScoreboardType.SHARED:
             return self.shared
         elif self.type == ScoreboardType.SPLIT:

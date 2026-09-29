@@ -84,7 +84,5 @@ def get_env(bundled=False):
     return env
 
 
-def unix_ms_to_datetime(time_ms: int, timezone: tzinfo | None):
-    if timezone is None:
-        timezone = datetime.now().astimezone().tzinfo
+def unix_ms_to_datetime(time_ms: int, timezone: tzinfo):
     return datetime.fromtimestamp(time_ms / 1000, tz=timezone)
