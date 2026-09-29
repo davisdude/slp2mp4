@@ -44,15 +44,12 @@ Both methods require having `git` and `pip` installed
 ### Command Line Interface
 
 ```text
-usage: slp2mp4 [-h] [-v] [-n] [-m] [-t TEMPORARY_DIRECTORY] [-o OUTPUT_DIRECTORY] [--debug] [--paths-ffmpeg PATHS_FFMPEG]
+usage: slp2mp4 [-h] [-v] [-n] [-m] [--debug] [-t TEMPORARY_DIRECTORY] [-o OUTPUT_DIRECTORY] [--combine-mode {None,All,By Input,By Phase}] [--paths-ffmpeg PATHS_FFMPEG]
                [--paths-slippi-playback PATHS_SLIPPI_PLAYBACK] [--paths-ssbm-iso PATHS_SSBM_ISO] [--paths-ffprobe PATHS_FFPROBE]
-               [--dolphin-backend {D3D12,DX11,DX9,OGL,Software Renderer,Vulkan}] [--dolphin-resolution {480p,720p,1080p,1440p,2160p}]
-               [--dolphin-msaa DOLPHIN_MSAA] [--dolphin-ssaa | --no-dolphin-ssaa] [--dolphin-bitrate DOLPHIN_BITRATE]
-               [--dolphin-gecko-codes DOLPHIN_GECKO_CODES] [--ffmpeg-audio-args FFMPEG_AUDIO_ARGS] [--ffmpeg-volume FFMPEG_VOLUME]
-               [--runtime-parallel RUNTIME_PARALLEL]
-               [--runtime-preserve-directory-structure | --no-runtime-preserve-directory-structure]
-               [--runtime-youtubify-names | --no-runtime-youtubify-names] [--runtime-name-replacements RUNTIME_NAME_REPLACEMENTS]
-               [--runtime-combine-mode {None,All,By Input,By Phase}] [--runtime-use-context-json | --no-runtime-use-context-json]
+               [--dolphin-backend {D3D12,DX11,DX9,OGL,Software Renderer,Vulkan}] [--dolphin-resolution {480p,720p,1080p,1440p,2160p}] [--dolphin-msaa DOLPHIN_MSAA]
+               [--dolphin-ssaa | --no-dolphin-ssaa] [--dolphin-bitrate DOLPHIN_BITRATE] [--ffmpeg-audio-args FFMPEG_AUDIO_ARGS] [--ffmpeg-volume FFMPEG_VOLUME]
+               [--runtime-parallel RUNTIME_PARALLEL] [--runtime-preserve-directory-structure | --no-runtime-preserve-directory-structure]
+               [--runtime-youtubify-names | --no-runtime-youtubify-names] [--runtime-use-context-json | --no-runtime-use-context-json]
                [--runtime-exclude-streamed-sets | --no-runtime-exclude-streamed-sets]
                inputs [inputs ...]
 
@@ -64,11 +61,13 @@ options:
   -v, --version         show program's version number and exit
   -n, --dry-run         Don't actually render videos; useful for testing
   -m, --monitor         Continuously watch input directories
+  --debug               Enables extra logging; saves temporary files
   -t, --temporary-directory TEMPORARY_DIRECTORY
                         Where to write temp videos; leave blank for system default
   -o, --output-directory OUTPUT_DIRECTORY
                         Where to write output videos
-  --debug
+  --combine-mode {None,All,By Input,By Phase}
+                        How to combine set videos; None = separate sets
   --paths-ffmpeg PATHS_FFMPEG
   --paths-slippi-playback PATHS_SLIPPI_PLAYBACK
   --paths-ssbm-iso PATHS_SSBM_ISO
@@ -78,7 +77,6 @@ options:
   --dolphin-msaa DOLPHIN_MSAA
   --dolphin-ssaa, --no-dolphin-ssaa
   --dolphin-bitrate DOLPHIN_BITRATE
-  --dolphin-gecko-codes DOLPHIN_GECKO_CODES
   --ffmpeg-audio-args FFMPEG_AUDIO_ARGS
   --ffmpeg-volume FFMPEG_VOLUME
   --runtime-parallel RUNTIME_PARALLEL
@@ -87,10 +85,6 @@ options:
                         Recreate input directory structure instead of being 'flat'
   --runtime-youtubify-names, --no-runtime-youtubify-names
                         Enable name replacements
-  --runtime-name-replacements RUNTIME_NAME_REPLACEMENTS
-                        Mapping of characters to replace in video titles
-  --runtime-combine-mode {None,All,By Input,By Phase}
-                        How to combine set videos; None = separate sets
   --runtime-use-context-json, --no-runtime-use-context-json
                         Use context.json files (if found) when naming / sorting videos
   --runtime-exclude-streamed-sets, --no-runtime-exclude-streamed-sets
