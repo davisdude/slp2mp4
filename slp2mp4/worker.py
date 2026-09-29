@@ -98,7 +98,7 @@ class Worker:
             output_video=video_out,
             input_video_dimensions=video_in_dims,
             output_video_height=video_out_height,
-            user_data=self.conf.scoreboard.user_data,
+            config=self.conf.scoreboard,
             **conf_data,
         )
         scoreboard.render_image()

@@ -2,17 +2,17 @@
     box-sizing: border-box;
 }
 html, body {
-    color: {{ sb.user_data.primary_color }};
-    font-family: {{ sb.user_data.font_spec }};
+    color: {{ sb.config.theme.primary_color }};
+    font-family: {{ sb.config.theme.font_spec }};
     width: 100%;
     height: 100%;
 }
 
 .box {
-    background: {{ sb.user_data.background_color }};
+    background: {{ sb.config.theme.background_color }};
     border-width: 1;
     border-style: solid;
-    border-color: {{ sb.user_data.primary_color }};
+    border-color: {{ sb.config.theme.primary_color }};
     padding: 1vh;
     font-size: 3vh;
 }
@@ -54,12 +54,12 @@ html, body {
 
 .small {
     font-size: 60%;
-    color: {{ sb.user_data.secondary_color }};
+    color: {{ sb.config.theme.secondary_color }};
 }
 
 .medium {
     font-size: 80%;
-    color: {{ sb.user_data.secondary_color }};
+    color: {{ sb.config.theme.secondary_color }};
 }
 
 .score {

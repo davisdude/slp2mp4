@@ -2,7 +2,6 @@ import dataclasses
 import json
 from enum import Enum
 from pathlib import Path
-from zoneinfo import ZoneInfo
 
 from slp2mp4 import util
 
@@ -220,9 +219,6 @@ class ContextData:
                 "-": "",
             },
         )
-
-    def tournament_date(self, timezone: ZoneInfo | None):
-        return util.utc_to_datetime(self.start_ms, timezone)
 
     @property
     def platform(self):

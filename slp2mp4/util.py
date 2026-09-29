@@ -4,8 +4,7 @@ import ctypes
 import os
 import re
 import sys
-from datetime import datetime
-from zoneinfo import ZoneInfo
+from datetime import datetime, tzinfo
 
 
 def update_dict(d1: dict, d2: dict):
@@ -85,7 +84,7 @@ def get_env(bundled=False):
     return env
 
 
-def utc_to_datetime(time_ms: int, timezone: ZoneInfo | None):
+def unix_ms_to_datetime(time_ms: int, timezone: tzinfo | None):
     if timezone is None:
         timezone = datetime.now().astimezone().tzinfo
     return datetime.fromtimestamp(time_ms / 1000, tz=timezone)

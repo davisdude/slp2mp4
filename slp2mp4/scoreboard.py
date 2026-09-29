@@ -8,8 +8,9 @@ from html2image import Html2Image
 from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoescape
 
 import slp2mp4
+from slp2mp4 import util
 from slp2mp4.artifact import Mp4Artifact, SlippiArtifact
-from slp2mp4.config import ScoreboardType, ScoreboardUserData
+from slp2mp4.config import ScoreboardConfig, ScoreboardType
 
 DEFAULT_LOGO_PATH = importlib.resources.files(slp2mp4).joinpath("logo.svg")
 TEMPLATES_DIR = importlib.resources.files(slp2mp4).joinpath("templates")
@@ -23,7 +24,7 @@ class ScoreboardBase:
     output_video: Mp4Artifact
     input_video_dimensions: tuple[int, int]
     output_video_height: int
-    user_data: ScoreboardUserData
+    config: ScoreboardConfig
     workdir: Path | None = dataclasses.field(default=None)
     image_path: Path | None = dataclasses.field(default=None)
 
@@ -39,6 +40,12 @@ class ScoreboardBase:
             loader=FileSystemLoader(TEMPLATES_DIR),
             autoescape=select_autoescape(["html", "css"]),
             undefined=StrictUndefined,
+        )
+
+    @property
+    def tournament_date(self):
+        return util.unix_ms_to_datetime(
+            self.slp.context.data.start_ms, self.config.tzinfo
         )
 
     @property
@@ -104,7 +111,7 @@ class ScoreboardBase:
             # Scale video down
             f"[0]scale={self.size[0]}:{self.size[1]}:force_original_aspect_ratio=decrease,"
             # Pad to output resolution
-            f"pad=w={self.size[0]}:h={self.size[1]}:{self.video_alignment}:color={self.user_data.background_color}"
+            f"pad=w={self.size[0]}:h={self.size[1]}:{self.video_alignment}:color={self.config.theme.background_color}"
             # Overlay
             f"{'[scaled];[scaled][1:v]overlay,' if self.slp.context is not None else ','}"
             # Bookkeeping

@@ -5,7 +5,7 @@
             <div class="tournament">
                 <div class="tournament-name">{{ sb.slp.context.data.tournament_name }}</div>
                 <div class="rule"><hr></div>
-                <div class="tournament-location">{{ sb.slp.context.data.tournament_date(sb.user_data.tzinfo).strftime("%b %d, %Y").replace(" 0", " ") }}</div>
+                <div class="tournament-location">{{ sb.tournament_date.strftime("%b %d, %Y").replace(" 0", " ") }}</div>
                 <div class="tournament-location">{{ sb.slp.context.data.tournament_location }}</div>
                 <div class="rule"><hr></div>
             </div>

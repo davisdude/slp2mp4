@@ -12,12 +12,12 @@ html, body {
     width: {{ 606 / 1080 * sb.size[1] }}px;
     margin: 0 0 0 0;
     padding: 0.5vh 0.5vh 0.5vh 0.5vh;
-    color: {{ sb.user_data.primary_color }};
-    font-family: {{ sb.user_data.font_spec }};
+    color: {{ sb.config.theme.primary_color }};
+    font-family: {{ sb.config.theme.font_spec }};
 }
 hr {
     border: 0;
-    border-top: 1px solid {{ sb.user_data.primary_color }};
+    border-top: 1px solid {{ sb.config.theme.primary_color }};
 }
 #container {
     height: 100%;
@@ -73,7 +73,7 @@ hr {
 }
 .combatant-sponsor, .combatant-pronouns {
     font-size: 60%;
-    color: {{ sb.user_data.secondary_color }};
+    color: {{ sb.config.theme.secondary_color }};
 }
 .combatant-score {
     padding-left: 1vh;

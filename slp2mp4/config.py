@@ -283,11 +283,6 @@ class ScoreboardUserData:
     primary_color: str
     secondary_color: str
     background_color: str
-    timezone: str = dataclasses.field(
-        metadata={
-            "help": "IANA timezone; Used for to get date for scoreboards; blank = local timezone"
-        }
-    )
 
     @classmethod
     def from_dict(cls, data):
@@ -296,26 +291,21 @@ class ScoreboardUserData:
             primary_color=data["primary_color"],
             secondary_color=data["secondary_color"],
             background_color=data["background_color"],
-            timezone=data["timezone"],
         )
 
-    @property
-    def tzinfo(self):
-        if self.timezone == "":
-            return None
-        try:
-            return ZoneInfo(self.timezone)
-        except (ZoneInfoNotFoundError, ValueError, TypeError):
-            raise ValueError(f"Invalid timezone '{self.timezone}'")
-
     def validate(self):
-        assert (self.tzinfo is None) or isinstance(self.tzinfo, ZoneInfo)
+        pass
 
 
 @dataclasses.dataclass
 class ScoreboardConfig:
     type: ScoreboardType
-    user_data: ScoreboardUserData
+    timezone: str = dataclasses.field(
+        metadata={
+            "help": "IANA timezone; Used for to get date for scoreboards; blank = local timezone"
+        }
+    )
+    theme: ScoreboardUserData
     shared: SharedScoreboardConfig
     split: BasicScoreboardConfig
     minimal: MinimalScoreboardConfig
@@ -325,15 +315,26 @@ class ScoreboardConfig:
     def from_dict(cls, data):
         return cls(
             type=ScoreboardType(data["type"]),
-            user_data=ScoreboardUserData.from_dict(data["user_data"]),
+            timezone=data["timezone"],
+            theme=ScoreboardUserData.from_dict(data["theme"]),
             shared=SharedScoreboardConfig.from_dict(data["shared"]),
             split=BasicScoreboardConfig.from_dict(data["split"]),
             minimal=MinimalScoreboardConfig.from_dict(data["minimal"]),
             custom=CustomScoreboardConfig.from_dict(data["custom"]),
         )
 
+    @cached_property
+    def tzinfo(self):
+        if self.timezone == "":
+            return None
+        try:
+            return ZoneInfo(self.timezone)
+        except (ZoneInfoNotFoundError, ValueError, TypeError):
+            raise ValueError(f"Invalid timezone '{self.timezone}'")
+
     @property
     def scoreboard(self):
+        _ = self.tzinfo
         if self.type == ScoreboardType.SHARED:
             return self.shared
         elif self.type == ScoreboardType.SPLIT:
@@ -344,7 +345,7 @@ class ScoreboardConfig:
             return self.custom
 
     def validate(self):
-        self.user_data.validate()
+        self.theme.validate()
         self.scoreboard.validate()
 
 
