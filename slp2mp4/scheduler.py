@@ -126,7 +126,6 @@ class Scheduler:
                 self.ready_tasks.remove(task)
             for dependent in self.dependents[task]:
                 self.mark_failed(dependent)
-            task.cleanup()
 
     def get_leaves(self):
         with self.lock:
