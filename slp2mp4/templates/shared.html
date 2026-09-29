@@ -20,7 +20,7 @@
                 {% endif %}
                 <div class="combatant">
                     <div class="combatant-team">
-                        {% for i in range(slot.prefixes | length) %}
+                        {% for i in range(sb.slp.context.data.num_teams) %}
                         <div class="combatant-info">
                             <span class="combatant-sponsor">{{ slot.prefixes[i] }}</span>
                             <span class="combatant-tag">{{ slot.display_names[i] }}</span>

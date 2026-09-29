@@ -200,8 +200,8 @@ class ContextData:
             return ContextData.from_dict(json.load(f))
 
     @property
-    def is_singles(self):
-        return len(self.final_score.slots[0].display_names) == 1
+    def num_teams(self):
+        return len(self.final_score.slots[0].display_names)
 
     @property
     def round_name_short(self):

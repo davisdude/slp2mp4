@@ -21,7 +21,7 @@
                 </div>
                 <div class="row4"><hr></div>
                 <div class="info info-medium">
-                    {% for i in range(slot.prefixes | length) %}
+                    {% for i in range(sb.slp.context.data.num_teams) %}
                     <div class="combatant row{{ 5 + i }}">
                         <div class="combatant-sponsor">{{ slot.prefixes[i] }}</div>
                         <div class="combatant-tag">{{ slot.display_names[i] }}</div>
