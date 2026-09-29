@@ -255,7 +255,9 @@ class RuntimeOptions:
         default=False,
         metadata={"short": "m", "help": "Continuously watch input directories"},
     )
-    debug: bool = dataclasses.field(default=False)
+    debug: bool = dataclasses.field(
+        default=False, metadata={"help": "Enables extra logging; saves temporary files"}
+    )
     temporary_directory: Path | None = dataclasses.field(
         default=None,
         metadata={

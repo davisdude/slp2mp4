@@ -115,7 +115,6 @@ class Scheduler:
                     self.ready_tasks.appendleft(dependent)
             self.running_tasks.remove(task)
             self.completed_tasks.add(task)
-            task.cleanup()
 
     def mark_failed(self, task: Task):
         self.log.info(f"Marking task '{task.name}' as failed")

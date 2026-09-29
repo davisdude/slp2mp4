@@ -35,6 +35,7 @@ class Orchestrator:
     num_procs: int | None = dataclasses.field(default=None)
     output_directory: Path | None = dataclasses.field(default=None)
     workdir: Path | None = dataclasses.field(default=None)
+    debug: bool = dataclasses.field(default=False)
 
     worker: Worker | None = dataclasses.field(default=None, init=False)
     scheduler: Scheduler | None = dataclasses.field(default=None, init=False)
@@ -46,6 +47,8 @@ class Orchestrator:
             self.num_procs = self.conf.runtime.parallel
         if self.num_procs == 0:
             self.num_procs = psutil.cpu_count(logical=False) or 1
+        if self.workdir is not None:
+            self.workdir.mkdir(exist_ok=True, parents=True)
 
         self.worker = Worker(self.conf, self.kill_event)
         self.scheduler = Scheduler({"cpu": self.num_procs})
@@ -191,6 +194,9 @@ class Orchestrator:
                         f"Worker encountered exception in task '{task.name}': {traceback.format_exc()}"
                     )
                     self.scheduler.mark_failed(task)
+                finally:
+                    if not self.debug:
+                        task.cleanup()
             else:
                 if self.collector.done and self.scheduler.is_pipeline_empty():
                     break
@@ -217,7 +223,8 @@ class Orchestrator:
         for task in leaves:
             self.write_timestamps(task)
 
-        self.collector.cleanup()
-        self.pipeline.cleanup()
+        if not self.debug:
+            self.collector.cleanup()
+            self.pipeline.cleanup()
 
         self.log.info("Done!")

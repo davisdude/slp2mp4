@@ -127,6 +127,7 @@ def main():
         dry_run=args.dry_run,
         workdir=args.temporary_directory,
         output_directory=args.output_directory,
+        debug=args.debug,
     )
     orchestrator.run()
 

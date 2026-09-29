@@ -392,6 +392,7 @@ class Application(tk.Tk):
             dry_run=self.variables[("dry_run",)].get(),
             workdir=workdir,
             output_directory=Path(self.variables[("output_directory",)].get()),
+            debug=debug,
         )
         threading.Thread(target=orchestrator.run).start()
 
