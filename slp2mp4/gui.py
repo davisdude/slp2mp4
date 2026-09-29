@@ -424,9 +424,11 @@ class Application(tk.Tk):
         threading.Thread(target=orchestrator.run).start()
 
     def stop(self):
+        self.log.info("Received stop event")
         self.stop_event.set()
 
     def kill(self):
+        self.log.info("Received kill event")
         self.kill_event.set()
 
 
