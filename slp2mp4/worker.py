@@ -86,7 +86,7 @@ class Worker:
     def render_scoreboard(
         self, slp: SlippiArtifact, video_in: Mp4Artifact, video_out: Mp4Artifact
     ):
-        self.logger.info(f"Scoreboarding '{video_in.path}' to '{video_out.path}'")
+        self.log.info(f"Scoreboarding '{video_in.path}' to '{video_out.path}'")
         conf_data = dataclasses.asdict(self.conf.scoreboard.scoreboard)
         sb_class = SCOREBOARD_MAPPING[self.conf.scoreboard.type]
         video_in_dims = self.ffmpeg.get_video_dimensions(video_in.path)
@@ -106,7 +106,7 @@ class Worker:
         success = self.ffmpeg.run(cmd)
         if not success:
             raise RuntimeError(f"Failed to scoreboard '{video_in.path}'")
-        self.logger.info(f"Done scoreboarding '{slp.path}'")
+        self.log.info(f"Done scoreboarding '{slp.path}'")
 
     def combine_mp4s(
         self,

@@ -30,7 +30,7 @@ class FfmpegRunner:
         return proc
 
     def run(self, args):
-        return self._run([self.ffmpeg_path] + args)
+        return self._run([self.config.paths.ffmpeg_path] + args)
 
     def reencode_audio(self, audio_file_path: Path):
         reencoded_path = audio_file_path.parent / "fixed.out"
@@ -123,7 +123,7 @@ class FfmpegRunner:
 
     def get_video_dimensions(self, video: Path):
         args = (
-            str(self.ffprobe_path),
+            str(self.config.paths.ffprobe_path),
             "-v",
             "quiet",
             "-select_streams",
