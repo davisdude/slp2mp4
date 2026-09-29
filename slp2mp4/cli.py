@@ -123,6 +123,7 @@ def main():
         conf=conf,
         kill_event=kill_event,
         collector=collector,
+        combine_mode=args.combine_mode,
         dry_run=args.dry_run,
         workdir=args.temporary_directory,
         output_directory=args.output_directory,

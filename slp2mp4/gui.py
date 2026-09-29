@@ -13,7 +13,7 @@ import tomli_w
 
 from slp2mp4 import config, log, util
 from slp2mp4.collector import Collector
-from slp2mp4.config import DolphinBackend, DolphinResolution
+from slp2mp4.config import DolphinBackend, DolphinResolution, CombineMode
 from slp2mp4.orchestrator import Orchestrator
 
 try:
@@ -387,6 +387,7 @@ class Application(tk.Tk):
             conf=conf,
             kill_event=self.kill_event,
             collector=collector,
+            combine_mode=CombineMode(self.variables[("combine_mode",)].get()),
             dry_run=self.variables[("dry_run",)].get(),
             workdir=workdir,
             output_directory=Path(self.variables[("output_directory",)].get()),

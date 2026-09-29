@@ -17,7 +17,7 @@ import psutil
 from slp2mp4 import log, util
 from slp2mp4.artifact import Artifact, ContextArtifact, Mp4Artifact, SlippiArtifact
 from slp2mp4.collector import Collector
-from slp2mp4.config import Config
+from slp2mp4.config import Config, CombineMode
 from slp2mp4.pipeline import Pipeline
 from slp2mp4.scheduler import Scheduler
 from slp2mp4.task import MoveFileTask, Task
@@ -29,6 +29,7 @@ class Orchestrator:
     conf: Config
     kill_event: Event
     collector: Collector
+    combine_mode: CombineMode
 
     dry_run: bool = dataclasses.field(default=False)
     num_procs: int | None = dataclasses.field(default=None)
@@ -163,7 +164,7 @@ class Orchestrator:
         leaves = self.scheduler.get_leaves()
         phase_by_task = {task: self.get_round_info(task) for task in leaves}
         yield from self.pipeline.get_group_concat_tasks(
-            leaves, input_by_task, phase_by_task, self.conf.runtime.combine_mode
+            leaves, input_by_task, phase_by_task, self.combine_mode
         )
         leaves = self.scheduler.get_leaves()
         yield from self.get_move_tasks(leaves)

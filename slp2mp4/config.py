@@ -170,9 +170,6 @@ class RuntimeConfig:
     name_replacements: dict[str, str] = dataclasses.field(
         metadata={"help": "Mapping of characters to replace in video titles"}
     )
-    combine_mode: CombineMode = dataclasses.field(
-        metadata={"help": "How to combine set videos; None = separate sets"}
-    )
     use_context_json: bool = dataclasses.field(
         metadata={
             "help": "Use context.json files (if found) when naming / sorting videos"
@@ -191,7 +188,6 @@ class RuntimeConfig:
             preserve_directory_structure=data["preserve_directory_structure"],
             youtubify_names=data["youtubify_names"],
             name_replacements=data["name_replacements"],
-            combine_mode=CombineMode(data["combine_mode"]),
             use_context_json=data["use_context_json"],
             exclude_streamed_sets=data["exclude_streamed_sets"],
         )
@@ -259,6 +255,7 @@ class RuntimeOptions:
         default=False,
         metadata={"short": "m", "help": "Continuously watch input directories"},
     )
+    debug: bool = dataclasses.field(default=False)
     temporary_directory: Path | None = dataclasses.field(
         default=None,
         metadata={
@@ -275,7 +272,10 @@ class RuntimeOptions:
             "is_directory": True,
         },
     )
-    debug: bool = dataclasses.field(default=False)
+    combine_mode: CombineMode = dataclasses.field(
+        default=CombineMode.NONE,
+        metadata={"help": "How to combine set videos; None = separate sets"},
+    )
 
 
 def _load_configs(config_files: list[Path]) -> Config:
