@@ -46,12 +46,12 @@ Both methods require having `git` and `pip` installed
 
 ```text
 usage: slp2mp4 [-h] [-v] [-n] [-m] [--debug] [-t TEMPORARY_DIRECTORY] [-o OUTPUT_DIRECTORY] [--combine-mode {None,All,By Input,By Phase}] [--paths-ffmpeg PATHS_FFMPEG]
-               [--paths-slippi-playback PATHS_SLIPPI_PLAYBACK] [--paths-ssbm-iso PATHS_SSBM_ISO] [--paths-ffprobe PATHS_FFPROBE]
+               [--paths-slippi-playback PATHS_SLIPPI_PLAYBACK] [--paths-ssbm-iso PATHS_SSBM_ISO] [--paths-ffprobe PATHS_FFPROBE] [--paths-chrome PATHS_CHROME]
                [--dolphin-backend {D3D12,DX11,DX9,OGL,Software Renderer,Vulkan}] [--dolphin-resolution {480p,720p,1080p,1440p,2160p}] [--dolphin-msaa DOLPHIN_MSAA]
                [--dolphin-ssaa | --no-dolphin-ssaa] [--dolphin-bitrate DOLPHIN_BITRATE] [--ffmpeg-audio-args FFMPEG_AUDIO_ARGS] [--ffmpeg-volume FFMPEG_VOLUME]
                [--runtime-parallel RUNTIME_PARALLEL] [--runtime-preserve-directory-structure | --no-runtime-preserve-directory-structure]
                [--runtime-youtubify-names | --no-runtime-youtubify-names] [--runtime-use-context-json | --no-runtime-use-context-json]
-               [--runtime-exclude-streamed-sets | --no-runtime-exclude-streamed-sets]
+               [--runtime-exclude-streamed-sets | --no-runtime-exclude-streamed-sets] [--scoreboard-type {None,Shared,Split,Minimal,Custom}]
                inputs [inputs ...]
 
 positional arguments:
@@ -73,6 +73,7 @@ options:
   --paths-slippi-playback PATHS_SLIPPI_PLAYBACK
   --paths-ssbm-iso PATHS_SSBM_ISO
   --paths-ffprobe PATHS_FFPROBE
+  --paths-chrome PATHS_CHROME
   --dolphin-backend {D3D12,DX11,DX9,OGL,Software Renderer,Vulkan}
   --dolphin-resolution {480p,720p,1080p,1440p,2160p}
   --dolphin-msaa DOLPHIN_MSAA
@@ -90,6 +91,7 @@ options:
                         Use context.json files (if found) when naming / sorting videos
   --runtime-exclude-streamed-sets, --no-runtime-exclude-streamed-sets
                         Exclude sets marked with stream metadata (requires context.json)
+  --scoreboard-type {None,Shared,Split,Minimal,Custom}
 ```
 
 ### Graphical User Interface

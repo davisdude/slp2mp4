@@ -45,11 +45,12 @@ def enum_parser(enum_type, display_values):
     return parse
 
 
-# TODO: Nested fields don't work very well
 def add_config_option_to_parser(parser, config_type, prefix=""):
     for field in dataclasses.fields(config_type):
         metadata = getattr(field, "metadata", {})
         kwargs = {}
+        if dataclasses.is_dataclass(field.type):
+            continue
         if (default := field.default) is not None:
             kwargs["default"] = default
         if help_text := metadata.get("help"):
