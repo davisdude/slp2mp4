@@ -1,10 +1,10 @@
 # GUI frontend
 
 import dataclasses
+import math
 import threading
 import tkinter as tk
 import webbrowser
-import math
 from enum import Enum
 from multiprocessing import Event
 from pathlib import Path
@@ -14,7 +14,7 @@ import tomli_w
 
 from slp2mp4 import config, log, util
 from slp2mp4.collector import Collector
-from slp2mp4.config import DolphinBackend, DolphinResolution, CombineMode
+from slp2mp4.config import CombineMode, DolphinBackend, DolphinResolution
 from slp2mp4.orchestrator import Orchestrator
 
 try:

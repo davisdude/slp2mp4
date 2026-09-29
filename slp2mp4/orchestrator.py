@@ -17,7 +17,7 @@ import psutil
 from slp2mp4 import log, util
 from slp2mp4.artifact import Artifact, ContextArtifact, Mp4Artifact, SlippiArtifact
 from slp2mp4.collector import Collector
-from slp2mp4.config import Config, CombineMode
+from slp2mp4.config import CombineMode, Config
 from slp2mp4.pipeline import Pipeline
 from slp2mp4.scheduler import Scheduler
 from slp2mp4.task import MoveFileTask, Task
