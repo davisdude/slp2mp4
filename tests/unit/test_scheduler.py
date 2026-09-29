@@ -22,6 +22,7 @@ class Pipeline:
     sched: Scheduler
     render_tasks: dict[str, list[RenderGameTask]]
     concat_tasks: dict[str, ConcatVideosTask]
+    group_task: ConcatVideosTask | None
 
 
 @pytest.fixture
@@ -31,9 +32,12 @@ def make_pipeline(make_file):
         cpus: float = 1.0,
         create_mp4s: bool = False,
         create_slps: bool = True,
+        group: bool = False,
     ):
         render_tasks = {}
         concat_tasks = {}
+        set_artifacts = []
+        group_task = None
         tasks = []
         for name, set_paths in sets:
             mp4_artifacts = []
@@ -54,13 +58,19 @@ def make_pipeline(make_file):
             concat_task = ConcatVideosTask(
                 f"concat_{name}", mp4_artifacts, [set_artifact]
             )
+            set_artifacts.append(set_artifact)
             render_tasks[name] = mp4_tasks
             concat_tasks[name] = concat_task
             tasks.extend([*mp4_tasks, concat_task])
 
+        if group:
+            group_artifact = make_file("group.mp4", create=create_mp4s, cls=Mp4Artifact)
+            group_task = ConcatVideosTask("group", set_artifacts, [group_artifact])
+            tasks.append(group_task)
+
         sched = Scheduler({"cpu": cpus})
         sched.submit(tasks)
-        return Pipeline(sched, render_tasks, concat_tasks)
+        return Pipeline(sched, render_tasks, concat_tasks, group_task)
 
     return build
 
@@ -221,3 +231,68 @@ def test_all_tasks_execute_once(make_pipeline):
         completed.add(work)
 
     assert completed == expected
+
+
+def test_group(make_pipeline):
+    pipeline = make_pipeline(
+        [
+            ("set1", ["game1", "game2", "game3"]),
+            ("set2", ["game4"]),
+        ],
+        cpus=2.0,
+        group=True,
+    )
+    completed = set()
+    expected = (
+        set(pipeline.render_tasks["set1"])
+        | set(pipeline.render_tasks["set2"])
+        | set(pipeline.concat_tasks.values())
+        | {pipeline.group_task}
+    )
+
+    while True:
+        work = pipeline.sched.get_work()
+        if work is None:
+            break
+        assert work not in completed
+        for i in work.inputs:
+            i.path.touch(exist_ok=True)
+        pipeline.sched.finish(work)
+        completed.add(work)
+
+    assert completed == expected
+    assert pipeline.group_task is not None
+
+
+def test_failures_propogate(make_pipeline):
+    pipeline = make_pipeline(
+        [
+            ("set1", ["game1", "game2", "game3"]),
+            ("set2", ["game4"]),
+        ],
+        cpus=2.0,
+        group=True,
+    )
+    completed = set()
+
+    while True:
+        work = pipeline.sched.get_work()
+        if work is None:
+            break
+        assert work not in completed
+        if work.name == "render_game1":
+            pipeline.sched.mark_failed(work)
+        else:
+            for i in work.inputs:
+                i.path.touch(exist_ok=True)
+            pipeline.sched.finish(work)
+            completed.add(work)
+
+    assert all(task in completed for task in pipeline.render_tasks["set2"])
+    assert pipeline.concat_tasks["set2"] in completed
+
+    assert pipeline.render_tasks["set1"][0] not in completed
+    assert pipeline.concat_tasks["set1"] not in completed
+
+    assert pipeline.group_task is not None
+    assert pipeline.group_task not in completed

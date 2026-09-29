@@ -6,6 +6,7 @@ import shutil
 import tomllib
 import typing
 from enum import Enum
+from functools import cached_property
 from pathlib import Path
 from types import UnionType
 
@@ -66,6 +67,11 @@ class ScoreboardType(Enum):
     CUSTOM = "Custom"
 
 
+def _check_file(path: Path):
+    p = path.expanduser().resolve()
+    return p.is_file() and p.exists()
+
+
 @dataclasses.dataclass
 class PathsConfig:
     # Paths are un-altered so saving works properly
@@ -75,6 +81,25 @@ class PathsConfig:
     ffprobe: Path | None = dataclasses.field(default=None)
     chrome: Path | None = dataclasses.field(default=None)
     # TODO: Make this just `browser` if html2image accepts that
+
+    @cached_property
+    def ffmpeg_path(self):
+        return Path(shutil.which(self.ffmpeg))
+
+    @cached_property
+    def ffprobe_path(self):
+        if self.ffprobe is not None:
+            return self.ffprobe
+        # Assume it's relative to ffmpeg
+        suffix = self.ffmpeg.suffix
+        ffprobe = self.ffmpeg_path.parent / f"ffprobe{suffix}"
+        if _check_file(ffprobe):
+            return ffprobe
+        # Try to find in path
+        ffprobe = shutil.which("ffprobe")
+        if ffprobe is not None:
+            return Path(ffprobe)
+        raise RuntimeError("Could not find ffprobe.")
 
     @classmethod
     def from_dict(cls, data):
@@ -93,23 +118,11 @@ class PathsConfig:
             self.chrome = Path(self.chrome)
 
     def validate(self):
-        assert shutil.which(self.ffmpeg) is not None
-        assert self.slippi_playback.expanduser().exists()
-        assert self.ssbm_iso.expanduser().exists()
-
-    def get_ffprobe(self):
-        if self.ffprobe is not None:
-            return self.ffprobe
-        # Assume it's relative to ffmpeg
-        suffix = self.ffmpeg.suffix
-        ffprobe = self.ffmpeg.parent / f"ffprobe{suffix}"
-        if ffprobe.exists():
-            return ffprobe
-        # Try to find in path
-        ffprobe = shutil.which("ffprobe")
-        if ffprobe is not None:
-            return Path(ffprobe)
-        raise RuntimeError("Could not find ffprobe.")
+        assert _check_file(self.ffmpeg_path)
+        assert _check_file(self.slippi_playback)
+        assert _check_file(self.ssbm_iso)
+        assert _check_file(self.ffprobe_path)
+        assert (self.chrome is None) or _check_file(self.chrome)
 
 
 @dataclasses.dataclass
@@ -171,9 +184,6 @@ class RuntimeConfig:
     name_replacements: dict[str, str] = dataclasses.field(
         metadata={"help": "Mapping of characters to replace in video titles"}
     )
-    combine_mode: CombineMode = dataclasses.field(
-        metadata={"help": "How to combine set videos; None = separate sets"}
-    )
     use_context_json: bool = dataclasses.field(
         metadata={
             "help": "Use context.json files (if found) when naming / sorting videos"
@@ -192,7 +202,6 @@ class RuntimeConfig:
             preserve_directory_structure=data["preserve_directory_structure"],
             youtubify_names=data["youtubify_names"],
             name_replacements=data["name_replacements"],
-            combine_mode=CombineMode(data["combine_mode"]),
             use_context_json=data["use_context_json"],
             exclude_streamed_sets=data["exclude_streamed_sets"],
         )
@@ -383,11 +392,15 @@ class RuntimeOptions:
         default=False,
         metadata={"short": "m", "help": "Continuously watch input directories"},
     )
+    debug: bool = dataclasses.field(
+        default=False, metadata={"help": "Enables extra logging; saves temporary files"}
+    )
     temporary_directory: Path | None = dataclasses.field(
         default=None,
         metadata={
             "short": "t",
             "help": "Where to write temp videos; leave blank for system default",
+            "is_directory": True,
         },
     )
     output_directory: Path = dataclasses.field(
@@ -398,7 +411,10 @@ class RuntimeOptions:
             "is_directory": True,
         },
     )
-    debug: bool = dataclasses.field(default=False)
+    combine_mode: CombineMode = dataclasses.field(
+        default=CombineMode.NONE,
+        metadata={"help": "How to combine set videos; None = separate sets"},
+    )
 
 
 def _load_configs(config_files: list[Path]) -> Config:
@@ -428,7 +444,9 @@ def get_config(config_files: list[Path] | None = None):
 
 def is_optional_type(field_type):
     t = typing.get_origin(field_type)
-    return t in [typing.Union, UnionType]
+    return (t in [typing.Union, UnionType]) and (
+        type(None) in typing.get_args(field_type)
+    )
 
 
 def get_optional_type(field_type):

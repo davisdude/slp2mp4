@@ -1,5 +1,6 @@
 import dataclasses
 import signal
+import typing
 from argparse import ArgumentParser, ArgumentTypeError, BooleanOptionalAction
 from enum import Enum
 from multiprocessing import Event
@@ -47,34 +48,34 @@ def enum_parser(enum_type, display_values):
 # TODO: Nested fields don't work very well
 def add_config_option_to_parser(parser, config_type, prefix=""):
     for field in dataclasses.fields(config_type):
-        field_type = field.type
         metadata = getattr(field, "metadata", {})
         kwargs = {}
         if (default := field.default) is not None:
             kwargs["default"] = default
         if help_text := metadata.get("help"):
             kwargs["help"] = help_text
-        if config.is_optional_type(field_type):
-            field_type = config.get_optional_type(field_type)
-        if field_type is bool:
+        if config.is_optional_type(field.type):
+            field.type = config.get_optional_type(field.type)
+        if field.type is bool:
             if (default is True) or (default is False):
                 kwargs["action"] = "store_false" if default else "store_true"
             else:
                 kwargs["action"] = BooleanOptionalAction
-        elif isinstance(field_type, type) and issubclass(field_type, Enum):
-            display_values = util.get_enum_display_values(field_type)
-            kwargs["type"] = enum_parser(field_type, display_values)
-            kwargs["choices"] = list(field_type)
+        elif isinstance(field.type, type) and issubclass(field.type, Enum):
+            display_values = util.get_enum_display_values(field.type)
+            kwargs["type"] = enum_parser(field.type, display_values)
+            kwargs["choices"] = list(field.type)
             kwargs["metavar"] = "{" + ",".join(display_values) + "}"
         else:
-            kwargs["type"] = field_type
+            kwargs["type"] = field.type
         name = field.name.replace("_", "-")
         args = []
         if short := metadata.get("short"):
             args.append(f"-{short}")
         long_name = f"--{prefix}-{name}" if prefix else f"--{name}"
         args.append(long_name)
-        if (field_type is not dict) and (not metadata.get("multiline", False)):
+        not_dict = typing.get_origin(field.type) is not dict
+        if not_dict and not metadata.get("multiline", False):
             parser.add_argument(*args, **kwargs)
 
 
@@ -123,9 +124,11 @@ def main():
         conf=conf,
         kill_event=kill_event,
         collector=collector,
+        combine_mode=args.combine_mode,
         dry_run=args.dry_run,
         workdir=args.temporary_directory,
         output_directory=args.output_directory,
+        debug=args.debug,
     )
     orchestrator.run()
 

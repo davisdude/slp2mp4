@@ -1,6 +1,7 @@
 # GUI frontend
 
 import dataclasses
+import math
 import threading
 import tkinter as tk
 import webbrowser
@@ -14,6 +15,7 @@ import tomli_w
 from slp2mp4 import config, log, util
 from slp2mp4.collector import Collector
 from slp2mp4.config import (
+    CombineMode,
     DolphinBackend,
     DolphinResolution,
     ScoreboardType,
@@ -46,19 +48,22 @@ def build_notebook(variables, parent, obj, prefix=None):
     return notebook
 
 
-def build_dataclass(variables, parent, obj, prefix=None):
+def build_dataclass(variables, parent, obj, prefix=None, cols=1):
     if prefix is None:
         prefix = ()
-    row = 0
-    for field in dataclasses.fields(obj):
+    fields = dataclasses.fields(obj)
+    rows_per_column = math.ceil(len(fields) / cols)
+    for i, field in enumerate(fields):
+        row = 2 * (i % rows_per_column)
+        col = 2 * math.floor(i / rows_per_column)
         value = getattr(obj, field.name)
         key = prefix + (field.name,)
         if dataclasses.is_dataclass(field.type):
             widget = ttk.LabelFrame(parent, text=field.name.title())
-            build_dataclass(variables, widget, value, key)
+            build_dataclass(variables, widget, value, prefix=key, cols=cols)
         else:
             ttk.Label(parent, text=field.name.replace("_", " ").title()).grid(
-                row=row, column=0, sticky="w"
+                row=row, column=col, sticky="w"
             )
             widget = build_widget(
                 variables=variables,
@@ -67,13 +72,10 @@ def build_dataclass(variables, parent, obj, prefix=None):
                 value=value,
                 field=field,
             )
-        widget.grid(row=row, column=1, sticky="ew")
-        row += 1
-
+        widget.grid(row=row, column=col + 1, sticky="ew")
         if (metadata := field.metadata) and (help_text := metadata.get("help")):
             label = ttk.Label(parent, text=help_text, foreground="gray40")
-            label.grid(row=row, column=0, columnspan=2, sticky="w")
-            row += 1
+            label.grid(row=row + 1, column=col, columnspan=2, sticky="w")
 
 
 def is_dict_of_type(d, t):
@@ -349,7 +351,7 @@ class Application(tk.Tk):
     def make_runtime_options(self):
         frame = ttk.LabelFrame(self, text="Runtime")
         frame.pack(fill="both", expand=True, padx=10, pady=10)
-        build_dataclass(self.variables, frame, self.runtime_options, prefix=())
+        build_dataclass(self.variables, frame, self.runtime_options, prefix=(), cols=2)
 
     def make_actions(self):
         frame = ttk.LabelFrame(self, text="Actions")
@@ -415,9 +417,11 @@ class Application(tk.Tk):
             conf=conf,
             kill_event=self.kill_event,
             collector=collector,
+            combine_mode=CombineMode(self.variables[("combine_mode",)].get()),
             dry_run=self.variables[("dry_run",)].get(),
             workdir=workdir,
             output_directory=Path(self.variables[("output_directory",)].get()),
+            debug=debug,
         )
         threading.Thread(target=orchestrator.run).start()
 

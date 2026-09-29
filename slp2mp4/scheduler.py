@@ -3,8 +3,10 @@
 import copy
 import dataclasses
 from collections import deque
+from logging import Logger
 from threading import RLock
 
+from slp2mp4 import log
 from slp2mp4.artifact import Artifact, ExistingFileArtifact
 from slp2mp4.task import Task
 
@@ -18,6 +20,7 @@ class Scheduler:
     ready_tasks: deque[Task] = dataclasses.field(default_factory=deque)
     running_tasks: set[Task] = dataclasses.field(default_factory=set)
     completed_tasks: set[Task] = dataclasses.field(default_factory=set)
+    failed_tasks: set[Task] = dataclasses.field(default_factory=set)
 
     waiting_on: dict[Task, set[Task]] = dataclasses.field(default_factory=dict)
     dependents: dict[Task, set[Task]] = dataclasses.field(default_factory=dict)
@@ -27,9 +30,11 @@ class Scheduler:
     full_resources: dict[str, float] = dataclasses.field(
         default_factory=dict, init=False
     )
+    log: Logger = dataclasses.field(init=False)
 
     def __post_init__(self):
         self.full_resources = copy.deepcopy(self.available_resources)
+        self.log = log.get_logger()
 
     def submit(self, tasks: list[Task]):
         with self.lock:
@@ -52,12 +57,22 @@ class Scheduler:
                 self.dependents[task] = set()
 
             for task in tasks:
+                task_failed = False
                 for i in task.inputs:
+                    if task_failed:
+                        continue
                     if isinstance(i, ExistingFileArtifact):
                         continue
                     upstream = self.producers.get(i)
                     if upstream is None:
                         raise RuntimeError(f"No producer found for artifact '{i}'.")
+                    if upstream in self.failed_tasks:
+                        self.log.error(
+                            f"Parent task {upstream} failed to produce {i} - skipping {task}"
+                        )
+                        self.mark_failed(task)
+                        task_failed = True
+                        continue
                     self.dependents[upstream].add(task)
                     if upstream in self.completed_tasks:
                         continue
@@ -100,6 +115,17 @@ class Scheduler:
                     self.ready_tasks.appendleft(dependent)
             self.running_tasks.remove(task)
             self.completed_tasks.add(task)
+
+    def mark_failed(self, task: Task):
+        self.log.info(f"Marking task '{task.name}' as failed")
+        with self.lock:
+            self.failed_tasks.add(task)
+            if task in self.running_tasks:
+                self.running_tasks.remove(task)
+            if task in self.ready_tasks:
+                self.ready_tasks.remove(task)
+            for dependent in self.dependents[task]:
+                self.mark_failed(dependent)
             task.cleanup()
 
     def get_leaves(self):
