@@ -353,7 +353,6 @@ class Config:
         data = dataclasses.asdict(self)
         data["dolphin"]["backend"] = data["dolphin"]["backend"].value
         data["dolphin"]["resolution"] = data["dolphin"]["resolution"].display_name
-        data["runtime"]["combine_mode"] = data["runtime"]["combine_mode"].value
         data["scoreboard"]["type"] = data["scoreboard"]["type"].value
         self._convert_paths_to_strs(data)
         return data
