@@ -165,6 +165,7 @@ class Orchestrator:
                     self.conf.scoreboard, artifacts, videos
                 )
             ):
+                input_by_task[task] = input_item
                 yield [task]
                 videos[i] = task.video
 
