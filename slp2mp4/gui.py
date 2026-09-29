@@ -27,6 +27,7 @@ except ImportError:
 
 HOME_PAGE = "https://github.com/davisdude/slp2mp4"
 LICENSE_PAGE = f"{HOME_PAGE}/blob/master/LICENSE.md"
+FFMPEG_LICENSE_PATH = Path("_internal/lib/ffmpeg/LICENSE")
 
 
 def build_dataclass(variables, parent, obj, prefix=None, cols=1):
@@ -248,21 +249,36 @@ class AboutDialog(tk.Toplevel):
         self.create_widgets()
 
     def create_widgets(self):
-        frame = ttk.LabelFrame(self, text="About")
-        frame.pack(fill="both", expand=True, padx=10, pady=10)
+        self.rowconfigure(0, weight=1)
+        self.columnconfigure(0, weight=1)
 
-        ttk.Label(frame, text="Version").grid(row=0, column=0, sticky="w")
-        ttk.Label(frame, text=__version__).grid(row=0, column=1, sticky="w")
+        links = (
+            ("home_page", HOME_PAGE),
+            ("license_page", LICENSE_PAGE),
+            ("ffmpeg", "https://ffmpeg.org/"),
+            ("ffmpeg_license", str(FFMPEG_LICENSE_PATH)),
+        )
+        text = tk.Text(self, borderwidth=0, wrap=tk.WORD)
+        text.grid(row=0, column=0, sticky="ew")
+        text.insert("end", f"slp2mp4 {__version__}\n\n")
+        text.insert("end", "Homepage: ")
+        text.insert("end", HOME_PAGE, "home_page")
+        text.insert("end", "\nLicense: ")
+        text.insert("end", LICENSE_PAGE, "license_page")
 
-        ttk.Label(frame, text="Hopepage").grid(row=1, column=0, sticky="w")
-        link = ttk.Label(frame, text=HOME_PAGE, foreground="blue", cursor="hand2")
-        link.grid(row=1, column=1, sticky="w")
-        link.bind("<Button-1>", lambda _: webbrowser.open(HOME_PAGE))
+        if FFMPEG_LICENSE_PATH.exists():
+            text.insert("end", "\n\nThis build includes a bundled version of ")
+            text.insert("end", "FFmpeg", "ffmpeg")
+            text.insert("end", ". Its license can be found at ")
+            text.insert("end", str(FFMPEG_LICENSE_PATH), "ffmpeg_license")
 
-        ttk.Label(frame, text="License").grid(row=2, column=0, sticky="w")
-        link = ttk.Label(frame, text=LICENSE_PAGE, foreground="blue", cursor="hand2")
-        link.grid(row=2, column=1, sticky="w")
-        link.bind("<Button-1>", lambda _: webbrowser.open(LICENSE_PAGE))
+        for link_tag, link_location in links:
+            text.tag_config(link_tag, foreground="blue", underline=True)
+            text.tag_bind(
+                link_tag,
+                "<Button-1>",
+                lambda _, url=link_location: webbrowser.open(url),
+            )
 
 
 class Application(tk.Tk):
