@@ -167,14 +167,11 @@ class SharedScoreboard(ScoreboardBase):
 @dataclasses.dataclass
 class SplitScoreboard(ScoreboardBase):
     logo: Path = dataclasses.field(default=None)
-    logo_right: Path = dataclasses.field(default=None)
 
     def __post_init__(self):
         super().__post_init__()
         if self.logo is None:
             self.logo = DEFAULT_LOGO_PATH
-        if self.logo_right is None:
-            self.logo_right = DEFAULT_LOGO_PATH
         if abs(self.input_aspect_ratio - MELEE_ASPECT_RATIO) > 1e-3:
             raise RuntimeError("Split scoreboard must not be widescreen")
 

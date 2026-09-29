@@ -198,7 +198,6 @@ A scoreboard where the gameplay is cenetered and info is on either side. Does
 not support widescreen.
 
 - `logo`: Path to logo; defaults to `slp2mp4` logo
-- `logo_right`: Path to secondary logo
 
 ![](images/split.jpg)
 
