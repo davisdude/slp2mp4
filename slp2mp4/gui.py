@@ -110,10 +110,7 @@ def build_widget(variables, parent, key, value, field, field_type=None):
         field_type = field.type
     if config.is_optional_type(field_type):
         field_type = config.get_optional_type(field_type)
-        default_value = None
-        if (field_type is Path) or (field_type is str):
-            default_value = ""
-        value = value if (value is not None) else default_value
+        value = value if (value is not None) else ""
         return build_widget(variables, parent, key, value, field, field_type)
     elif field_type is bool:
         var = tk.BooleanVar(value=value)
@@ -235,6 +232,8 @@ class ConfigDialog(tk.Toplevel):
         for t in ("shared", "split"):
             if data["scoreboard"][t]["logo"].strip() == "":
                 data["scoreboard"][t]["logo"] = None
+        if data["scoreboard"]["custom"]["ratio"].strip() == "":
+            data["scoreboard"]["custom"]["ratio"] = None
         if data["scoreboard"]["custom"]["html_path"].strip() == "":
             data["scoreboard"]["custom"]["html_path"] = None
         if data["scoreboard"]["custom"]["css_path"].strip() == "":
