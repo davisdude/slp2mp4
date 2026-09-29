@@ -318,7 +318,9 @@ class ScoreboardConfig:
     type: ScoreboardType
     timezone: TzEnum = dataclasses.field(
         metadata={
-            "help": "IANA timezone; Used for to get date for scoreboards; blank = local timezone"
+            "help_all": True,
+            "help_all_metavar": "timezone; see --help-all",
+            "help": "IANA timezone; Used for to get date for scoreboards; blank = local timezone",
         }
     )
     theme: ScoreboardUserData

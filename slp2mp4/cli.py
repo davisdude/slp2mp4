@@ -1,7 +1,7 @@
 import dataclasses
 import signal
 import typing
-from argparse import ArgumentParser, ArgumentTypeError, BooleanOptionalAction
+from argparse import SUPPRESS, ArgumentParser, ArgumentTypeError, BooleanOptionalAction
 from enum import Enum
 from multiprocessing import Event
 from pathlib import Path
@@ -45,17 +45,29 @@ def enum_parser(enum_type, display_values):
     return parse
 
 
-def add_config_option_to_parser(parser, config_type, prefix=""):
+def add_config_option_to_parser(
+    parser, config_type, prefix="", help_most=True, help_all=False
+):
     for field in dataclasses.fields(config_type):
         metadata = getattr(field, "metadata", {})
         kwargs = {}
         name = field.name.replace("_", "-")
         if dataclasses.is_dataclass(field.type):
-            add_config_option_to_parser(parser, field.type, f"{prefix}-{name}")
+            add_config_option_to_parser(
+                parser, field.type, f"{prefix}-{name}", help_most, help_all
+            )
             continue
         if (default := field.default) is not None:
             kwargs["default"] = default
-        if help_text := metadata.get("help"):
+        metavar = metadata.get("metavar")
+        if (not help_all) and metadata.get("help_all", False) and not metavar:
+            if metavar := metadata.get("help_all_metavar"):
+                kwargs["metavar"] = metavar
+            else:
+                kwargs["help"] = SUPPRESS
+        elif not help_most:
+            kwargs["help"] = SUPPRESS
+        elif help_text := metadata.get("help"):
             kwargs["help"] = help_text
         if config.is_optional_type(field.type):
             field.type = config.get_optional_type(field.type)
@@ -68,7 +80,8 @@ def add_config_option_to_parser(parser, config_type, prefix=""):
             display_values = util.get_enum_display_values(field.type)
             kwargs["type"] = enum_parser(field.type, display_values)
             kwargs["choices"] = list(field.type)
-            kwargs["metavar"] = "{" + ",".join(display_values) + "}"
+            if "metavar" not in kwargs:
+                kwargs["metavar"] = "{" + ",".join(display_values) + "}"
         else:
             kwargs["type"] = field.type
         args = []
@@ -97,15 +110,28 @@ def update_conf_from_args(args, conf, obj=None, prefix=""):
             setattr(obj, field.name, arg_value)
 
 
-def main():
+def make_parser(help_most=False, help_all=False):
+    if help_all:
+        help_most = True
+    print(f"{help_most = } {help_all = }")
     parser = ArgumentParser(prog="slp2mp4")
     parser.add_argument("inputs", type=Path, nargs="+")
+    parser.add_argument("--help-most", help="show most help", action="help")
+    parser.add_argument("--help-all", help="show all help", action="help")
     parser.add_argument("-v", "--version", action="version", version=__version__)
-
     add_config_option_to_parser(parser, RuntimeOptions)
     for field in dataclasses.fields(Config):
-        add_config_option_to_parser(parser, field.type, field.name)
+        add_config_option_to_parser(parser, field.type, field.name, help_most, help_all)
+    return parser
 
+
+def main():
+    initial = ArgumentParser(add_help=False)
+    initial.add_argument("--help-most", action="store_true")
+    initial.add_argument("--help-all", action="store_true")
+    initial_args, _ = initial.parse_known_args()
+
+    parser = make_parser(initial_args.help_most, initial_args.help_all)
     args = parser.parse_args()
 
     stop_event = Event()

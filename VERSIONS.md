@@ -3,6 +3,7 @@
 ## In-Progress
 
 - Initial scoreboard implementation ([#7](https://github.com/davisdude/slp2mp4/issues/7))
+- Added `--help-most` and `--help-all`
 
 - Totally reworked all internals
 - Removed `prepend_directory` option
