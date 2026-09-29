@@ -6,7 +6,7 @@ import threading
 import tkinter as tk
 import webbrowser
 from enum import Enum
-from multiprocessing import Event
+from multiprocessing import Event, freeze_support
 from pathlib import Path
 from tkinter import filedialog, scrolledtext, ttk
 
@@ -411,4 +411,7 @@ def main():
 
 
 if __name__ == "__main__":
+    # https://pyinstaller.org/en/stable/common-issues-and-pitfalls.html#multi-processing
+    # ttk internally uses multiprocessing
+    freeze_support()
     main()
