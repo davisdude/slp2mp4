@@ -166,15 +166,15 @@ class Collector:
             else:
                 name = relative.parent / (relative.name + ".mp4")
 
+            for p in path.iterdir():
+                yield from self._recurse(input_path, p, relative / p.name, in_zip, True)
+
             if in_zip or not self.monitor:
                 slps = self._get_dir_slps(path)
                 if slps:
                     yield input_path, ConcatRequest(name, slps)
             else:
                 self.to_concat[path] = (input_path, name)
-
-            for p in path.iterdir():
-                yield from self._recurse(input_path, p, relative / p.name, in_zip, True)
 
     def _get_dir_slps(self, path: Path):
         slp_paths = tuple(sorted(path.glob("*.slp"), key=util.natsort))
