@@ -77,11 +77,10 @@ class Pipeline:
     def _sort_tasks(self, tasks: list[Task], phase_by_task: dict[Task, Phase]):
         return sorted(tasks, key=self._get_sorting_func(phase_by_task))
 
-    def get_render_tasks(self, slps: list[SlippiArtifact]):
-        for slp in slps:
-            output = self._make_tmp_mp4()
-            name = slp.path.with_suffix(".mp4").name
-            yield RenderGameTask(f"render {slp}", [slp], [output], Path(name))
+    def get_render_task(self, slp: SlippiArtifact):
+        output = self._make_tmp_mp4()
+        name = slp.path.with_suffix(".mp4").name
+        yield RenderGameTask(f"render {slp}", [slp], [output], Path(name))
 
     def get_scoreboard_tasks(
         self,
@@ -98,7 +97,7 @@ class Pipeline:
                 f"scoreboard {video}", [slp, video], [out], Path(name)
             )
 
-    def get_concat_tasks(self, videos: list[Mp4Artifact], path: Path):
+    def get_concat_task(self, videos: list[Mp4Artifact], path: Path):
         if len(videos) > 1:
             yield self._concat_task(f"concat {path}", videos, path)
 

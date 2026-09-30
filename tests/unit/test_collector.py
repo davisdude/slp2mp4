@@ -1,9 +1,12 @@
 import zipfile
 from io import BytesIO
+from multiprocessing import Event
 from pathlib import Path
 
+import pytest
+
 from slp2mp4.artifact import ContextArtifact, SlippiArtifact
-from slp2mp4.collector import Collector
+from slp2mp4.collector import Collector, ConcatRequest, RenderRequest
 
 
 def zip_bytes(entries: dict[str, dict | Path]) -> bytes:
@@ -22,11 +25,14 @@ def zip_bytes(entries: dict[str, dict | Path]) -> bytes:
 def test_collector_single_file(tmp_path):
     test_slp = tmp_path / "g1.slp"
     test_slp.touch()
-    test_mp4 = test_slp.with_suffix(".mp4")
     collector = Collector([test_slp])
-    items = list(collector.next())
-    expected = (test_slp, test_mp4, [SlippiArtifact(test_slp)])
-    assert items == [expected]
+    requests = set(collector.next())
+    collector.cleanup()
+
+    mp4 = Path("g1.mp4")
+    slp = SlippiArtifact(test_slp)
+    expected = {(test_slp, RenderRequest(slp)), (test_slp, ConcatRequest(mp4, (slp,)))}
+    assert requests == expected
 
 
 def test_collector_context(tmp_path):
@@ -34,71 +40,91 @@ def test_collector_context(tmp_path):
     for slp in test_slps:
         slp.touch()
     test_slp = test_slps[1]
-    test_mp4 = test_slp.with_suffix(".mp4")
-    context = tmp_path / "context.json"
-    context.touch()
+    context_path = tmp_path / "context.json"
+    context_path.touch()
+    context = ContextArtifact(context_path)
     collector = Collector([test_slp])
-    items = list(collector.next())
+    requests = set(collector.next())
+    collector.cleanup()
 
-    assert len(items) == 1
-    item_input, final_name, collection = items[0]
-
-    assert item_input == test_slp
-    assert final_name == test_mp4
-    assert collection == [SlippiArtifact(test_slp, 1, ContextArtifact(context))]
+    mp4 = Path("g2.mp4")
+    slp = SlippiArtifact(test_slp, 1, context)
+    expected = {(test_slp, RenderRequest(slp)), (test_slp, ConcatRequest(mp4, (slp,)))}
+    assert requests == expected
 
 
 def test_collector_multiple_files(tmp_path):
     test_slps = [tmp_path / f"{p}.slp" for p in ["g1", "g2"]]
-    test_mp4s = [slp.with_suffix(".mp4") for slp in test_slps]
     for slp in test_slps:
         slp.touch()
-    artifacts = [[SlippiArtifact(slp)] for slp in test_slps]
     collector = Collector(test_slps)
-    items = list(collector.next())
-    expected = [tup for tup in zip(test_slps, test_mp4s, artifacts)]
-    assert items == expected
+    requests = set(collector.next())
+    collector.cleanup()
+
+    slps = [SlippiArtifact(slp, i) for i, slp in enumerate(test_slps)]
+    mp4s = [Path("g1.mp4"), Path("g2.mp4")]
+    expected = {
+        *{(test, RenderRequest(slp)) for test, slp in zip(test_slps, slps)},
+        *{
+            (test, ConcatRequest(mp4, (slp,)))
+            for test, mp4, slp in zip(test_slps, mp4s, slps)
+        },
+    }
+    assert requests == expected
 
 
 def test_collector_single_dir(tmp_path):
     test_slp = tmp_path / "foo/bar/baz/g1.slp"
     test_slp.parent.mkdir(parents=True)
     test_slp.touch()
-    test_mp4 = test_slp.with_suffix(".mp4")
-    collector = Collector([test_slp])
-    items = list(collector.next())
-    expected = (test_slp, test_mp4, [SlippiArtifact(test_slp)])
-    assert items == [expected]
+    test_dir = test_slp.parent
+    collector = Collector([test_dir])
+    requests = set(collector.next())
+    collector.cleanup()
+
+    slp = SlippiArtifact(test_slp)
+    mp4 = Path("baz.mp4")
+    expected = {
+        (test_dir, RenderRequest(slp)),
+        (test_dir, ConcatRequest(mp4, (slp,))),
+    }
+    assert requests == expected
 
 
 def test_collector_nested_simple_dir(tmp_path):
     test_slp = tmp_path / "foo/bar/baz/g1.slp"
     test_slp.parent.mkdir(parents=True)
     test_slp.touch()
-    test_mp4 = Path("foo/bar/baz.mp4")
     collector = Collector([tmp_path])
-    items = list(collector.next())
-    expected = (tmp_path, test_mp4, [SlippiArtifact(test_slp)])
-    assert items == [expected]
+    requests = set(collector.next())
+    collector.cleanup()
+
+    slp = SlippiArtifact(test_slp)
+    mp4 = Path("foo/bar/baz.mp4")
+    expected = {
+        (tmp_path, RenderRequest(slp)),
+        (tmp_path, ConcatRequest(mp4, (slp,))),
+    }
+    assert requests == expected
 
 
 def test_collector_nested_complex_dir(tmp_path):
     # tmp_path
+    # ├── g0.slp
     # ├── g1.slp
     # ├── g2.slp
-    # ├── g3.slp
     # ├── single
+    # │   ├── g0.slp
     # │   ├── g1.slp
-    # │   ├── g2.slp
-    # │   └── g3.slp
+    # │   └── g2.slp
     # └── double
+    #     ├── g0.slp
     #     ├── g1.slp
     #     ├── g2.slp
-    #     ├── g3.slp
     #     └── nested
+    #         ├── g0.slp
     #         ├── g1.slp
-    #         ├── g2.slp
-    #         └── g3.slp
+    #         └── g2.slp
     base_dir = tmp_path
     directories = [
         base_dir,
@@ -106,135 +132,188 @@ def test_collector_nested_complex_dir(tmp_path):
         base_dir / "double",
         base_dir / "double" / "nested",
     ]
-    expected_names = [
+    slps = []
+    for d in directories:
+        d.mkdir(exist_ok=True, parents=True)
+        for i in range(3):
+            path = d / f"g{i}.slp"
+            path.touch()
+    collector = Collector([tmp_path])
+    requests = set(collector.next())
+    collector.cleanup()
+
+    slps = [
+        tuple(SlippiArtifact(d / f"g{i}.slp", i) for i in range(3)) for d in directories
+    ]
+    mp4s = [
         Path(base_dir.name + ".mp4"),
         Path("single.mp4"),
         Path("double.mp4"),
         Path("double/nested.mp4"),
     ]
-    for d in directories:
-        d.mkdir(exist_ok=True, parents=True)
-        for i in range(1, 4):
-            path = d / f"g{i}.slp"
-            path.touch()
-
-    test_path = tmp_path
-    collector = Collector([test_path])
-    items = list(collector.next())
-
-    assert len(items) == 4
-
-    for d, e in zip(directories, expected_names):
-        expected_collection = [
-            SlippiArtifact(d / f"g{i}.slp", i - 1) for i in range(1, 4)
-        ]
-        expected_base = (tmp_path, e, expected_collection)
-        assert expected_base in items
+    expected = {
+        *{(tmp_path, RenderRequest(slp)) for slps in slps for slp in slps},
+        *{(tmp_path, ConcatRequest(mp4, slps)) for slps, mp4 in zip(slps, mp4s)},
+    }
+    assert requests == expected
 
 
 def test_collector_zip_simple(tmp_path):
     # tmp_path/test.zip
+    # ├── g0.slp
     # ├── g1.slp
-    # ├── g2.slp
-    # └── g3.slp
+    # └── g2.slp
     test_dir = tmp_path
-    slp_files = {f"g{i}.slp": "" for i in range(1, 4)}
+    slp_files = {f"g{i}.slp": "" for i in range(3)}
     archive_tree = slp_files
     test_zip = test_dir / "test.zip"
     test_zip.write_bytes(zip_bytes(archive_tree))
-
     collector = Collector([test_zip])
-    items = list(collector.next())
+    requests = set(collector.next())
+    collector.cleanup()
 
-    assert len(items) == 1
-    item_input, final_name, collection = items[0]
+    # Cannot do typical comparison because of zip's temp dirs
+    inputs = {i for i, _req in requests}
+    assert inputs == {test_zip}
 
-    assert item_input == test_zip
-    assert final_name == Path("test.mp4")
-    assert [file.path.name for file in collection] == [
-        "g1.slp",
-        "g2.slp",
-        "g3.slp",
-    ]
+    render_requests = {req for _i, req in requests if isinstance(req, RenderRequest)}
+    concat_requests = {req for _i, req in requests if isinstance(req, ConcatRequest)}
+
+    render_props = {(req.slp.path.name, req.slp.index) for req in render_requests}
+    expected_render_props = tuple((f"g{i}.slp", i) for i in range(3))
+    assert render_props == set(expected_render_props)
+
+    concat_props = {
+        (req.final, tuple((slp.path.name, slp.index) for slp in req.slps))
+        for req in concat_requests
+    }
+    expected_concat_props = {(Path("test.mp4"), expected_render_props)}
+    assert concat_props == expected_concat_props
 
 
 def test_collector_zip_in_dir(tmp_path):
     # tmp_path/foo/bar/baz/test.zip
+    # ├── g0.slp
     # ├── g1.slp
-    # ├── g2.slp
-    # └── g3.slp
+    # └── g2.slp
     test_dir = tmp_path / "foo/bar/baz"
     test_dir.mkdir(parents=True)
-    slp_files = {f"g{i}.slp": "" for i in range(1, 4)}
+    slp_files = {f"g{i}.slp": "" for i in range(3)}
     archive_tree = slp_files
     test_zip = test_dir / "test.zip"
     test_zip.write_bytes(zip_bytes(archive_tree))
-
     collector = Collector([tmp_path])
-    items = list(collector.next())
+    requests = list(collector.next())
+    collector.cleanup()
 
-    assert len(items) == 1
-    item_input, final_name, collection = items[0]
+    # Cannot do typical comparison because of zip's temp dirs
+    inputs = {i for i, _req in requests}
+    assert inputs == {tmp_path}
 
-    assert item_input == tmp_path
-    assert final_name == Path("foo/bar/baz/test.mp4")
-    assert [file.path.name for file in collection] == [
-        "g1.slp",
-        "g2.slp",
-        "g3.slp",
-    ]
+    render_requests = {req for _i, req in requests if isinstance(req, RenderRequest)}
+    concat_requests = {req for _i, req in requests if isinstance(req, ConcatRequest)}
+
+    render_props = {(req.slp.path.name, req.slp.index) for req in render_requests}
+    expected_render_props = tuple((f"g{i}.slp", i) for i in range(3))
+    assert render_props == set(expected_render_props)
+
+    concat_props = {
+        (req.final, tuple((slp.path.name, slp.index) for slp in req.slps))
+        for req in concat_requests
+    }
+    expected_concat_props = {(Path("foo/bar/baz/test.mp4"), expected_render_props)}
+    assert concat_props == expected_concat_props
 
 
 def test_collector_zip_complex(tmp_path):
     # tmp_path/test.zip
+    # ├── g0.slp
     # ├── g1.slp
     # ├── g2.slp
-    # ├── g3.slp
     # ├── single.zip
-    # │   ├── g1.slp
-    # │   ├── g2.slp
-    # │   └── g3.slp
+    # │   ├── g3.slp
+    # │   ├── g4.slp
+    # │   └── g5.slp
     # └── double.zip
-    #     ├── g1.slp
-    #     ├── g2.slp
-    #     ├── g3.slp
+    #     ├── g6.slp
+    #     ├── g7.slp
+    #     ├── g8.slp
     #     └── nested.zip
-    #         ├── g1.slp
-    #         ├── g2.slp
-    #         └── g3.slp
+    #         ├── g9.slp
+    #         ├── g10.slp
+    #         └── g11.slp
     test_dir = tmp_path
-    slp_files = {f"g{i}.slp": "" for i in range(1, 4)}
     archive_tree = {
-        **slp_files,
-        "single.zip": slp_files,
+        **{f"g{i}.slp": "" for i in range(3)},
+        "single.zip": {f"g{i}.slp": "" for i in range(3, 6)},
         "double.zip": {
-            **slp_files,
-            "nested.zip": slp_files,
+            **{f"g{i}.slp": "" for i in range(6, 9)},
+            "nested.zip": {f"g{i}.slp": "" for i in range(9, 12)},
         },
     }
     test_zip = test_dir / "test.zip"
     test_zip.write_bytes(zip_bytes(archive_tree))
-
     collector = Collector([test_zip])
-    items = list(collector.next())
+    requests = set(collector.next())
+    collector.cleanup()
 
-    assert len(items) == 4
+    # Cannot do typical comparison because of zip's temp dirs
+    inputs = {i for i, _req in requests}
+    assert inputs == {test_zip}
 
-    expected_names = {
-        Path("test.mp4"),
-        Path("test/single.mp4"),
-        Path("test/double.mp4"),
-        Path("test/double/nested.mp4"),
+    render_requests = {req for _i, req in requests if isinstance(req, RenderRequest)}
+    concat_requests = {req for _i, req in requests if isinstance(req, ConcatRequest)}
+
+    render_props = {(req.slp.path.name, req.slp.index) for req in render_requests}
+    expected_render_props = tuple(
+        tuple((f"g{i + j * 3}.slp", i) for i in range(3)) for j in range(4)
+    )
+    assert render_props == {p for prop in expected_render_props for p in prop}
+
+    concat_props = {
+        (req.final, tuple((slp.path.name, slp.index) for slp in req.slps))
+        for req in concat_requests
     }
-    final_names = set()
+    expected_names = [
+        "test.mp4",
+        "test/single.mp4",
+        "test/double.mp4",
+        "test/double/nested.mp4",
+    ]
+    expected_concat_props = {
+        (Path(name), prop) for name, prop in zip(expected_names, expected_render_props)
+    }
+    assert concat_props == expected_concat_props
 
-    for item_input, final_name, collection in items:
-        assert item_input == test_zip
-        assert [file.path.name for file in collection] == [
-            "g1.slp",
-            "g2.slp",
-            "g3.slp",
-        ]
-        final_names.add(final_name)
 
-    assert expected_names == final_names
+def test_collector_monitor_directory_grows(tmp_path):
+    test_dir = tmp_path / "set"
+    test_dir.mkdir()
+    stop_event = Event()
+    collector = Collector([test_dir], monitor=True, stop_event=stop_event)
+    iterator = collector.next()
+
+    g0 = test_dir / "g0.slp"
+    g0.touch()
+    input_path, request = next(iterator)
+    assert input_path == test_dir
+    assert request == RenderRequest(SlippiArtifact(g0))
+
+    g1 = test_dir / "g1.slp"
+    g1.touch()
+    input_path, request = next(iterator)
+    assert input_path == test_dir
+    assert request == RenderRequest(SlippiArtifact(g1, 1))
+
+    stop_event.set()
+    input_path, request = next(iterator)
+    assert input_path == test_dir
+    assert isinstance(request, ConcatRequest)
+
+    assert request.final == Path("set.mp4")
+    assert request.slps == (SlippiArtifact(g0, 0), SlippiArtifact(g1, 1))
+
+    with pytest.raises(StopIteration):
+        next(iterator)
+
+    collector.cleanup()

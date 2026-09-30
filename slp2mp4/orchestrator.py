@@ -16,7 +16,7 @@ import psutil
 
 from slp2mp4 import log, util
 from slp2mp4.artifact import Artifact, ContextArtifact, Mp4Artifact, SlippiArtifact
-from slp2mp4.collector import Collector
+from slp2mp4.collector import Collector, ConcatRequest, RenderRequest
 from slp2mp4.config import CombineMode, Config
 from slp2mp4.pipeline import Pipeline
 from slp2mp4.scheduler import Scheduler
@@ -65,6 +65,7 @@ class Orchestrator:
         slps = self.get_slps(task.video)
         return list({slp.context for slp in slps})
 
+    # TODO: Add start_time_ms
     def get_round_info(self, task: Task):
         default_round_info = ("", "", "", -math.inf)
         if not self.conf.runtime.use_context_json:
@@ -143,35 +144,36 @@ class Orchestrator:
 
     def next(self):
         """Iterator that returns <task>."""
+        # Indexing by slp path lets us handle context/index changes
+        task_by_slp_path: dict[Path, Task] = {}
         input_by_task: dict[Task, Path] = {}
-        for input_item, final, artifacts in self.collector.next():
-            contexts = list({artifact.context for artifact in artifacts})
-            if (len(contexts) == 1) and ((context := contexts[0]) is not None):
-                if (
-                    self.conf.runtime.exclude_streamed_sets
-                    and context.data.stream is not None
-                ):
-                    continue
-                final = self.get_final_name(context) or final
+        for input_path, request in self.collector.next():
+            if isinstance(request, RenderRequest):
+                for task in self.pipeline.get_render_task(request.slp):
+                    task_by_slp_path[request.slp.path] = task
+                    input_by_task[task] = input_path
+                    yield [task]
+            elif isinstance(request, ConcatRequest):
+                videos = [task_by_slp_path[slp.path].video for slp in request.slps]
+                sb = self.conf.scoreboard
+                it = self.pipeline.get_scoreboard_tasks(sb, request.slps, videos)
+                for i, task in enumerate(it):
+                    input_by_task[task] = input_path
+                    yield [task]
+                    videos[i] = task.video
 
-            videos = []
-            for task in self.pipeline.get_render_tasks(artifacts):
-                input_by_task[task] = input_item
-                yield [task]
-                videos.append(task.video)
-
-            for i, task in enumerate(
-                self.pipeline.get_scoreboard_tasks(
-                    self.conf.scoreboard, artifacts, videos
-                )
-            ):
-                input_by_task[task] = input_item
-                yield [task]
-                videos[i] = task.video
-
-            for task in self.pipeline.get_concat_tasks(videos, final):
-                input_by_task[task] = input_item
-                yield [task]
+                name = request.final
+                contexts = list({slp.context for slp in request.slps})
+                if (len(contexts) == 1) and ((context := contexts[0]) is not None):
+                    if (
+                        self.conf.runtime.exclude_streamed_sets
+                        and context.data.stream is not None
+                    ):
+                        continue
+                    name = self.get_final_name(context) or name
+                for task in self.pipeline.get_concat_task(videos, name):
+                    input_by_task[task] = input_path
+                    yield [task]
 
         leaves = self.scheduler.get_leaves()
         phase_by_task = {task: self.get_round_info(task) for task in leaves}
