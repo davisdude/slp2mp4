@@ -113,7 +113,6 @@ def update_conf_from_args(args, conf, obj=None, prefix=""):
 def make_parser(help_most=False, help_all=False):
     if help_all:
         help_most = True
-    print(f"{help_most = } {help_all = }")
     parser = ArgumentParser(prog="slp2mp4")
     parser.add_argument("inputs", type=Path, nargs="+")
     parser.add_argument("--help-most", help="show most help", action="help")
