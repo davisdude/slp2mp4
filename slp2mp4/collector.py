@@ -28,6 +28,7 @@ def create_monitor_event_handler(collector, root: Path):
             # to try to aggregate events to minimize recursive traversal. But that seems hard and
             # this is probably fine for now.
             collector.raw_monitor_inputs.append(root)
+            # TODO: Check event info; only append if directory or slp/zip file
 
     return MonitorEventHandler()
 
