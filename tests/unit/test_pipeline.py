@@ -43,39 +43,20 @@ def complex_pipeline(tmp_path):
     return build
 
 
-def test_get_render_tasks_single(tmp_path):
+def test_get_render_task(tmp_path):
     pipeline = Pipeline(tmp_path)
     slps = [tmp_path / "game.slp"]
     for slp in slps:
         slp.touch()
-    artifacts = [SlippiArtifact(slp) for slp in slps]
-    tasks = list(pipeline.get_render_tasks(artifacts))
+    slp = SlippiArtifact(slp)
+    tasks = list(pipeline.get_render_task(slp))
 
     assert len(tasks) == 1
-
     task = tasks[0]
     assert task.name == "render game.slp"
-    assert task.slp == artifacts[0]
-    assert task.inputs == artifacts
+    assert task.slp == slp
+    assert task.inputs == [slp]
     assert task.final_name == Path("game.mp4")
-
-
-def test_get_render_tasks_multiple(tmp_path):
-    pipeline = Pipeline(tmp_path)
-    prefixes = [f"g{i}" for i in range(3)]
-    slps = [tmp_path / f"{prefix}.slp" for prefix in prefixes]
-    for slp in slps:
-        slp.touch()
-    artifacts = [SlippiArtifact(slp) for slp in slps]
-    tasks = list(pipeline.get_render_tasks(artifacts))
-
-    assert len(tasks) == 3
-
-    for task, artifact, prefix in zip(tasks[:3], artifacts, prefixes):
-        assert task.name == f"render {prefix}.slp"
-        assert task.slp == artifact
-        assert task.inputs == [artifact]
-        assert task.final_name == Path(f"{prefix}.mp4")
 
 
 def test_get_concat_tasks_single(tmp_path):
@@ -85,7 +66,7 @@ def test_get_concat_tasks_single(tmp_path):
         vid.touch()
     artifacts = [Mp4Artifact(vid) for vid in vids]
     final_path = Path("used.mp4")
-    tasks = list(pipeline.get_concat_tasks(artifacts, final_path))
+    tasks = list(pipeline.get_concat_task(artifacts, final_path))
     assert len(tasks) == 0
 
 
@@ -97,7 +78,7 @@ def test_get_concat_tasks_multiple(tmp_path):
         vid.touch()
     artifacts = [Mp4Artifact(vid) for vid in vids]
     final_path = Path("used.mp4")
-    tasks = list(pipeline.get_concat_tasks(artifacts, final_path))
+    tasks = list(pipeline.get_concat_task(artifacts, final_path))
 
     assert len(tasks) == 1
     task = tasks[0]
