@@ -51,6 +51,13 @@ class ConcatRequest:
     slps: tuple[SlippiArtifact, ...]
 
 
+@dataclasses.dataclass(frozen=True)
+class RecurseState:
+    relative: Path = dataclasses.field(default=Path("."))
+    in_dir: bool = dataclasses.field(default=False)
+    in_zip: bool = dataclasses.field(default=False)
+
+
 @dataclasses.dataclass
 class Collector:
     inputs: list[Path]
@@ -66,7 +73,7 @@ class Collector:
     raw_monitor_inputs: deque = dataclasses.field(default_factory=deque, init=False)
     done: bool = dataclasses.field(default=False, init=False)
 
-    def next(self) -> Generator[RenderRequest | ConcatRequest, None, None]:
+    def next(self) -> Generator[tuple[Path, RenderRequest | ConcatRequest], None, None]:
         try:
             yield from self._next()
         finally:
@@ -77,23 +84,42 @@ class Collector:
             shutil.rmtree(d, ignore_errors=True)
 
     def _next(self):
-        # Set up monitoring
-        monitoring = []
+        observer = None
+        try:
+            actually_monitoring, observer = self._start_monitoring()
+
+            # Iterate like normal to catch files that exist before monitoring
+            for i in self.inputs:
+                yield from self._recurse(i, i)
+            if actually_monitoring:
+                yield from self._monitor()
+        finally:
+            if observer is not None:
+                observer.stop()
+                observer.join()
+
+        # Since we have no way of knowing when directories in monitor mode are
+        # finalized, they are deferred until monitoring is finished
+        for root, (input_path, name) in self.to_concat.items():
+            slps = self._get_dir_slps(root)
+            if slps:
+                yield input_path, ConcatRequest(name, slps)
+
+    def _start_monitoring(self):
+        actually_monitoring = False
+        observer = None
         if self.monitor:
             observer = Observer()
             for i in self.inputs:
                 if i.is_dir():
-                    monitoring.append(i)
+                    actually_monitoring = True
                     handler = create_monitor_event_handler(self, i)
                     observer.schedule(handler, i, recursive=True)
             observer.start()
+        return actually_monitoring, observer
 
-        # Iterate like normal to catch files that exist before monitoring
-        for i in self.inputs:
-            yield from self._recurse(i, i)
-
-        # Monitor files
-        while self.monitor and not self.stop_event.is_set() and monitoring:
+    def _monitor(self):
+        while self.monitor and not self.stop_event.is_set():
             batch = self._get_monitor_batch()
             if len(batch) == 0:
                 time.sleep(1)
@@ -105,17 +131,6 @@ class Collector:
         for i in batch:
             yield from self._recurse(i, i)
 
-        if self.monitor:
-            observer.stop()
-            observer.join()
-
-        for root, (input_path, name) in self.to_concat.items():
-            slps = self._get_dir_slps(root)
-            if slps:
-                yield input_path, ConcatRequest(name, slps)
-
-        self.done = True
-
     def _get_monitor_batch(self):
         inputs = set()
         while True:
@@ -125,14 +140,9 @@ class Collector:
                 break
         return inputs
 
-    def _recurse(
-        self,
-        input_path: Path,
-        path: Path,
-        relative: Path = Path("."),
-        in_zip: bool = False,
-        in_dir: bool = False,
-    ):
+    def _recurse(self, input_path: Path, path: Path, state: RecurseState | None = None):
+        if state is None:
+            state = RecurseState()
         if not path.exists():
             raise RuntimeError(f"Input '{path}' does not exist!")
         if path.is_file():
@@ -140,53 +150,61 @@ class Collector:
                 return
             self.encountered.add(path)
             if zipfile.is_zipfile(path):
-                tmpdir = Path(tempfile.mkdtemp(dir=self.workdir))
-                self.created_dirs.append(tmpdir)
-                with zipfile.ZipFile(path, "r") as archive:
-                    archive.extractall(path=tmpdir)
-                yield from self._recurse(
-                    input_path, tmpdir, relative.parent / path.stem, True, in_dir
-                )
+                yield from self._handle_zip(input_path, path, state)
             elif path.suffix.lower() == ".slp":
                 # TODO: Check if it's actually a slippi file
-                parent = path.resolve().parent
-                context = parent / "context.json"
-                context_artifact = None
-                slps = sorted(parent.glob("*.slp"), key=util.natsort)
-                index = slps.index(path.resolve())
-                if context.exists():
-                    context_artifact = ContextArtifact(context)
-                if relative == Path("."):
-                    name = Path(path.with_suffix(".mp4").name)
-                else:
-                    name = relative.parent / path.with_suffix(".mp4").name
-                slp = SlippiArtifact(path, index, context_artifact)
-                yield input_path, RenderRequest(slp)
-                if not in_dir:
-                    yield input_path, ConcatRequest(name, (slp,))
+                yield from self._handle_slp(input_path, path, state)
         else:
-            if relative == Path("."):
-                name = Path(path.name + ".mp4")
-            else:
-                name = relative.parent / (relative.name + ".mp4")
+            yield from self._handle_dir(input_path, path, state)
 
-            for p in path.iterdir():
-                yield from self._recurse(input_path, p, relative / p.name, in_zip, True)
+    def _handle_zip(self, input_path: Path, path: Path, state: RecurseState):
+        tmpdir = Path(tempfile.mkdtemp(dir=self.workdir))
+        self.created_dirs.append(tmpdir)
+        with zipfile.ZipFile(path, "r") as archive:
+            archive.extractall(path=tmpdir)
+        new_state = RecurseState(state.relative.parent / path.stem, state.in_dir, True)
+        yield from self._recurse(input_path, tmpdir, new_state)
 
-            if in_zip or not self.monitor:
-                slps = self._get_dir_slps(path)
-                if slps:
-                    yield input_path, ConcatRequest(name, slps)
-            elif path not in self.created_dirs:
-                self.to_concat[path] = (input_path, name)
+    def _handle_slp(self, input_path: Path, path: Path, state: RecurseState):
+        slp = self._get_slp(path)
+        if state.relative == Path("."):
+            name = Path(path.with_suffix(".mp4").name)
+        else:
+            name = state.relative.parent / path.with_suffix(".mp4").name
+        yield input_path, RenderRequest(slp)
+        if not state.in_dir:
+            yield input_path, ConcatRequest(name, (slp,))
+
+    def _handle_dir(self, input_path: Path, path: Path, state: RecurseState):
+        if state.relative == Path("."):
+            name = Path(path.name + ".mp4")
+        else:
+            name = state.relative.parent / (state.relative.name + ".mp4")
+        for p in path.iterdir():
+            new_state = RecurseState(state.relative / p.name, True, state.in_zip)
+            yield from self._recurse(input_path, p, new_state)
+        if state.in_zip or not self.monitor:
+            slps = self._get_dir_slps(path)
+            if slps:
+                yield input_path, ConcatRequest(name, slps)
+        elif path not in self.created_dirs:
+            self.to_concat[path] = (input_path, name)
+
+    def _get_context(self, path: Path):
+        context = path / "context.json"
+        if context.exists():
+            return ContextArtifact(context)
+        return None
+
+    def _get_slp(self, path: Path):
+        resolved = path.resolve()
+        slp_paths = tuple(sorted(resolved.parent.glob("*.slp"), key=util.natsort))
+        index = slp_paths.index(resolved)
+        return SlippiArtifact(path, index, self._get_context(path.parent))
 
     def _get_dir_slps(self, path: Path):
         slp_paths = tuple(sorted(path.glob("*.slp"), key=util.natsort))
-        context = path / "context.json"
-        context_artifact = None
-        if context.exists():
-            context_artifact = ContextArtifact(context)
+        context = self._get_context(path)
         return tuple(
-            SlippiArtifact(slp_path, i, context_artifact)
-            for i, slp_path in enumerate(slp_paths)
+            SlippiArtifact(slp_path, i, context) for i, slp_path in enumerate(slp_paths)
         )
