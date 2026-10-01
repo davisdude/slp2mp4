@@ -226,6 +226,11 @@ parallel = 0
 * Does not play nicely with WSL, since dolphin expects all paths to be relative
   to Windows.
 
+* Windows Media Player will show an "Unsupported encoder setting" error for
+  videos produced by this project unless videos are reencoded. You can install
+  a codec pack that supports mp4v / MPEG-4 or use another media player to view
+  the files.
+
 ## Tests
 
 * `pytest` is required for running all tests
