@@ -26,7 +26,7 @@ class Worker:
 
     def __post_init__(self):
         self.log = log.get_logger()
-        self.ffmpeg = FfmpegRunner(self.conf)
+        self.ffmpeg = FfmpegRunner(self.conf, self.kill_event)
         self.dolphin = DolphinRunner(self.conf)
 
     def submit(self, task: Task):

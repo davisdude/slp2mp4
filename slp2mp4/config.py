@@ -2,6 +2,7 @@
 
 import dataclasses
 import importlib.resources
+import shlex
 import shutil
 import tomllib
 import typing
@@ -146,6 +147,10 @@ class DolphinConfig:
 class FfmpegConfig:
     audio_args: str
     volume: int
+
+    @cached_property
+    def split_audio_args(self):
+        return shlex.split(self.audio_args)
 
     @classmethod
     def from_dict(cls, data):
