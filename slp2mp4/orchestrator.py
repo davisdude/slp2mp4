@@ -65,7 +65,6 @@ class Orchestrator:
         slps = self.get_slps(task.video)
         return list({slp.context for slp in slps})
 
-    # TODO: Add start_time_ms
     def get_round_info(self, task: Task):
         default_round_info = ("", "", "", -math.inf)
         if not self.conf.runtime.use_context_json:
@@ -81,6 +80,7 @@ class Orchestrator:
             context.data.phase_name,
             context.data.ordinal or -math.inf,
             context.data.round,
+            context.data.start_ms,
         )
 
     def print_leaf(self, task: Task):

@@ -284,6 +284,11 @@ parallel = 0
   dependencies-included build, which has a version of Chrome included that
   should work better. See [here][chrome-bug] for more.
 
+* Windows Media Player will show an "Unsupported encoder setting" error for
+  videos produced by this project unless videos are reencoded (i.e. when
+  rendering scoreboards). You can install a codec pack that supports mp4v /
+  MPEG-4 or use another media player to view the files.
+
 ## Tests
 
 * `pytest` is required for running all tests

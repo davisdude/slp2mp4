@@ -1,34 +1,50 @@
 # Logic for joining audio / video files
 
-import shlex
+import dataclasses
 import subprocess
 import tempfile
+import time
+from logging import Logger
+from multiprocessing import Event
 from pathlib import Path
 
 from slp2mp4 import log, util
+from slp2mp4.config import Config
 
 
+@dataclasses.dataclass
 class FfmpegRunner:
-    def __init__(self, config):
-        self.config = config
-        self.audio_args = shlex.split(config.ffmpeg.audio_args)
+    config: Config
+    kill_event: Event
+
+    log: Logger = dataclasses.field(init=False)
+
+    def __post_init__(self):
         self.log = log.get_logger()
 
-    # TODO: Pass kill_event
-    def _run(self, args):
-        kwargs = {
-            "stdin": subprocess.DEVNULL,
-            "stdout": subprocess.PIPE,
-            "stderr": subprocess.STDOUT,
-        }
-        env = util.get_env()
-        proc = subprocess.run(args, check=False, env=env, **kwargs)
-        stdout = proc.stdout.decode(errors="backslashreplace")
+    def _run(self, args: list[str]):
+        proc = subprocess.Popen(
+            args=args,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding="utf-8",
+            env=util.get_env(),
+        )
+        while (proc.poll() is None) and (not self.kill_event.is_set()):
+            time.sleep(1)
+        stdout, stderr = proc.communicate()
         if proc.returncode != 0:
             self.log.error(f"{args = }: {stdout}")
         else:
             self.log.debug(f"{args = }: {stdout}")
-        return proc
+        return subprocess.CompletedProcess(
+            args=args,
+            returncode=proc.returncode,
+            stdout=stdout,
+            stderr=stderr,
+        )
 
     def run(self, args):
         return self._run([self.config.paths.ffmpeg_path] + args)
@@ -40,7 +56,7 @@ class FfmpegRunner:
             "-y",
             "-i",
             audio_file_path,
-            *self.audio_args,
+            *self.config.ffmpeg.split_audio_args,
             "-filter:a",
             f"volume='{self.config.ffmpeg.volume / 100}'",
             reencoded_path,
@@ -138,4 +154,4 @@ class FfmpegRunner:
         proc = self._run(args)
         if proc.returncode != 0:
             raise RuntimeError(f"Failed to get dimensions of '{video}'")
-        return [int(v) for v in proc.stdout.split(b",")]
+        return [int(v) for v in proc.stdout.split(",")]

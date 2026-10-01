@@ -19,16 +19,19 @@ from slp2mp4.artifact import ContextArtifact, SlippiArtifact
 
 def create_monitor_event_handler(collector, root: Path):
     class MonitorEventHandler(FileSystemEventHandler):
-        def on_created(self, _event: FileSystemEvent):
+        def on_created(self, event: FileSystemEvent):
             # When a directory is created, a `DirCreatedEvent` and one `FileCreatedEvent` per file
-            # is triggered. We don't actually care _what_ has been created; the recursive iterator
+            # are triggered. We don't actually care _what_ has been created; the recursive iterator
             # handles that for us. By returning just the root, we avoid processing files for
             # multiple events.
             # NOTE: This is very inefficient for very large directories. A better approach would be
             # to try to aggregate events to minimize recursive traversal. But that seems hard and
             # this is probably fine for now.
-            collector.raw_monitor_inputs.append(root)
-            # TODO: Check event info; only append if directory or slp/zip file
+            if event.event_type != "created":
+                return
+            path = Path(event.src_path)
+            if event.is_directory or (path.suffix.lower() in (".slp", ".zip")):
+                collector.raw_monitor_inputs.append(root)
 
     return MonitorEventHandler()
 
@@ -144,7 +147,8 @@ class Collector:
                 yield from self._recurse(
                     input_path, tmpdir, relative.parent / path.stem, True, in_dir
                 )
-            elif path.suffix == ".slp":
+            elif path.suffix.lower() == ".slp":
+                # TODO: Check if it's actually a slippi file
                 parent = path.resolve().parent
                 context = parent / "context.json"
                 context_artifact = None

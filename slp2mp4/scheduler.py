@@ -84,6 +84,7 @@ class Scheduler:
                     and (task not in self.ready_tasks)
                     and (task not in self.running_tasks)
                     and (task not in self.completed_tasks)
+                    and (task not in self.failed_tasks)
                 ):
                     self.ready_tasks.append(task)
 
