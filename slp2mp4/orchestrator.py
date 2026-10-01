@@ -115,7 +115,7 @@ class Orchestrator:
             name = task.final_name.stem
             if self.conf.runtime.youtubify_names:
                 name = util.translate(name, self.conf.runtime.name_replacements)
-            output_directory = self.output_directory
+            output_directory = Path(self.output_directory)
             if self.conf.runtime.preserve_directory_structure:
                 for parent in parents:
                     output_directory /= parent
