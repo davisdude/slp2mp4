@@ -2,8 +2,10 @@
 
 import concurrent.futures
 import dataclasses
+import hashlib
 import time
 import traceback
+from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
 from logging import Logger
@@ -82,17 +84,21 @@ class Orchestrator:
                 break
 
     def get_move_tasks(self, tasks: list[Task]):
+        # Find potential collisions
+        names = {}
         for task in tasks:
-            parents = task.final_name.parents
             name = task.final_name.stem
             if self.conf.runtime.youtubify_names:
                 name = util.translate(name, self.conf.runtime.name_replacements)
-            output_directory = Path(self.output_directory)
-            if self.conf.runtime.preserve_directory_structure:
-                for parent in parents:
-                    output_directory /= parent
-            name = pathvalidate.sanitize_filename(name, max_len=251)  # 255 - .mp4
-            output_path = output_directory / f"{name}.mp4"
+            name = pathvalidate.sanitize_filename(name, max_len=244)  # 255 - .mp4 - sha
+            names[task] = name
+        counts = Counter(names.values())
+
+        for task, name in names.items():
+            if counts[name] > 1:
+                sha = hashlib.sha1(str(task.final_name).encode()).hexdigest()[:6]
+                name = f"{name}-{sha}"
+            output_path = self.output_directory / f"{name}.mp4"
             output_artifact = Mp4Artifact(output_path)
             yield [
                 MoveFileTask(
