@@ -177,7 +177,7 @@ class Collector:
                 slps = self._get_dir_slps(path)
                 if slps:
                     yield input_path, ConcatRequest(name, slps)
-            else:
+            elif path not in self.created_dirs:
                 self.to_concat[path] = (input_path, name)
 
     def _get_dir_slps(self, path: Path):
