@@ -45,7 +45,7 @@ class ConcatRequest:
     """Request for a set to be rendered."""
 
     final: Path
-    slps: tuple[SlippiArtifact]
+    slps: tuple[SlippiArtifact, ...]
 
 
 @dataclasses.dataclass
