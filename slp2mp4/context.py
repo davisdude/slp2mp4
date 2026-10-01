@@ -2,6 +2,7 @@ import dataclasses
 import json
 from enum import Enum
 from pathlib import Path
+import frozendict
 
 
 # https://github.com/jmlee337/replay-manager-for-slippi/blob/46fcbcd9aa5ae51702cdab45f75e343a27e56f9c/src/common/constants.ts#L7
@@ -36,61 +37,60 @@ class Character(Enum):
 
 @dataclasses.dataclass(frozen=True)
 class SlotData:
-    display_names: list[str]
-    ports: list[int]
-    prefixes: list[str]
-    pronouns: list[str]
+    display_names: tuple[str]
+    ports: tuple[int]
+    prefixes: tuple[str]
+    pronouns: tuple[str]
     score: int
 
     @classmethod
     def from_dict(cls, data: dict):
         return cls(
-            display_names=data["displayNames"],
-            ports=data["ports"],
-            prefixes=data["prefixes"],
-            pronouns=data["pronouns"],
+            display_names=tuple(data["displayNames"]),
+            ports=tuple(data["ports"]),
+            prefixes=tuple(data["prefixes"]),
+            pronouns=tuple(data["pronouns"]),
             score=data["score"],
         )
 
 
 @dataclasses.dataclass(frozen=True)
 class ScoreData:
-    slots: list[SlotData]
+    slots: tuple[SlotData]
 
     @classmethod
     def from_dict(cls, data: dict):
-        return cls(slots=[SlotData.from_dict(slot) for slot in data["slots"]])
+        return cls(slots=tuple(SlotData.from_dict(slot) for slot in data["slots"]))
 
 
 @dataclasses.dataclass(frozen=True)
 class EntrantData:
     name: str
-    characters: list[Character]
+    characters: tuple[Character]
 
     @classmethod
     def from_dict(cls, data: dict):
         return cls(
             name=data["name"],
-            characters=[Character(char) for char in data["characters"]],
+            characters=tuple(Character(char) for char in data["characters"]),
         )
 
 
 @dataclasses.dataclass(frozen=True)
 class PlayerData:
-    entrant_1: list[EntrantData]
-    entrant_2: list[EntrantData]
+    entrant_1: tuple[EntrantData]
+    entrant_2: tuple[EntrantData]
 
     @classmethod
     def from_dict(cls, data: dict):
-        return cls(
-            entrant_1=[EntrantData.from_dict(entrant) for entrant in data["entrant1"]],
-            entrant_2=[EntrantData.from_dict(entrant) for entrant in data["entrant2"]],
-        )
+        entrant_1 = tuple(EntrantData.from_dict(e) for e in data["entrant1"])
+        entrant_2 = tuple(EntrantData.from_dict(e) for e in data["entrant2"])
+        return cls(entrant_1=entrant_1, entrant_2=entrant_2)
 
 
 @dataclasses.dataclass(frozen=True)
 class PlatformData:
-    data: dict
+    data: frozendict.frozendict
 
     @property
     def tournament_name(self):
@@ -164,7 +164,7 @@ class StartggData(PlatformData):
 class ContextData:
     best_of: int
     duration_ms: int
-    scores: list[ScoreData]
+    scores: tuple[ScoreData]
     final_score: ScoreData
     start_ms: int  # UTC time
 
@@ -176,7 +176,7 @@ class ContextData:
             players = PlayerData.from_dict(self.players)
             object.__setattr__(self, "players", players)
         if isinstance(self.startgg, dict):
-            startgg = StartggData(self.startgg)
+            startgg = StartggData(frozendict.deepfreeze(self.startgg))
             object.__setattr__(self, "startgg", startgg)
 
     @classmethod
@@ -184,7 +184,7 @@ class ContextData:
         return cls(
             best_of=data["bestOf"],
             duration_ms=data["durationMs"],
-            scores=[ScoreData.from_dict(score) for score in data["scores"]],
+            scores=tuple(ScoreData.from_dict(score) for score in data["scores"]),
             final_score=ScoreData.from_dict(data["finalScore"]),
             start_ms=data["startMs"],
             players=data.get("players"),
