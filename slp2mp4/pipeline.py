@@ -88,8 +88,7 @@ class Pipeline:
         yield RenderGameTask(f"render {slp}", [slp], [output], Path(name))
 
     def get_concat_task(self, videos: list[Mp4Artifact], path: Path):
-        if len(videos) > 1:
-            yield self._concat_task(f"concat {path}", videos, path)
+        yield self._concat_task(f"concat {path}", videos, path)
 
     def get_group_concat_tasks(
         self,

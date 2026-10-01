@@ -132,7 +132,12 @@ def test_get_concat_tasks_single(tmp_path):
     artifacts = [Mp4Artifact(vid) for vid in vids]
     final_path = Path("used.mp4")
     tasks = list(pipeline.get_concat_task(artifacts, final_path))
-    assert len(tasks) == 0
+
+    assert len(tasks) == 1
+    task = tasks[0]
+    assert task.name == "concat used.mp4"
+    assert task.inputs == artifacts
+    assert task.final_name == Path("used.mp4")
 
 
 def test_get_concat_tasks_multiple(tmp_path):
