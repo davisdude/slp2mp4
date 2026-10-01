@@ -1,7 +1,9 @@
 import dataclasses
 import json
+import math
 from enum import Enum
 from pathlib import Path
+
 import frozendict
 
 
@@ -200,6 +202,15 @@ class ContextData:
     def platform(self):
         if self.startgg is not None:
             return self.startgg
+
+    @property
+    def phase_group(self):
+        return (self.tournament_name, self.event_name, self.phase_name)
+
+    @property
+    def set_order(self):
+        ordinal = self.ordinal if self.ordinal is not None else -math.inf
+        return (ordinal, self.round, self.start_ms)
 
     @property
     def tournament_name(self):

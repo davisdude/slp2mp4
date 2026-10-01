@@ -1,6 +1,7 @@
 # Groups orchestrator inputs logically; handles file names
 
 import dataclasses
+import math
 import os
 import tempfile
 from collections import defaultdict
@@ -8,10 +9,17 @@ from pathlib import Path
 
 from slp2mp4.artifact import Artifact, Mp4Artifact, SlippiArtifact
 from slp2mp4.config import CombineMode
+from slp2mp4.context import ContextData
 from slp2mp4.task import ConcatVideosTask, RenderGameTask, Task
 
-Phase = tuple[str, str, str, int, int]
-PhaseGroup = tuple[str, str, str]
+DEFAULT_PHASE_GROUP = ("", "", "")
+DEFAULT_SET_ORDER = (-math.inf, 0, 0)
+
+
+def _get_task_key(task: Task):
+    if (context := task.video.context) is not None:
+        return context.phase_group, context.set_order, task.final_name
+    return DEFAULT_PHASE_GROUP, DEFAULT_SET_ORDER, task.final_name
 
 
 @dataclasses.dataclass
@@ -25,22 +33,24 @@ class Pipeline:
         if self.output_directory is None:
             self.output_directory = Path(".")
 
-    def _make_tmp_mp4(self):
+    def _make_tmp_mp4(self, contexts: set[ContextData] | None = None):
+        if contexts is None:
+            contexts = {}
         fd, tmp = tempfile.mkstemp(suffix=".mp4", dir=self.workdir)
         os.close(fd)
-        artifact = Mp4Artifact(Path(tmp))
+        artifact = Mp4Artifact(Path(tmp), frozenset(contexts))
         self.tmp_artifacts.append(artifact)
         return artifact
 
     def _concat_task(self, task_name: str, videos: list[Mp4Artifact], final: Path):
-        output = self._make_tmp_mp4()
+        contexts = {context for video in videos for context in video.contexts}
+        output = self._make_tmp_mp4(contexts)
         return ConcatVideosTask(task_name, videos, [output], final)
 
     def _get_concat_groups(
         self,
         tasks: list[Task],
         input_by_task: dict[Task, Path],
-        phase_by_task: dict[Task, Phase],
         combine_mode: CombineMode,
     ):
         if combine_mode == CombineMode.NONE:
@@ -59,26 +69,21 @@ class Pipeline:
                 )
                 yield group_tasks, Path(name)
         elif combine_mode == CombineMode.BY_PHASE:
-            groups: dict[PhaseGroup, list[Task]] = defaultdict(list)
+            groups: dict[tuple | None, list[Task]] = defaultdict(list)
             for task in tasks:
-                groups[phase_by_task[task][:3]].append(task)
-            for round_info, group_tasks in groups.items():
-                name = (" - ").join(round_info) + ".mp4"
+                if context := task.video.context:
+                    groups[context.phase_group].append(task)
+                else:
+                    groups[DEFAULT_PHASE_GROUP].append(task)
+            for group_info, group_tasks in groups.items():
+                name = (" - ").join(group_info) + ".mp4"
                 yield group_tasks, Path(name)
         else:
             raise ValueError(f"Unsupported combine mode '{combine_mode}'")
 
-    def _get_sorting_func(self, phase_by_task: dict[Task, Phase]):
-        def foo(task: Task):
-            return (phase_by_task[task], task.final_name)
-
-        return foo
-
-    def _sort_tasks(self, tasks: list[Task], phase_by_task: dict[Task, Phase]):
-        return sorted(tasks, key=self._get_sorting_func(phase_by_task))
-
     def get_render_task(self, slp: SlippiArtifact):
-        output = self._make_tmp_mp4()
+        context_data = None if slp.context is None else slp.context.data
+        output = self._make_tmp_mp4({context_data})
         name = slp.path.with_suffix(".mp4").name
         yield RenderGameTask(f"render {slp}", [slp], [output], Path(name))
 
@@ -90,13 +95,12 @@ class Pipeline:
         self,
         tasks: list[Task],
         input_by_task: dict[Task, Path],
-        phase_by_task: dict[Task, Phase],
         combine_mode: CombineMode,
     ):
         for group_tasks, final in self._get_concat_groups(
-            tasks, input_by_task, phase_by_task, combine_mode
+            tasks, input_by_task, combine_mode
         ):
-            sorted_tasks = self._sort_tasks(group_tasks, phase_by_task)
+            sorted_tasks = sorted(group_tasks, key=_get_task_key)
             videos = [task.video for task in sorted_tasks]
             yield [self._concat_task(f"concat {final}", videos, final)]
 
