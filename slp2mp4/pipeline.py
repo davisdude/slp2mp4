@@ -95,8 +95,7 @@ class Pipeline:
         if conf.type == ScoreboardType.NONE:
             return
         for slp, video in zip(slps, videos):
-            context_data = None if slp.context is None else slp.context.data
-            out = self._make_tmp_mp4({context_data})
+            out = self._make_tmp_mp4({slp.context})
             name = slp.path.with_suffix(".mp4").name
             yield RenderScoreboardTask(
                 f"scoreboard {video}", [slp, video], [out], Path(name)

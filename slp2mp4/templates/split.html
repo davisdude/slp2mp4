@@ -2,11 +2,11 @@
 <html lang="en">
     <body>
         <div class="stage">
-            {% for slot in sb.slp.context.data.scores[sb.slp.index].slots %}
+            {% for slot in sb.slp.context.scores[sb.slp.index].slots %}
             <section class="side {{ "left" if loop.first else "right" }}">
                 <div class="info row1">
                     {% if loop.first %}
-                    <div class="info-big">{{ sb.slp.context.data.tournament_name }}</div>
+                    <div class="info-big">{{ sb.slp.context.tournament_name }}</div>
                     {% else %}
                     <img src="{{ sb.logo }}">
                     {% endif %}
@@ -16,12 +16,12 @@
                     {% if loop.first %}
                     <div>{{ sb.tournament_date.strftime("%b %d, %Y").replace(" 0", " ") }}</div>
                     {% else %}
-                    <div>{{ sb.slp.context.data.tournament_location }}</div>
+                    <div>{{ sb.slp.context.tournament_location }}</div>
                     {% endif %}
                 </div>
                 <div class="row4"><hr></div>
                 <div class="info info-medium">
-                    {% for i in range(sb.slp.context.data.num_teams) %}
+                    {% for i in range(sb.slp.context.num_teams) %}
                     <div class="combatant row{{ 5 + i }}">
                         <div class="combatant-sponsor">{{ slot.prefixes[i] }}</div>
                         <div class="combatant-tag">{{ slot.display_names[i] }}</div>
@@ -33,11 +33,11 @@
                 <div class="row8"><hr></div>
                 <div class="info info-small row9">
                     {% if loop.first %}
-                    <div>{{ sb.slp.context.data.phase_name }}</div>
+                    <div>{{ sb.slp.context.phase_name }}</div>
                     {% else %}
-                    <span>{{ sb.slp.context.data.round_name_short }}</span>
+                    <span>{{ sb.slp.context.round_name_short }}</span>
                     /
-                    <span>Bo{{sb.slp.context.data.best_of }}</span>
+                    <span>Bo{{sb.slp.context.best_of }}</span>
                     {% endif %}
                 </div>
             </section>
