@@ -3,12 +3,25 @@
 import re
 import subprocess
 import tempfile
-import time
+from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import Event
 from pathlib import Path
+from queue import Empty, Queue
 
 from slp2mp4 import log, util
 from slp2mp4.dolphin import comm, ini
+
+GAME_END_PREFIX = "[GAME_END_FRAME] "
+CURRENT_FRAME_PREFIX = "[CURRENT_FRAME] "
+
+
+def _read(proc: subprocess.Popen, queue: Queue[str | None]):
+    try:
+        if proc.stdout is not None:
+            for line in proc.stdout:
+                queue.put(line)
+    finally:
+        queue.put(None)
 
 
 class DolphinRunner:
@@ -81,51 +94,53 @@ class DolphinRunner:
                     userdir,
                     "--cout",
                 )
-                try:
-                    proc = subprocess.Popen(
-                        args=args,
-                        stdin=subprocess.DEVNULL,
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.PIPE,
-                        text=True,
-                        encoding="utf-8",
-                        env=util.get_env(),
-                    )
-                    game_end_frame = -124
-                    current_frame = -125
-
-                    while (proc.poll() is None) and (not kill_event.is_set()):
-                        line = proc.stdout.readline()
-                        if not line:
-                            break
-                        strip_line = line.rstrip()
-
-                        if strip_line.startswith("[GAME_END_FRAME] "):
-                            game_end_frame = int(
-                                strip_line.removeprefix("[GAME_END_FRAME] ")
-                            )
-                        elif strip_line.startswith("[CURRENT_FRAME] "):
-                            current_frame = int(
-                                strip_line.removeprefix("[CURRENT_FRAME] ")
-                            )
-
-                        if current_frame >= game_end_frame:
-                            break
-
-                    # Kills dolphin (if need be) when finished dumping
-                    if current_frame != game_end_frame:
-                        self.log.info("Dolphin terminated early")
-                    # TODO: Try removing this sleep/terminate to see if it helps dolphin in heavy load
-                    time.sleep(2)
-                    proc.terminate()
-                    # Wait for process to die and flush stdout / stderr
-                    stdout, stderr = proc.communicate()
-                    self.log.debug(f"Dolphin finished:\n{stdout = }\n{stderr = }")
-
-                except subprocess.CalledProcessError as e:
-                    self.log.error(f"Dolphin failed with error ${e}")
-                    raise
-
+                self._run(args, kill_event)
         audio_file = dump_dir.joinpath("dspdump.wav")
         video_file = dump_dir.joinpath("framedump0.avi")
         return audio_file, video_file
+
+    def _run(self, args: tuple[str, ...], kill_event: Event):
+        with ThreadPoolExecutor(max_workers=1) as executor:
+            proc = subprocess.Popen(
+                args=args,
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                encoding="utf-8",
+                env=util.get_env(),
+            )
+            queue = Queue()
+            future = executor.submit(_read, proc, queue)
+
+            game_end_frame = -124
+            current_frame = -125
+
+            try:
+                while not kill_event.is_set():
+                    try:
+                        line = queue.get(timeout=1)
+                    except Empty:
+                        if future.done():
+                            break
+                        continue
+                    if line is None:
+                        break
+                    line = line.rstrip()
+                    if line.startswith(GAME_END_PREFIX):
+                        game_end_frame = int(line.removeprefix(GAME_END_PREFIX))
+                    elif line.startswith(CURRENT_FRAME_PREFIX):
+                        current_frame = int(line.removeprefix(CURRENT_FRAME_PREFIX))
+                    if current_frame >= game_end_frame:
+                        break
+                if current_frame < game_end_frame:
+                    self.log.info("Dolphin terminated early!")
+            finally:
+                if proc.poll() is None:
+                    proc.terminate()
+                    try:
+                        proc.wait(timeout=5)
+                    except subprocess.TimeoutExpired:
+                        proc.kill()
+                        proc.wait()
+                future.result()
