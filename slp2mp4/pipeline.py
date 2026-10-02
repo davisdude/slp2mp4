@@ -103,7 +103,8 @@ class Pipeline:
             )
 
     def get_concat_task(self, videos: list[Mp4Artifact], path: Path):
-        yield self._concat_task(f"concat {path}", videos, path)
+        if len(videos) > 0:
+            yield self._concat_task(f"concat {path}", videos, path)
 
     def get_group_concat_tasks(
         self,
