@@ -166,6 +166,9 @@ class RuntimeConfig:
     parallel: int = dataclasses.field(
         metadata={"help": "Max # of slippi instances; 0 = # of logical CPU cores"}
     )
+    preserve_directory_structure: bool = dataclasses.field(
+        metadata={"help": "Recreate input directory structure instead of being 'flat'"}
+    )
     youtubify_names: bool = dataclasses.field(
         metadata={"help": "Enable name replacements"}
     )
@@ -187,6 +190,7 @@ class RuntimeConfig:
     def from_dict(cls, data):
         return cls(
             parallel=data["parallel"],
+            preserve_directory_structure=data["preserve_directory_structure"],
             youtubify_names=data["youtubify_names"],
             name_replacements=data["name_replacements"],
             use_context_json=data["use_context_json"],
