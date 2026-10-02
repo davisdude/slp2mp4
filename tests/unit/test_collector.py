@@ -1,3 +1,4 @@
+import json
 import zipfile
 from io import BytesIO
 from multiprocessing import Event
@@ -41,6 +42,15 @@ def test_collector_context(tmp_path):
         slp.touch()
     test_slp = test_slps[1]
     context_path = tmp_path / "context.json"
+    with open(context_path, "w") as f:
+        data = {
+            "bestOf": 0,
+            "durationMs": 0,
+            "scores": [{"slots": []}],
+            "finalScore": {"slots": []},
+            "startMs": 0,
+        }
+        json.dump(data, f)
     context_path.touch()
     context = ContextArtifact(context_path)
     collector = Collector([test_slp])
@@ -48,7 +58,7 @@ def test_collector_context(tmp_path):
     collector.cleanup()
 
     mp4 = Path("g2.mp4")
-    slp = SlippiArtifact(test_slp, 1, context)
+    slp = SlippiArtifact(test_slp, 1, context.data)
     expected = {(test_slp, RenderRequest(slp)), (test_slp, ConcatRequest(mp4, (slp,)))}
     assert requests == expected
 

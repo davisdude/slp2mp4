@@ -194,7 +194,7 @@ class Collector:
     def _get_context(self, path: Path):
         context = path / "context.json"
         if context.exists():
-            return ContextArtifact(context)
+            return ContextArtifact(context).data
         return None
 
     def _get_slp(self, path: Path):

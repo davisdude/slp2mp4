@@ -120,7 +120,7 @@ class Orchestrator:
         contexts = {slp.context for slp in request.slps}
         if (len(contexts) != 1) or (None in contexts):
             return request.final
-        context = next(iter(contexts)).data
+        context = next(iter(contexts))
         player1 = (" + ").join(context.scores[0].slots[0].display_names)
         player2 = (" + ").join(context.scores[0].slots[1].display_names)
         tournament_name = context.tournament_name
