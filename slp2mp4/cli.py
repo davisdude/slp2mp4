@@ -106,7 +106,7 @@ def update_conf_from_args(args, conf, obj=None, prefix=""):
         if not hasattr(args, arg_name):
             continue
         arg_value = getattr(args, arg_name)
-        if arg_value is not dataclasses.MISSING:
+        if (arg_value is not dataclasses.MISSING) and (arg_value is not None)::
             setattr(obj, field.name, arg_value)
 
 
