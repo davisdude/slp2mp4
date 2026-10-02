@@ -72,9 +72,9 @@ class Orchestrator:
                 self.log.info(f"{pad}{leaf.final_name} ({leaf.short_name})")
             elif isinstance(leaf, Artifact):
                 pad = (indent_level + 1) * indent
-                self.log.info(f"{pad}{leaf}")
-                if context := getattr(leaf, "context", None):
-                    self.log.info(f"{pad}{context} ({leaf.index + 1})")
+                prefix = f"{pad}{leaf} ({leaf.index + 1})"
+                suffix = " + context.json" if leaf.context is not None else ""
+                self.log.info(f"{prefix}{suffix}")
 
     def get_timestamps(self, task):
         for _, child in self.scheduler.walk_tree(task):
