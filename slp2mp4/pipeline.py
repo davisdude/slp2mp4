@@ -82,8 +82,7 @@ class Pipeline:
             raise ValueError(f"Unsupported combine mode '{combine_mode}'")
 
     def get_render_task(self, slp: SlippiArtifact):
-        context_data = None if slp.context is None else slp.context.data
-        output = self._make_tmp_mp4({context_data})
+        output = self._make_tmp_mp4({slp.context})
         name = slp.path.with_suffix(".mp4")
         yield RenderGameTask(f"render {slp}", [slp], [output], name)
 

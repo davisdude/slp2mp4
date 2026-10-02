@@ -42,6 +42,7 @@ class Orchestrator:
     output_directory: Path | None = dataclasses.field(default=None)
     workdir: Path | None = dataclasses.field(default=None)
     debug: bool = dataclasses.field(default=False)
+    poll_interval_s: int = dataclasses.field(default=1)
 
     worker: Worker | None = dataclasses.field(default=None, init=False)
     scheduler: Scheduler | None = dataclasses.field(default=None, init=False)
@@ -53,6 +54,8 @@ class Orchestrator:
             self.num_procs = self.conf.runtime.parallel
         if self.num_procs == 0:
             self.num_procs = psutil.cpu_count(logical=False) or 1
+        if self.output_directory is None:
+            self.output_directory = Path(".")
         if self.workdir is not None:
             self.workdir.mkdir(exist_ok=True, parents=True)
 
@@ -73,40 +76,53 @@ class Orchestrator:
                 if context := getattr(leaf, "context", None):
                     self.log.info(f"{pad}{context} ({leaf.index + 1})")
 
-    def write_timestamps(self, main_task):
-        filename = main_task.video.path.with_suffix(".txt")
-        for _, leaf in self.scheduler.walk_tree(main_task):
-            if hasattr(leaf, "timestamps") and not self.dry_run:
-                if leaf.timestamps:
-                    with open(filename, "w") as f:
-                        names = [
-                            self.scheduler.get_producer(i).final_name.stem
-                            for i in leaf.inputs
-                        ]
-                        times = [timedelta(seconds=int(t)) for t in leaf.timestamps]
-                        f.writelines(f"{t} - {n}\n" for n, t in zip(names, times))
-                break
+    def get_timestamps(self, task):
+        for _, child in self.scheduler.walk_tree(task):
+            if hasattr(child, "timestamps") and not self.dry_run:
+                if child.timestamps:
+                    names = [
+                        self.scheduler.get_producer(i).final_name.stem
+                        for i in child.inputs
+                    ]
+                    times = [timedelta(seconds=int(t)) for t in child.timestamps]
+                    return ("\n").join(f"{t} - {n}" for n, t in zip(names, times))
+                return ""
+        return ""
 
-    def get_move_tasks(self, tasks: list[Task]):
+    def write_timestamps(self, task):
+        filename = task.video.path.with_suffix(".txt")
+        timestamp_str = self.get_timestamps(task)
+        if timestamp_str:
+            with open(filename, "w") as f:
+                f.write(timestamp_str)
+
+    def get_move_paths(self, tasks: list[Task]):
         paths: dict[Task, Path] = {}
         for task in tasks:
-            parents = task.final_name.parents
+            parent_parts = task.final_name.parent.parts
             name = task.final_name.stem
             if self.conf.runtime.youtubify_names:
                 name = util.translate(name, self.conf.runtime.name_replacements)
             output_directory = Path(self.output_directory)
             if self.conf.runtime.preserve_directory_structure:
-                for parent in parents:
+                for parent in parent_parts:
                     output_directory /= parent
             name = pathvalidate.sanitize_filename(name, max_len=244)  # 255 - .mp4 - sha
             paths[task] = output_directory / name
 
         counts = Counter(paths.values())
+        new_paths = []
         for task, path in paths.items():
             if counts[path] > 1:
                 sha = _hash_task(task)
                 path = path.parent / f"{path.name}-{sha}"
             output_path = path.parent / f"{path.name}.mp4"
+            new_paths.append(output_path)
+        return new_paths
+
+    def get_move_tasks(self, tasks: list[Task]):
+        new_paths = self.get_move_paths(tasks)
+        for task, output_path in zip(tasks, new_paths):
             output_artifact = Mp4Artifact(output_path)
             yield [
                 MoveFileTask(
@@ -120,15 +136,23 @@ class Orchestrator:
         contexts = {slp.context for slp in request.slps}
         if (len(contexts) != 1) or (None in contexts):
             return request.final
-        context = next(iter(contexts)).data
-        player1 = (" + ").join(context.scores[0].slots[0].display_names)
-        player2 = (" + ").join(context.scores[0].slots[1].display_names)
+        context = next(iter(contexts))
+        player1 = (" + ").join(context.final_score.slots[0].display_names)
+        player2 = (" + ").join(context.final_score.slots[1].display_names)
         tournament_name = context.tournament_name
         event_name = context.event_name
         phase_name = context.phase_name
         round_name = context.round_name
-        name = f"{player1} vs {player2} - {tournament_name} - {event_name} - {phase_name} - {round_name}.mp4"
+        name = f"{player1} vs {player2} - {tournament_name} - {event_name} - {phase_name} {round_name}.mp4"
         return request.final.parent / name
+
+    def should_skip_request(self, request: RenderRequest | ConcatRequest):
+        if not self.conf.runtime.exclude_streamed_sets:
+            return False
+        if isinstance(request, RenderRequest):
+            if request.slp.context is None:
+                return False
+            return request.slp.context.stream is not None
 
     def next(self):
         """Iterator that returns <task>."""
@@ -181,23 +205,22 @@ class Orchestrator:
     def do_work(self):
         while not self.kill_event.is_set():
             task = self.scheduler.get_work()
-            if task is not None:
-                try:
-                    if not self.dry_run:
-                        self.worker.submit(task)
-                    self.scheduler.finish(task)
-                except Exception:  # noqa: BLE001
-                    self.log.error(
-                        f"Worker encountered exception in task '{task.name}': {traceback.format_exc()}"
-                    )
-                    self.scheduler.mark_failed(task)
-                finally:
-                    if not self.debug:
-                        task.cleanup()
-            else:
+            if task is None:
                 if self.collector.done and self.scheduler.is_pipeline_empty():
                     break
-                time.sleep(1)
+                time.sleep(self.poll_interval_s)
+                continue
+            try:
+                if not self.dry_run:
+                    self.worker.submit(task)
+                self.scheduler.finish(task)
+            except Exception:  # noqa: BLE001
+                tb = traceback.format_exc()
+                self.log.error(f"Encountered exception in task '{task.name}': {tb}")
+                self.scheduler.mark_failed(task)
+            finally:
+                if not self.debug:
+                    task.cleanup()
 
     def run(self):
         self.log.info("Starting")
@@ -225,11 +248,3 @@ class Orchestrator:
             self.pipeline.cleanup()
 
         self.log.info("Done!")
-
-    def should_skip_request(self, request: RenderRequest | ConcatRequest):
-        if not self.conf.runtime.exclude_streamed_sets:
-            return False
-        if isinstance(request, RenderRequest):
-            if request.slp.context is None:
-                return False
-            return request.slp.context.data.stream is not None

@@ -52,7 +52,7 @@ class ContextArtifact(ExistingFileArtifact):
 @dataclasses.dataclass(frozen=True)
 class SlippiArtifact(ExistingFileArtifact):
     index: int = dataclasses.field(default=0)
-    context: ContextArtifact | None = dataclasses.field(default=None)
+    context: ContextData | None = dataclasses.field(default=None)
 
     def __post_init__(self):
         super().__post_init__()

@@ -3,7 +3,6 @@
 import dataclasses
 import subprocess
 import tempfile
-import time
 from logging import Logger
 from multiprocessing import Event
 from pathlib import Path
@@ -32,13 +31,23 @@ class FfmpegRunner:
             encoding="utf-8",
             env=util.get_env(),
         )
-        while (proc.poll() is None) and (not self.kill_event.is_set()):
-            time.sleep(1)
-        stdout, stderr = proc.communicate()
-        if proc.returncode != 0:
-            self.log.error(f"{args = }: {stdout}")
+        while True:
+            try:
+                stdout, stderr = proc.communicate(timeout=1)
+                break
+            except subprocess.TimeoutExpired:
+                if not self.kill_event.is_set():
+                    continue
+                proc.terminate()
+                try:
+                    stdout, stderr = proc.communicate(timeout=5)
+                except subprocess.TimeoutExpired:
+                    proc.kill()
+                    stdout, stderr = proc.communicate()
+        if proc.returncode == 0:
+            self.log.debug(f"{args = }")
         else:
-            self.log.debug(f"{args = }: {stdout}")
+            self.log.error(f"{args = }:\nstdout: {stdout}\nstderr: {stderr}")
         return subprocess.CompletedProcess(
             args=args,
             returncode=proc.returncode,
