@@ -2,8 +2,11 @@
 
 import concurrent.futures
 import dataclasses
+import hashlib
+import pickle
 import time
 import traceback
+from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
 from logging import Logger
@@ -21,6 +24,10 @@ from slp2mp4.pipeline import Pipeline
 from slp2mp4.scheduler import Scheduler
 from slp2mp4.task import MoveFileTask, Task
 from slp2mp4.worker import Worker
+
+
+def _hash_task(task: Task):
+    return hashlib.sha1(pickle.dumps(task)).hexdigest()[:6]
 
 
 @dataclasses.dataclass
@@ -81,6 +88,7 @@ class Orchestrator:
                 break
 
     def get_move_tasks(self, tasks: list[Task]):
+        paths: dict[Task, Path] = {}
         for task in tasks:
             parents = task.final_name.parents
             name = task.final_name.stem
@@ -90,8 +98,15 @@ class Orchestrator:
             if self.conf.runtime.preserve_directory_structure:
                 for parent in parents:
                     output_directory /= parent
-            name = pathvalidate.sanitize_filename(name, max_len=251)  # 255 - .mp4
-            output_path = output_directory / f"{name}.mp4"
+            name = pathvalidate.sanitize_filename(name, max_len=244)  # 255 - .mp4 - sha
+            paths[task] = output_directory / name
+
+        counts = Counter(paths.values())
+        for task, path in paths.items():
+            if counts[path] > 1:
+                sha = _hash_task(task)
+                path = path.parent / f"{path.name}-{sha}"
+            output_path = path.parent / f"{path.name}.mp4"
             output_artifact = Mp4Artifact(output_path)
             yield [
                 MoveFileTask(
