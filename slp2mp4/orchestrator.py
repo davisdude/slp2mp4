@@ -2,9 +2,11 @@
 
 import concurrent.futures
 import dataclasses
-import math
+import hashlib
+import pickle
 import time
 import traceback
+from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
 from logging import Logger
@@ -15,13 +17,17 @@ import pathvalidate
 import psutil
 
 from slp2mp4 import log, util
-from slp2mp4.artifact import Artifact, ContextArtifact, Mp4Artifact, SlippiArtifact
+from slp2mp4.artifact import Artifact, Mp4Artifact
 from slp2mp4.collector import Collector, ConcatRequest, RenderRequest
 from slp2mp4.config import CombineMode, Config
 from slp2mp4.pipeline import Pipeline
 from slp2mp4.scheduler import Scheduler
 from slp2mp4.task import MoveFileTask, Task
 from slp2mp4.worker import Worker
+
+
+def _hash_task(task: Task):
+    return hashlib.sha1(pickle.dumps(task)).hexdigest()[:6]
 
 
 @dataclasses.dataclass
@@ -55,34 +61,6 @@ class Orchestrator:
         self.pipeline = Pipeline(self.workdir, self.output_directory)
         self.log = log.get_logger()
 
-    def get_slps(self, artifact: Artifact):
-        task = self.scheduler.get_producer(artifact)
-        for _, leaf in self.scheduler.walk_tree(task):
-            if isinstance(leaf, SlippiArtifact):
-                yield leaf
-
-    def get_contexts(self, task: Task):
-        slps = self.get_slps(task.video)
-        return list({slp.context for slp in slps})
-
-    def get_round_info(self, task: Task):
-        default_round_info = ("", "", "", -math.inf)
-        if not self.conf.runtime.use_context_json:
-            return default_round_info
-        contexts = self.get_contexts(task)
-        if (len(contexts) != 1) or ((context := contexts[0]) is None):
-            return default_round_info
-        if context.data is None:
-            return default_round_info
-        return (
-            context.data.tournament_name,
-            context.data.event_name,
-            context.data.phase_name,
-            context.data.ordinal or -math.inf,
-            context.data.round,
-            context.data.start_ms,
-        )
-
     def print_leaf(self, task: Task):
         indent = "    "
         for indent_level, leaf in self.scheduler.walk_tree(task):
@@ -110,17 +88,25 @@ class Orchestrator:
                 break
 
     def get_move_tasks(self, tasks: list[Task]):
+        paths: dict[Task, Path] = {}
         for task in tasks:
             parents = task.final_name.parents
             name = task.final_name.stem
             if self.conf.runtime.youtubify_names:
                 name = util.translate(name, self.conf.runtime.name_replacements)
-            output_directory = self.output_directory
+            output_directory = Path(self.output_directory)
             if self.conf.runtime.preserve_directory_structure:
                 for parent in parents:
                     output_directory /= parent
-            name = pathvalidate.sanitize_filename(name, max_len=251)  # 255 - .mp4
-            output_path = output_directory / f"{name}.mp4"
+            name = pathvalidate.sanitize_filename(name, max_len=244)  # 255 - .mp4 - sha
+            paths[task] = output_directory / name
+
+        counts = Counter(paths.values())
+        for task, path in paths.items():
+            if counts[path] > 1:
+                sha = _hash_task(task)
+                path = path.parent / f"{path.name}-{sha}"
+            output_path = path.parent / f"{path.name}.mp4"
             output_artifact = Mp4Artifact(output_path)
             yield [
                 MoveFileTask(
@@ -128,19 +114,21 @@ class Orchestrator:
                 )
             ]
 
-    def get_final_name(self, context: ContextArtifact):
+    def get_final_name(self, request: ConcatRequest):
         if not self.conf.runtime.use_context_json:
-            return None
-        if (data := context.data) is None:
-            return None
-        player1 = (" + ").join(data.scores[0].slots[0].display_names)
-        player2 = (" + ").join(data.scores[0].slots[1].display_names)
-        tournament_name = data.tournament_name
-        event_name = data.event_name
-        phase_name = data.phase_name
-        round_name = data.round_name
+            return request.final
+        contexts = {slp.context for slp in request.slps}
+        if (len(contexts) != 1) or (None not in contexts):
+            return request.final
+        context = next(iter(contexts))
+        player1 = (" + ").join(context.scores[0].slots[0].display_names)
+        player2 = (" + ").join(context.scores[0].slots[1].display_names)
+        tournament_name = context.tournament_name
+        event_name = context.event_name
+        phase_name = context.phase_name
+        round_name = context.round_name
         name = f"{player1} vs {player2} - {tournament_name} - {event_name} - {phase_name} - {round_name}.mp4"
-        return Path(name)
+        return request.parent / name
 
     def next(self):
         """Iterator that returns <task>."""
@@ -148,13 +136,21 @@ class Orchestrator:
         task_by_slp_path: dict[Path, Task] = {}
         input_by_task: dict[Task, Path] = {}
         for input_path, request in self.collector.next():
+            if self.should_skip_request(request):
+                continue
             if isinstance(request, RenderRequest):
                 for task in self.pipeline.get_render_task(request.slp):
                     task_by_slp_path[request.slp.path] = task
                     input_by_task[task] = input_path
                     yield [task]
             elif isinstance(request, ConcatRequest):
-                videos = [task_by_slp_path[slp.path].video for slp in request.slps]
+                name = self.get_final_name(request)
+                videos = [
+                    task_by_slp_path[slp.path].video
+                    for slp in request.slps
+                    if slp.path in task_by_slp_path
+                ]
+
                 sb = self.conf.scoreboard
                 it = self.pipeline.get_scoreboard_tasks(sb, request.slps, videos)
                 for i, task in enumerate(it):
@@ -162,23 +158,13 @@ class Orchestrator:
                     yield [task]
                     videos[i] = task.video
 
-                name = request.final
-                contexts = list({slp.context for slp in request.slps})
-                if (len(contexts) == 1) and ((context := contexts[0]) is not None):
-                    if (
-                        self.conf.runtime.exclude_streamed_sets
-                        and context.data.stream is not None
-                    ):
-                        continue
-                    name = self.get_final_name(context) or name
                 for task in self.pipeline.get_concat_task(videos, name):
                     input_by_task[task] = input_path
                     yield [task]
 
         leaves = self.scheduler.get_leaves()
-        phase_by_task = {task: self.get_round_info(task) for task in leaves}
         yield from self.pipeline.get_group_concat_tasks(
-            leaves, input_by_task, phase_by_task, self.combine_mode
+            leaves, input_by_task, self.combine_mode
         )
         leaves = self.scheduler.get_leaves()
         yield from self.get_move_tasks(leaves)
@@ -239,3 +225,11 @@ class Orchestrator:
             self.pipeline.cleanup()
 
         self.log.info("Done!")
+
+    def should_skip_request(self, request: RenderRequest | ConcatRequest):
+        if not self.conf.runtime.exclude_streamed_sets:
+            return False
+        if isinstance(request, RenderRequest):
+            if request.slp.context is None:
+                return False
+            return request.slp.context.data.stream is not None

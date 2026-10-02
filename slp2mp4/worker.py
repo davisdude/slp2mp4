@@ -2,6 +2,7 @@
 
 import dataclasses
 import itertools
+import shutil
 from functools import singledispatchmethod
 from logging import Logger
 from multiprocessing import Event
@@ -64,7 +65,9 @@ class Worker:
         for i, o in zip(task.inputs, task.outputs):
             self.log.info(f"Moving '{i.path}' to '{o.path}'")
             o.path.parent.mkdir(parents=True, exist_ok=True)
-            i.path.replace(o.path)
+            # TODO: Replace with i.path.move (3.14)
+            # path.replace can cause cross-device link errors
+            shutil.move(i.path, o.path)
 
     def render_slp(self, slp: SlippiArtifact, mp4: Mp4Artifact):
         self.log.info(f"Rendering '{slp.path}' to '{mp4.path}'")

@@ -64,9 +64,17 @@ class SlippiArtifact(ExistingFileArtifact):
 
 @dataclasses.dataclass(frozen=True)
 class Mp4Artifact(Artifact):
+    contexts: frozenset[ContextData] = dataclasses.field(default_factory=frozenset)
+
     def __post_init__(self):
         super().__post_init__()
         if self.path.suffix != ".mp4":
             raise RuntimeError(
                 f"'{self.path}' has invalid file extension for an mp4 file."
             )
+
+    @property
+    def context(self):
+        if len(self.contexts) == 1:
+            return next(iter(self.contexts))
+        return None
