@@ -17,7 +17,6 @@ from slp2mp4 import log, util
 from slp2mp4.artifact import Artifact, Mp4Artifact
 from slp2mp4.collector import Collector, ConcatRequest, RenderRequest
 from slp2mp4.config import CombineMode, Config
-from slp2mp4.context import ContextData
 from slp2mp4.pipeline import Pipeline
 from slp2mp4.scheduler import Scheduler
 from slp2mp4.task import MoveFileTask, Task
@@ -100,11 +99,13 @@ class Orchestrator:
                 )
             ]
 
-    def get_final_name(self, context: ContextData | None):
-        if context is None:
-            return None
+    def get_final_name(self, request: ConcatRequest):
         if not self.conf.runtime.use_context_json:
-            return None
+            return request.final
+        contexts = {slp.context for slp in request.slps}
+        if (len(contexts) != 1) or (None not in contexts):
+            return request.final
+        context = next(iter(contexts))
         player1 = (" + ").join(context.scores[0].slots[0].display_names)
         player2 = (" + ").join(context.scores[0].slots[1].display_names)
         tournament_name = context.tournament_name
@@ -112,7 +113,7 @@ class Orchestrator:
         phase_name = context.phase_name
         round_name = context.round_name
         name = f"{player1} vs {player2} - {tournament_name} - {event_name} - {phase_name} - {round_name}.mp4"
-        return Path(name)
+        return request.parent / name
 
     def next(self):
         """Iterator that returns <task>."""
@@ -128,11 +129,7 @@ class Orchestrator:
                     input_by_task[task] = input_path
                     yield [task]
             elif isinstance(request, ConcatRequest):
-                name = request.final
-                contexts = {slp.context for slp in request.slps}
-                if (len(contexts) == 1) and (None not in contexts):
-                    context = next(iter(contexts))
-                    name = self.get_final_name(context.data) or name
+                name = self.get_final_name(request)
                 videos = [
                     task_by_slp_path[slp.path].video
                     for slp in request.slps

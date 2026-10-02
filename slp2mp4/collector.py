@@ -177,7 +177,7 @@ class Collector:
 
     def _handle_dir(self, input_path: Path, path: Path, state: RecurseState):
         if state.relative == Path("."):
-            name = Path(path.name + ".mp4")
+            name = Path(path.resolve().name + ".mp4")
         else:
             name = state.relative.parent / (state.relative.name + ".mp4")
         for p in path.iterdir():

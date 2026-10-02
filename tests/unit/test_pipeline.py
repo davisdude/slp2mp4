@@ -121,7 +121,7 @@ def test_get_render_task(tmp_path):
     assert task.name == "render game.slp"
     assert task.slp == slp
     assert task.inputs == [slp]
-    assert task.final_name == Path("game.mp4")
+    assert task.final_name == tmp_path / "game.mp4"
 
 
 def test_get_concat_tasks_single(tmp_path):

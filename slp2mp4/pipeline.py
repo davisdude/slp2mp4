@@ -84,8 +84,8 @@ class Pipeline:
     def get_render_task(self, slp: SlippiArtifact):
         context_data = None if slp.context is None else slp.context.data
         output = self._make_tmp_mp4({context_data})
-        name = slp.path.with_suffix(".mp4").name
-        yield RenderGameTask(f"render {slp}", [slp], [output], Path(name))
+        name = slp.path.with_suffix(".mp4")
+        yield RenderGameTask(f"render {slp}", [slp], [output], name)
 
     def get_concat_task(self, videos: list[Mp4Artifact], path: Path):
         yield self._concat_task(f"concat {path}", videos, path)
