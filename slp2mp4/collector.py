@@ -181,8 +181,9 @@ class Collector:
         else:
             name = state.relative.parent / (state.relative.name + ".mp4")
         for p in path.iterdir():
-            new_state = RecurseState(state.relative / p.name, True, state.in_zip)
-            yield from self._recurse(input_path, p, new_state)
+            if p not in self.created_dirs:
+                new_state = RecurseState(state.relative / p.name, True, state.in_zip)
+                yield from self._recurse(input_path, p, new_state)
         if state.in_zip or not self.monitor:
             slps = self._get_dir_slps(path)
             if slps:
