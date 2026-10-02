@@ -118,9 +118,9 @@ class Orchestrator:
         if not self.conf.runtime.use_context_json:
             return request.final
         contexts = {slp.context for slp in request.slps}
-        if (len(contexts) != 1) or (None not in contexts):
+        if (len(contexts) != 1) or (None in contexts):
             return request.final
-        context = next(iter(contexts))
+        context = next(iter(contexts)).data
         player1 = (" + ").join(context.scores[0].slots[0].display_names)
         player2 = (" + ").join(context.scores[0].slots[1].display_names)
         tournament_name = context.tournament_name
@@ -128,7 +128,7 @@ class Orchestrator:
         phase_name = context.phase_name
         round_name = context.round_name
         name = f"{player1} vs {player2} - {tournament_name} - {event_name} - {phase_name} - {round_name}.mp4"
-        return request.parent / name
+        return request.final.parent / name
 
     def next(self):
         """Iterator that returns <task>."""
