@@ -3,6 +3,7 @@
 import re
 import subprocess
 import tempfile
+import time
 from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import Event
 from pathlib import Path
@@ -135,6 +136,9 @@ class DolphinRunner:
                         break
                 if current_frame < game_end_frame:
                     self.log.info("Dolphin terminated early!")
+                else:
+                    # Give time for "GAME!" to clear
+                    time.sleep(2)
             finally:
                 if proc.poll() is None:
                     proc.terminate()
