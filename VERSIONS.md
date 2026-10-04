@@ -15,6 +15,7 @@
 - Testing! ([#8](https://github.com/davisdude/slp2mp4/issues/8))
 - Options to override anti-aliasing settings ([#51](https://github.com/davisdude/slp2mp4/issues/51))
 - Custom gecko codes ([#54](https://github.com/davisdude/slp2mp4/issues/54))
+- Fixed renders under load stopping as soon as "GAME!" appeared
 
 ## 3.1.1
 

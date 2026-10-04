@@ -231,9 +231,6 @@ parallel = 0
   a codec pack that supports mp4v / MPEG-4 or use another media player to view
   the files.
 
-* If videos cut off right as "GAME!" appears, try running fewer parallel
-  processes.
-
 ## Tests
 
 * `pytest` is required for running all tests
