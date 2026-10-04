@@ -3,7 +3,6 @@
 import re
 import subprocess
 import tempfile
-import time
 from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import Event
 from pathlib import Path
@@ -13,9 +12,11 @@ from slp2mp4 import log, util
 from slp2mp4.dolphin import comm, ini
 
 # https://github.com/project-slippi/Ishiiruka/blob/60f7b63496fb6ec7b9180a04f16f3edc0ad89fe2/Source/Core/Core/HW/EXI_DeviceSlippi.cpp#L1204
-LRAS_PREFIX = "[LRAS]"
-GAME_END_PREFIX = "[GAME_END_FRAME] "
+GAME_END_FRAME_PREFIX = "[GAME_END_FRAME] "
 CURRENT_FRAME_PREFIX = "[CURRENT_FRAME] "
+
+# https://github.com/project-slippi/Ishiiruka/blob/60f7b63496fb6ec7b9180a04f16f3edc0ad89fe2/Source/Core/Core/Slippi/SlippiReplayComm.cpp#L95
+NO_GAME_MESSAGE = "[NO_GAME]"
 
 
 def _read(proc: subprocess.Popen, queue: Queue[str | None]):
@@ -118,7 +119,6 @@ class DolphinRunner:
 
             game_end_frame = -124
             current_frame = -125
-            quit_out = False
 
             try:
                 while not kill_event.is_set():
@@ -131,23 +131,14 @@ class DolphinRunner:
                     if line is None:
                         break
                     line = line.rstrip()
-                    if line.startswith(LRAS_PREFIX):
-                        quit_out = True
-                    elif line.startswith(GAME_END_PREFIX):
-                        game_end_frame = int(line.removeprefix(GAME_END_PREFIX))
+                    if line.startswith(NO_GAME_MESSAGE):
+                        break
+                    elif line.startswith(GAME_END_FRAME_PREFIX):
+                        game_end_frame = int(line.removeprefix(GAME_END_FRAME_PREFIX))
                     elif line.startswith(CURRENT_FRAME_PREFIX):
                         current_frame = int(line.removeprefix(CURRENT_FRAME_PREFIX))
-                    if current_frame >= game_end_frame:
-                        break
                 if current_frame < game_end_frame:
                     self.log.info("Dolphin terminated early!")
-                else:
-                    if not quit_out:
-                        # Give time for "GAME!" to clear if needed
-                        # TODO: This doesn't work well under high load and causes replays to end early
-                        # TODO: Configurable extra delay
-                        # TODO: Does this include timeouts?
-                        time.sleep(2)
             finally:
                 if proc.poll() is None:
                     proc.terminate()
