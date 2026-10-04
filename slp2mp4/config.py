@@ -330,9 +330,10 @@ class ScoreboardConfig:
     )
     theme: ScoreboardUserData
     shared: SharedScoreboardConfig
-    split: BasicScoreboardConfig
+    split: BasicScoreboardConfig  # TODO: checkbox option (remove boX text)
     minimal: MinimalScoreboardConfig
     custom: CustomScoreboardConfig
+    # TODO: [L] indicator for GFs
 
     @classmethod
     def from_dict(cls, data):
