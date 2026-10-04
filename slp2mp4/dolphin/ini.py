@@ -59,7 +59,6 @@ def make_dolphin_file(userdir: pathlib.Path):
 
 @contextlib.contextmanager
 def make_gfx_file(userdir: pathlib.Path, user_settings):
-    # Could use Settings.DumpFramesAsImages, then detect all-black images
     settings = {
         "Settings": {
             "AspectRatio": "0",
