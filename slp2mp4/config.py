@@ -320,3 +320,6 @@ def get_optional_type(field_type):
     # Assumes Unions are [X, None]
     args = typing.get_args(field_type)
     return next(filter(lambda x: x is not None, args))
+
+
+# TODO: From dict + merge to unify CLI / GUI

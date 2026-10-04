@@ -145,6 +145,8 @@ class DolphinRunner:
                     if not quit_out:
                         # Give time for "GAME!" to clear if needed
                         # TODO: This doesn't work well under high load and causes replays to end early
+                        # TODO: Configurable extra delay
+                        # TODO: Does this include timeouts?
                         time.sleep(2)
             finally:
                 if proc.poll() is None:
