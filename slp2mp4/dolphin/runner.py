@@ -3,7 +3,6 @@
 import re
 import subprocess
 import tempfile
-import time
 from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import Event
 from pathlib import Path
@@ -12,8 +11,12 @@ from queue import Empty, Queue
 from slp2mp4 import log, util
 from slp2mp4.dolphin import comm, ini
 
-GAME_END_PREFIX = "[GAME_END_FRAME] "
+# https://github.com/project-slippi/Ishiiruka/blob/60f7b63496fb6ec7b9180a04f16f3edc0ad89fe2/Source/Core/Core/HW/EXI_DeviceSlippi.cpp#L1204
+GAME_END_FRAME_PREFIX = "[GAME_END_FRAME] "
 CURRENT_FRAME_PREFIX = "[CURRENT_FRAME] "
+
+# https://github.com/project-slippi/Ishiiruka/blob/60f7b63496fb6ec7b9180a04f16f3edc0ad89fe2/Source/Core/Core/Slippi/SlippiReplayComm.cpp#L95
+NO_GAME_MESSAGE = "[NO_GAME]"
 
 
 def _read(proc: subprocess.Popen, queue: Queue[str | None]):
@@ -128,17 +131,14 @@ class DolphinRunner:
                     if line is None:
                         break
                     line = line.rstrip()
-                    if line.startswith(GAME_END_PREFIX):
-                        game_end_frame = int(line.removeprefix(GAME_END_PREFIX))
+                    if line.startswith(NO_GAME_MESSAGE):
+                        break
+                    elif line.startswith(GAME_END_FRAME_PREFIX):
+                        game_end_frame = int(line.removeprefix(GAME_END_FRAME_PREFIX))
                     elif line.startswith(CURRENT_FRAME_PREFIX):
                         current_frame = int(line.removeprefix(CURRENT_FRAME_PREFIX))
-                    if current_frame >= game_end_frame:
-                        break
                 if current_frame < game_end_frame:
                     self.log.info("Dolphin terminated early!")
-                else:
-                    # Give time for "GAME!" to clear
-                    time.sleep(2)
             finally:
                 if proc.poll() is None:
                     proc.terminate()
