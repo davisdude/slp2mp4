@@ -12,6 +12,8 @@ from queue import Empty, Queue
 from slp2mp4 import log, util
 from slp2mp4.dolphin import comm, ini
 
+# https://github.com/project-slippi/Ishiiruka/blob/60f7b63496fb6ec7b9180a04f16f3edc0ad89fe2/Source/Core/Core/HW/EXI_DeviceSlippi.cpp#L1204
+LRAS_PREFIX = "[LRAS]"
 GAME_END_PREFIX = "[GAME_END_FRAME] "
 CURRENT_FRAME_PREFIX = "[CURRENT_FRAME] "
 
@@ -116,6 +118,7 @@ class DolphinRunner:
 
             game_end_frame = -124
             current_frame = -125
+            quit_out = False
 
             try:
                 while not kill_event.is_set():
@@ -128,7 +131,9 @@ class DolphinRunner:
                     if line is None:
                         break
                     line = line.rstrip()
-                    if line.startswith(GAME_END_PREFIX):
+                    if line.startswith(LRAS_PREFIX):
+                        quit_out = True
+                    elif line.startswith(GAME_END_PREFIX):
                         game_end_frame = int(line.removeprefix(GAME_END_PREFIX))
                     elif line.startswith(CURRENT_FRAME_PREFIX):
                         current_frame = int(line.removeprefix(CURRENT_FRAME_PREFIX))
@@ -137,8 +142,10 @@ class DolphinRunner:
                 if current_frame < game_end_frame:
                     self.log.info("Dolphin terminated early!")
                 else:
-                    # Give time for "GAME!" to clear
-                    time.sleep(2)
+                    if not quit_out:
+                        # Give time for "GAME!" to clear if needed
+                        # TODO: This doesn't work well under high load and causes replays to end early
+                        time.sleep(2)
             finally:
                 if proc.poll() is None:
                     proc.terminate()
