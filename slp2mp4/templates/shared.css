@@ -110,6 +110,7 @@ hr {
     gap: 0.1em;
     height: 1em;
     justify-content: flex-end;
+    column-gap: 1.1vh;
 }
 
 .marker {
