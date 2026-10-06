@@ -29,7 +29,7 @@ hr {
     grid-template-columns:
         calc({{ 303 / 1080 * sb.size[1] - 2 }}px - 1vh)
         calc({{ 303 / 1080 * sb.size[1] - 2 }}px - 1vh);
-    grid-template-rows: auto auto auto auto 1fr 1fr 3fr auto auto;
+    grid-template-rows: auto auto auto auto auto auto auto 1fr auto;
     align-content: center;
     align-items: center;
     justify-content: space-between;
