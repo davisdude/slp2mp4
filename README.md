@@ -194,8 +194,11 @@ A scoreboard where the gameplay is cenetered and info is on either side. Does
 not support widescreen.
 
 - `logo`: Path to logo; defaults to `slp2mp4` logo
+- `checkbox`: Whether or not to use checkboxes for displaying the score.
 
-![](images/split.jpg)
+![](images/split-no-checkbox.jpg)
+
+![](images/split-checkbox.jpg)
 
 ##### Minimal Scoreboard
 

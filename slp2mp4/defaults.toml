@@ -59,6 +59,7 @@ background_color = "Black"
 left = true
 
 [scoreboard.split]
+checkbox = false
 
 [scoreboard.minimal]
 

@@ -28,7 +28,17 @@
                         <div class="combatant-pronouns">{{ slot.pronouns[i] }}</div>
                     </div>
                     {% endfor %}
+                    {% if not sb.checkbox %}
                     <div class="combatant-score row7">{{ slot.score }}</div>
+                    {% else %}
+                    <div class="set-score row7">
+                        <div class="score-markers score-markers-right">
+                            {% for i in range((sb.slp.context.best_of / 2) | round(0, 'ceil') | int) %}
+                                <span class="marker {{ "is-won" if i < slot.score }}"></span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
                 </div>
                 <div class="row8"></div>
                 <div class="info info-small row9">
@@ -36,9 +46,11 @@
                     {% if loop.first %}
                     <div>{{ sb.slp.context.phase_name }}</div>
                     {% else %}
-                    <span>{{ sb.slp.context.round_name_short }}</span>
-                    /
-                    <span>Bo{{sb.slp.context.best_of }}</span>
+                        <span>{{ sb.slp.context.round_name_short }}</span>
+                        {% if not sb.checkbox %}
+                        /
+                        <span>Bo{{sb.slp.context.best_of }}</span>
+                        {% endif %}
                     {% endif %}
                 </div>
             </section>

@@ -8,6 +8,8 @@ html, body {
     padding: 0.5vh;
     color: {{ sb.config.theme.primary_color }};
     font-family: {{ sb.config.theme.font_spec }};
+    overflow-wrap: break-word;
+    hyphens: auto;
 }
 
 img {
@@ -98,4 +100,35 @@ hr {
 .combatant-sponsor, .combatant-pronouns {
     font-size: 60%;
     color: {{ sb.config.theme.secondary_color }};
+}
+
+.set-score {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0.5em;
+}
+
+.score-markers {
+    display: flex;
+    align-items: center;
+    gap: 0.25em;
+}
+
+.marker {
+    box-sizing: border-box;
+    width: 1em;
+    height: 1em;
+    border: 0.1em solid {{ sb.config.theme.primary_color }};
+    background: {{ sb.config.theme.background_color }};
+}
+
+.marker.is-won {
+    background: {{ sb.config.theme.primary_color }};
+}
+
+.set-score {
+    justify-self: center;
+    width: max-content;
 }

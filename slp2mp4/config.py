@@ -258,6 +258,15 @@ class SharedScoreboardConfig(BasicScoreboardConfig):
         return cls(left=data["left"], logo=data.get("logo"))
 
 
+@dataclasses.dataclass
+class SplitScoreboardConfig(BasicScoreboardConfig):
+    checkbox: bool
+
+    @classmethod
+    def from_dict(cls, data):
+        return cls(checkbox=data["checkbox"], logo=data.get("logo"))
+
+
 @dataclasses.dataclass(kw_only=True)
 class MinimalScoreboardConfig:
     @classmethod
@@ -291,7 +300,6 @@ class CustomScoreboardConfig:
             self.css_path = Path(self.css_path)
 
     def validate(self):
-        print(self.html_path)
         assert self.html_path is not None
         assert self.html_path.expanduser().exists()
         assert self.css_path is not None
@@ -330,7 +338,7 @@ class ScoreboardConfig:
     )
     theme: ScoreboardUserData
     shared: SharedScoreboardConfig
-    split: BasicScoreboardConfig  # TODO: checkbox option (remove boX text)
+    split: SplitScoreboardConfig
     minimal: MinimalScoreboardConfig
     custom: CustomScoreboardConfig
     # TODO: [L] indicator for GFs
@@ -342,7 +350,7 @@ class ScoreboardConfig:
             timezone=TzEnum(data["timezone"]),
             theme=ScoreboardUserData.from_dict(data["theme"]),
             shared=SharedScoreboardConfig.from_dict(data["shared"]),
-            split=BasicScoreboardConfig.from_dict(data["split"]),
+            split=SplitScoreboardConfig.from_dict(data["split"]),
             minimal=MinimalScoreboardConfig.from_dict(data["minimal"]),
             custom=CustomScoreboardConfig.from_dict(data["custom"]),
         )
