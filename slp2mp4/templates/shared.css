@@ -96,3 +96,35 @@ hr {
 .bracket-data {
     text-align: center;
 }
+
+.set-score {
+    display: flex;
+    align-items: center;
+    align-self: flex-end;
+    justify-content: space-between;
+}
+
+.score-markers {
+    display: flex;
+    align-items: center;
+    gap: 0.1em;
+    height: 1em;
+    justify-content: flex-end;
+}
+
+.marker {
+    box-sizing: border-box;
+    height: 90%;
+    aspect-ratio: 1 / 1;
+    border: 0.1em solid {{ sb.config.theme.primary_color }};
+    background: {{ sb.config.theme.background_color }};
+}
+
+.marker.is-won {
+    background: {{ sb.config.theme.primary_color }};
+}
+
+.set-score {
+    justify-self: right;
+    width: max-content;
+}

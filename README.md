@@ -185,8 +185,11 @@ A scoreboard where all the info is in one block. Does not support widescreen.
 
 - `logo`: Path to logo; defaults to `slp2mp4` logo
 - `left`: Whether scoreboard should be on the left or right
+- `checkbox`: Whether or not to use checkboxes for displaying the score.
 
-![](images/shared.jpg)
+![](images/shared-no-checkbox.jpg)
+
+![](images/shared-checkbox.jpg)
 
 ##### Split Scoreboard
 

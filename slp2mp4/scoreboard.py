@@ -144,6 +144,7 @@ class ScoreboardBase:
 class SharedScoreboard(ScoreboardBase):
     logo: Path = dataclasses.field(default=None)
     left: bool = dataclasses.field(default=True)
+    checkbox: bool = dataclasses.field(default=False)
 
     def __post_init__(self):
         super().__post_init__()
@@ -173,8 +174,8 @@ class SharedScoreboard(ScoreboardBase):
 
 @dataclasses.dataclass
 class SplitScoreboard(ScoreboardBase):
-    checkbox: bool = dataclasses.field()
     logo: Path = dataclasses.field(default=None)
+    checkbox: bool = dataclasses.field(default=False)
 
     def __post_init__(self):
         super().__post_init__()

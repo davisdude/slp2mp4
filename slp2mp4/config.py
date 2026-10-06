@@ -252,10 +252,11 @@ class BasicScoreboardConfig:
 @dataclasses.dataclass
 class SharedScoreboardConfig(BasicScoreboardConfig):
     left: bool
+    checkbox: bool
 
     @classmethod
     def from_dict(cls, data):
-        return cls(left=data["left"], logo=data.get("logo"))
+        return cls(left=data["left"], checkbox=data["checkbox"], logo=data.get("logo"))
 
 
 @dataclasses.dataclass

@@ -57,6 +57,7 @@ background_color = "Black"
 
 [scoreboard.shared]
 left = true
+checkbox = false
 
 [scoreboard.split]
 checkbox = false
