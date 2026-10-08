@@ -45,7 +45,7 @@ class ScoreboardBase:
     @property
     def tournament_date(self):
         return util.unix_ms_to_datetime(
-            self.slp.context.start_ms, self.config.timezone.tzinfo
+            self.slp.context.start_ms, self.config.timezone_enum.tzinfo
         )
 
     @property

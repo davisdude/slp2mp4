@@ -380,18 +380,19 @@ class ScoreboardConfig(ConfigBase):
     def type_enum(self):
         return ScoreboardType(self.type)
 
+    @property
     def timezone_enum(self):
         return TzEnum(self.timezone)
 
     @property
     def scoreboard(self):
-        if self.type == ScoreboardType.SHARED:
+        if self.type_enum == ScoreboardType.SHARED:
             return self.shared
-        elif self.type == ScoreboardType.SPLIT:
+        elif self.type_enum == ScoreboardType.SPLIT:
             return self.split
-        elif self.type == ScoreboardType.MINIMAL:
+        elif self.type_enum == ScoreboardType.MINIMAL:
             return self.minimal
-        elif self.type == ScoreboardType.CUSTOM:
+        elif self.type_enum == ScoreboardType.CUSTOM:
             return self.custom
 
     def validate(self):
