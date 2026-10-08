@@ -7,19 +7,20 @@ import time
 import zipfile
 from collections import deque
 from collections.abc import Generator
+from logging import Logger
 from multiprocessing import Event
 from pathlib import Path
 
 from watchdog.events import FileSystemEvent, FileSystemEventHandler
 from watchdog.observers import Observer
 
-from slp2mp4 import util
+from slp2mp4 import log, util
 from slp2mp4.artifact import ContextArtifact, SlippiArtifact
 
 
 def create_monitor_event_handler(collector, root: Path):
     class MonitorEventHandler(FileSystemEventHandler):
-        def on_created(self, event: FileSystemEvent):
+        def on_any_event(self, event: FileSystemEvent):
             # When a directory is created, a `DirCreatedEvent` and one `FileCreatedEvent` per file
             # are triggered. We don't actually care _what_ has been created; the recursive iterator
             # handles that for us. By returning just the root, we avoid processing files for
@@ -27,8 +28,6 @@ def create_monitor_event_handler(collector, root: Path):
             # NOTE: This is very inefficient for very large directories. A better approach would be
             # to try to aggregate events to minimize recursive traversal. But that seems hard and
             # this is probably fine for now.
-            if event.event_type != "created":
-                return
             path = Path(event.src_path)
             if event.is_directory or (path.suffix.lower() in (".slp", ".zip")):
                 collector.raw_monitor_inputs.append(root)
@@ -72,6 +71,10 @@ class Collector:
     )
     raw_monitor_inputs: deque = dataclasses.field(default_factory=deque, init=False)
     done: bool = dataclasses.field(default=False, init=False)
+    log: Logger | None = dataclasses.field(default=None, init=False)
+
+    def __post_init__(self):
+        self.log = log.get_logger()
 
     def next(self) -> Generator[tuple[Path, RenderRequest | ConcatRequest], None, None]:
         try:
@@ -144,15 +147,17 @@ class Collector:
         if state is None:
             state = RecurseState()
         if not path.exists():
-            raise RuntimeError(f"Input '{path}' does not exist!")
+            self.log.info(f"Input '{path}' does not exist! Skipping.")
+            return
         if path.is_file():
             if path in self.encountered:
                 return
-            self.encountered.add(path)
             if zipfile.is_zipfile(path):
+                self.encountered.add(path)
                 yield from self._handle_zip(input_path, path, state)
             elif path.suffix.lower() == ".slp":
                 # TODO: Check if it's actually a slippi file
+                self.encountered.add(path)
                 yield from self._handle_slp(input_path, path, state)
         else:
             yield from self._handle_dir(input_path, path, state)
