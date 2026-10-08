@@ -142,14 +142,14 @@ class ScoreboardBase:
 
 @dataclasses.dataclass
 class SharedScoreboard(ScoreboardBase):
-    logo: Path = dataclasses.field(default=None)
+    logo_path: Path = dataclasses.field(default=None)
     left: bool = dataclasses.field(default=True)
     checkbox: bool = dataclasses.field(default=False)
 
     def __post_init__(self):
         super().__post_init__()
-        if self.logo is None:
-            self.logo = DEFAULT_LOGO_PATH
+        if not self.logo_path:
+            self.logo_path = DEFAULT_LOGO_PATH
         if abs(self.input_aspect_ratio - MELEE_ASPECT_RATIO) > 1e-3:
             raise RuntimeError("Shared scoreboard must not be widescreen")
 
@@ -174,13 +174,13 @@ class SharedScoreboard(ScoreboardBase):
 
 @dataclasses.dataclass
 class SplitScoreboard(ScoreboardBase):
-    logo: Path = dataclasses.field(default=None)
+    logo_path: Path = dataclasses.field(default=None)
     checkbox: bool = dataclasses.field(default=False)
 
     def __post_init__(self):
         super().__post_init__()
-        if self.logo is None:
-            self.logo = DEFAULT_LOGO_PATH
+        if not self.logo_path:
+            self.logo_path = DEFAULT_LOGO_PATH
         if abs(self.input_aspect_ratio - MELEE_ASPECT_RATIO) > 1e-3:
             raise RuntimeError("Split scoreboard must not be widescreen")
 
@@ -223,7 +223,7 @@ class MinimalScoreboard(ScoreboardBase):
 @dataclasses.dataclass
 class CustomScoreboard(ScoreboardBase):
     alignment: str
-    ratio: float | None
+    ratio: float
     html_path: Path
     css_path: Path
 

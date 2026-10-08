@@ -90,8 +90,11 @@ class Worker:
         self, slp: SlippiArtifact, video_in: Mp4Artifact, video_out: Mp4Artifact
     ):
         self.log.info(f"Scoreboarding '{video_in.path}' to '{video_out.path}'")
-        conf_data = dataclasses.asdict(self.conf.scoreboard.scoreboard)
         sb_class = SCOREBOARD_MAPPING[self.conf.scoreboard.type]
+        conf_data = {
+            prop: getattr(self.conf.scoreboard.scoreboard, prop)
+            for prop in sb_class.get_properties()
+        }
         video_in_dims = self.ffmpeg.get_video_dimensions(video_in.path)
         resolution = self.conf.dolphin.resolution.display_name
         video_out_height = int(resolution.removesuffix("p"))

@@ -14,7 +14,6 @@ from multiprocessing import Event
 from pathlib import Path
 
 import pathvalidate
-import psutil
 
 from slp2mp4 import log, util
 from slp2mp4.artifact import Artifact, Mp4Artifact
@@ -51,9 +50,7 @@ class Orchestrator:
 
     def __post_init__(self):
         if self.num_procs is None:
-            self.num_procs = self.conf.runtime.parallel
-        if self.num_procs == 0:
-            self.num_procs = psutil.cpu_count(logical=False) or 1
+            self.num_procs = self.conf.runtime.parallel_procs
         if self.output_directory is None:
             self.output_directory = Path(".")
         if self.workdir is not None:

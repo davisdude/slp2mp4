@@ -31,14 +31,14 @@ def _read(proc: subprocess.Popen, queue: Queue[str | None]):
 class DolphinRunner:
     def __init__(self, config):
         self.log = log.get_logger()
-        self.slippi_playback = config.paths.slippi_playback.expanduser()
-        self.ssbm_iso = config.paths.ssbm_iso.expanduser()
-        self.video_backend = config.dolphin.backend.value
+        self.slippi_playback = config.paths.slippi_playback_path.expanduser()
+        self.ssbm_iso = config.paths.ssbm_iso_path.expanduser()
+        self.video_backend = config.dolphin.backend_enum.value
         self.user_gfx = {
             "Settings": {
                 "MSAA": str(config.dolphin.msaa),
                 "SSAA": "True" if config.dolphin.ssaa else "False",
-                "EFBScale": config.dolphin.resolution.dolphin_value,
+                "EFBScale": config.dolphin.resolution_enum.dolphin_value,
                 "BitrateKbps": str(config.dolphin.bitrate),
             },
         }
@@ -46,7 +46,7 @@ class DolphinRunner:
         # Need to override this setting for non-integral scaling
         self.user_gal = {
             "Video_Settings": {
-                "EFBScale": config.dolphin.resolution.dolphin_value,
+                "EFBScale": config.dolphin.resolution_enum.dolphin_value,
             },
         }
 

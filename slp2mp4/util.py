@@ -5,6 +5,7 @@ import os
 import re
 import sys
 from datetime import datetime, tzinfo
+from pathlib import Path
 
 
 def update_dict(d1: dict, d2: dict):
@@ -82,6 +83,11 @@ def get_env(bundled=False):
         else:
             env["LD_LIBRARY_PATH"] = orig
     return env
+
+
+def check_file(path: Path):
+    p = path.expanduser().resolve()
+    return p.is_file() and p.exists()
 
 
 def unix_ms_to_datetime(time_ms: int, timezone: tzinfo):

@@ -2,6 +2,7 @@
 ffmpeg = "ffmpeg"
 slippi_playback = "~/AppData/Roaming/Slippi Launcher/playback/Slippi Dolphin.exe"
 ssbm_iso = "~/Downloads/Super Smash Bros. Melee (USA) (En,Ja) (Rev 2).iso"
+ffprobe = ""
 
 [dolphin]
 backend = "OGL"
@@ -56,13 +57,18 @@ secondary_color = "LightGray"
 background_color = "Black"
 
 [scoreboard.shared]
+logo = ""
 left = true
 checkbox = false
 
 [scoreboard.split]
+logo = ""
 checkbox = false
 
 [scoreboard.minimal]
 
 [scoreboard.custom]
 alignment = "x=(ow-iw)/2:y=0"
+ratio = 0
+html = ""
+css = ""
