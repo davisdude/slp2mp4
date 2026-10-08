@@ -5,7 +5,6 @@ import math
 import threading
 import tkinter as tk
 import webbrowser
-from enum import Enum
 from multiprocessing import Event, freeze_support
 from pathlib import Path
 from tkinter import filedialog, scrolledtext, ttk
@@ -14,7 +13,6 @@ import tomli_w
 
 from slp2mp4 import config, log, util
 from slp2mp4.collector import Collector
-from slp2mp4.config import CombineMode, DolphinBackend, DolphinResolution
 from slp2mp4.orchestrator import Orchestrator
 
 try:
@@ -28,34 +26,6 @@ except ImportError:
 HOME_PAGE = "https://github.com/davisdude/slp2mp4"
 LICENSE_PAGE = f"{HOME_PAGE}/blob/master/LICENSE.md"
 FFMPEG_LICENSE_PATH = Path("_internal/lib/ffmpeg/LICENSE")
-
-
-def build_dataclass(variables, parent, obj, prefix=None, cols=1):
-    fields = dataclasses.fields(obj)
-    rows_per_column = math.ceil(len(fields) / cols)
-    for i, field in enumerate(fields):
-        row = 2 * (i % rows_per_column)
-        col = 2 * math.floor(i / rows_per_column)
-        value = getattr(obj, field.name)
-        key = (prefix or ()) + (field.name,)
-        ttk.Label(parent, text=field.name.replace("_", " ").title()).grid(
-            row=row, column=col, sticky="w"
-        )
-        widget = build_widget(
-            variables=variables,
-            parent=parent,
-            key=key,
-            value=value,
-            field=field,
-        )
-        widget.grid(row=row, column=col + 1, sticky="ew")
-        if (metadata := field.metadata) and (help_text := metadata.get("help")):
-            label = ttk.Label(parent, text=help_text, foreground="gray40")
-            label.grid(row=row + 1, column=col, columnspan=2, sticky="w")
-
-
-def is_dict_of_type(d, t):
-    return isinstance(d, dict) and all(isinstance(v, t) for v in d.values())
 
 
 def select_all(event):
@@ -81,38 +51,57 @@ class ScrolledTextwrapper:
         return self.widget.insert("1.0", s)
 
 
-def build_widget(variables, parent, key, value, field, field_type=None):
-    if field_type is None:
-        field_type = field.type
-    if config.is_optional_type(field_type):
-        field_type = config.get_optional_type(field_type)
-        default_value = None
-        if (field_type is Path) or (field_type is str):
-            default_value = ""
-        value = value if (value is not None) else default_value
-        return build_widget(variables, parent, key, value, field, field_type)
-    elif field_type is bool:
+def add_config_option_to_gui(variables, parent, config_type, prefix=None, cols=1):
+    if prefix is None:
+        prefix = ()
+
+    fields = dataclasses.fields(config_type)
+    rows_per_column = math.ceil(len(fields) / cols)
+    for i, field in enumerate(fields):
+        row = 2 * (i % rows_per_column)
+        col = 2 * math.floor(i / rows_per_column)
+        value = getattr(config_type, field.name)
+        new_prefix = prefix + (field.name,)
+        label = ttk.Label(parent, text=field.name.replace("_", " ").title())
+        label.grid(row=row, column=col, sticky="w")
+        widget = build_widget(
+            variables=variables,
+            parent=parent,
+            prefix=new_prefix,
+            value=value,
+            field=field,
+        )
+        widget.grid(row=row, column=col + 1, sticky="ew")
+        if (metadata := field.metadata) and (help_text := metadata.get("help")):
+            label = ttk.Label(parent, text=help_text, foreground="gray40")
+            label.grid(row=row + 1, column=col, columnspan=2, sticky="w")
+
+
+def build_widget(variables, parent, prefix, value, field):
+    metadata = getattr(field, "metadata", {})
+    if field.type is bool:
         var = tk.BooleanVar(value=value)
         widget = ttk.Checkbutton(parent, variable=var)
-    elif isinstance(value, Enum):
-        enum_type = type(value)
-        options = util.get_enum_display_values(enum_type)
-        var = tk.StringVar(value=util.enum_to_display(value))
+    elif choices := metadata.get("choices"):
+        var = tk.StringVar(value=value)
         widget = ttk.Combobox(
-            parent, textvariable=var, values=options, state="readonly"
+            parent, textvariable=var, values=choices, state="readonly"
         )
-    elif field_type is int:
-        # TODO: Spinners for some with min/max
+    elif field.type is int:
+        from_ = metadata.get("min", -math.inf)
+        to = metadata.get("max", math.inf)
         var = tk.IntVar(value=value)
-        widget = ttk.Entry(parent, textvariable=var)
-    elif field_type is Path:
-        var = tk.StringVar(value=str(value))
-        is_directory = field.metadata.get("is_directory")
-        widget = create_path_widget(parent, var, is_directory)
+        widget = ttk.Spinbox(parent, from_=from_, to=to, textvariable=var)
+    elif metadata.get("is_path"):
+        var = tk.StringVar(value=value)
+        widget = create_path_widget(parent, var)
+    elif metadata.get("is_directory"):
+        var = tk.StringVar(value=value)
+        widget = create_dir_widget(parent, var)
     elif is_dict_of_type(value, bool):
-        return create_bool_dict_widget(variables, parent, key, value)
+        return create_bool_dict_widget(variables, parent, prefix, value)
     elif is_dict_of_type(value, str):
-        return create_str_dict_widget(variables, parent, key, value)
+        return create_str_dict_widget(variables, parent, prefix, value)
     else:
         if field.metadata.get("multiline"):
             widget = scrolledtext.ScrolledText(parent, height=10, wrap=tk.WORD)
@@ -121,25 +110,40 @@ def build_widget(variables, parent, key, value, field, field_type=None):
         else:
             var = tk.StringVar(value=str(value))
             widget = ttk.Entry(parent, textvariable=var)
-    variables[key] = var
+    variables[prefix] = var
     return widget
 
 
-def create_path_widget(parent, var, is_dir):
+def create_path_widget(parent, var):
     frame = ttk.Frame(parent)
     ttk.Entry(frame, textvariable=var).pack(side="left", fill="x", expand=True)
-    button = ttk.Button(frame, text="Browse", command=lambda: browse_path(var, is_dir))
+    button = ttk.Button(frame, text="Browse", command=lambda: browse_path(var))
     button.pack(side="left")
     return frame
 
 
-def browse_path(var, is_dir):
-    if is_dir:
-        path = filedialog.askdirectory()
-    else:
-        path = filedialog.askopenfilename()
+def browse_path(var):
+    path = filedialog.askopenfilename()
     if path:
         var.set(path)
+
+
+def create_dir_widget(parent, var):
+    frame = ttk.Frame(parent)
+    ttk.Entry(frame, textvariable=var).pack(side="left", fill="x", expand=True)
+    button = ttk.Button(frame, text="Browse", command=lambda: browse_dir(var))
+    button.pack(side="left")
+    return frame
+
+
+def browse_dir(var):
+    path = filedialog.askdirectory()
+    if path:
+        var.set(path)
+
+
+def is_dict_of_type(d, t):
+    return isinstance(d, dict) and all(isinstance(v, t) for v in d.values())
 
 
 def create_bool_dict_widget(variables, parent, prefix, values):
@@ -158,7 +162,8 @@ def create_str_dict_widget(variables, parent, prefix, values):
     frame = ttk.Frame(parent)
     for row, (name, value) in enumerate(values.items()):
         var = tk.StringVar(value=value)
-        ttk.Entry(frame, textvariable=var).grid(row=row, column=0, sticky="w")
+        ttk.Label(frame, text=name.title()).grid(row=row, column=0, sticky="w")
+        ttk.Entry(frame, textvariable=var).grid(row=row, column=1, sticky="w")
         key = (prefix or ()) + (name,)
         variables[key] = var
     return frame
@@ -186,7 +191,8 @@ class ConfigDialog(tk.Toplevel):
             section_obj = getattr(self.config_data, section_name)
             frame = ttk.Frame(notebook)
             notebook.add(frame, text=section_name)
-            build_dataclass(self.variables, frame, section_obj, prefix=(section_name,))
+            prefix = (section_name,)
+            add_config_option_to_gui(self.variables, frame, section_obj, prefix=prefix)
             frame.columnconfigure(1, weight=1)
 
         button_frame = ttk.Frame(self)
@@ -202,17 +208,6 @@ class ConfigDialog(tk.Toplevel):
             for part in key[:-1]:
                 current = current[part]
             current[key[-1]] = var.get()
-
-        data["dolphin"]["backend"] = DolphinBackend(data["dolphin"]["backend"]).value
-        data["dolphin"]["resolution"] = DolphinResolution.from_display_name(
-            data["dolphin"]["resolution"]
-        ).display_name
-        data["dolphin"]["custom_gecko_codes"] = data["dolphin"][
-            "custom_gecko_codes"
-        ].strip()
-
-        if data["paths"]["ffprobe"].strip() == "":
-            data["paths"]["ffprobe"] = None
 
         defaults = config.get_default_config().to_dict()
         unique_items = util.get_unique_items(defaults, data)
@@ -338,7 +333,7 @@ class Application(tk.Tk):
     def make_runtime_options(self):
         frame = ttk.LabelFrame(self, text="Runtime")
         frame.pack(fill="both", expand=True, padx=10, pady=10)
-        build_dataclass(self.variables, frame, self.runtime_options, prefix=(), cols=2)
+        add_config_option_to_gui(self.variables, frame, self.runtime_options, cols=2)
 
     def make_actions(self):
         frame = ttk.LabelFrame(self, text="Actions")
@@ -379,24 +374,28 @@ class Application(tk.Tk):
         self.listbox.delete(0, tk.END)
 
     def run(self):
-        debug = self.variables[("debug",)].get()
-        self.log = log.update_logger(debug, self.log_text)
-        self.log.debug("Debug")
+        override = {}
+        for key, var in self.variables.items():
+            current = override
+            for part in key[:-1]:
+                if part not in current:
+                    current[part] = {}
+                current = current[part]
+            current[key[-1]] = var.get()
+        self.runtime_options.override(override)
+
+        self.log = log.update_logger(self.runtime_options.debug, self.log_text)
 
         self.stop_event.clear()
         self.kill_event.clear()
         conf = config.get_config()
         conf.validate()
-        workdir = self.variables[("temporary_directory",)].get()
-        if workdir.strip() != "":
-            workdir = Path(workdir)
-        else:
-            workdir = None
+        workdir = self.runtime_options.temporary_directory_path
 
         collector = Collector(
             inputs=self.inputs,
             stop_event=self.stop_event,
-            monitor=self.variables[("monitor",)].get(),
+            monitor=self.runtime_options.monitor,
             workdir=workdir,
         )
 
@@ -404,11 +403,11 @@ class Application(tk.Tk):
             conf=conf,
             kill_event=self.kill_event,
             collector=collector,
-            combine_mode=CombineMode(self.variables[("combine_mode",)].get()),
-            dry_run=self.variables[("dry_run",)].get(),
+            combine_mode=self.runtime_options.combine_mode_enum,
+            dry_run=self.runtime_options.dry_run,
             workdir=workdir,
-            output_directory=Path(self.variables[("output_directory",)].get()),
-            debug=debug,
+            output_directory=self.runtime_options.output_directory_path,
+            debug=self.runtime_options.debug,
         )
         threading.Thread(target=orchestrator.run).start()
 

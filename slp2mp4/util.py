@@ -4,6 +4,7 @@ import ctypes
 import os
 import re
 import sys
+from pathlib import Path
 
 
 def update_dict(d1: dict, d2: dict):
@@ -81,3 +82,8 @@ def get_env(bundled=False):
         else:
             env["LD_LIBRARY_PATH"] = orig
     return env
+
+
+def check_file(path: Path):
+    p = path.expanduser().resolve()
+    return p.is_file() and p.exists()
