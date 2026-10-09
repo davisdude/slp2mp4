@@ -32,7 +32,7 @@ class Scheduler:
     )
     log: Logger = dataclasses.field(init=False)
     _num_tasks_submitted: int = dataclasses.field(init=False, default=0)
-    _num_tasks_completed: int = dataclasses.field(init=False, default=0)
+    _num_tasks_yielded: int = dataclasses.field(init=False, default=0)
 
     def __post_init__(self):
         self.full_resources = copy.deepcopy(self.available_resources)
@@ -44,9 +44,9 @@ class Scheduler:
             return self._num_tasks_submitted
 
     @property
-    def num_tasks_completed(self):
+    def num_tasks_yielded(self):
         with self.lock:
-            return self._num_tasks_completed
+            return self._num_tasks_yielded
 
     def submit(self, tasks: list[Task]):
         with self.lock:
@@ -111,6 +111,7 @@ class Scheduler:
                         self.available_resources[name] -= value
                     self.running_tasks.add(task)
                     self.ready_tasks.extendleft(blocked)
+                    self._num_tasks_yielded += 1
                     return task
                 blocked.append(task)
             self.ready_tasks.extend(blocked)
@@ -129,7 +130,6 @@ class Scheduler:
                     self.ready_tasks.appendleft(dependent)
             self.running_tasks.remove(task)
             self.completed_tasks.add(task)
-            self._num_tasks_completed += 1
 
     def mark_failed(self, task: Task):
         self.log.info(f"Marking task '{task.name}' as failed")

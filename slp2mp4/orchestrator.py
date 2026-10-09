@@ -198,7 +198,7 @@ class Orchestrator:
                 continue
             try:
                 if not self.dry_run:
-                    task_num = self.scheduler.num_tasks_completed + 1
+                    task_num = self.scheduler.num_tasks_yielded
                     submitted = self.scheduler.num_tasks_submitted
                     self.log.info(f"[{task_num}/{submitted}]: Starting {task.name}")
                     self.worker.submit(task)
