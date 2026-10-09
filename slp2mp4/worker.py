@@ -63,14 +63,14 @@ class Worker:
     @_submit.register
     def _(self, task: MoveFileTask):
         for i, o in zip(task.inputs, task.outputs):
-            self.log.info(f"Moving '{i.path}' to '{o.path}'")
+            self.log.debug(f"Moving '{i.path}' to '{o.path}'")
             o.path.parent.mkdir(parents=True, exist_ok=True)
             # TODO: Replace with i.path.move (3.14)
             # path.replace can cause cross-device link errors
             shutil.move(i.path, o.path)
 
     def render_slp(self, slp: SlippiArtifact, mp4: Mp4Artifact):
-        self.log.info(f"Rendering '{slp.path}' to '{mp4.path}'")
+        self.log.debug(f"Rendering '{slp.path}' to '{mp4.path}'")
         with TemporaryDirectory() as tmpdir_str:
             tmpdir = Path(tmpdir_str)
             audio_file, video_path = self.dolphin.run(slp.path, tmpdir, self.kill_event)
@@ -84,7 +84,7 @@ class Worker:
             )
             if not success:
                 raise RuntimeError(f"Failed to render '{slp.path}'")
-            self.log.info(f"Done rendering '{slp.path}'")
+            self.log.debug(f"Done rendering '{slp.path}'")
 
     def render_scoreboard(
         self, slp: SlippiArtifact, video_in: Mp4Artifact, video_out: Mp4Artifact
@@ -121,12 +121,12 @@ class Worker:
         task: Task | None = None,
     ):
         input_paths = [i.path for i in inputs]
-        self.log.info(f"Combining '{input_paths}' to '{output.path}'")
+        self.log.debug(f"Combining '{input_paths}' to '{output.path}'")
         success = self.ffmpeg.concat_videos(input_paths, output.path)
         if not success:
             raise RuntimeError(f"Failed to create '{output.path}'")
-        self.log.info(f"Done combining '{output.path}'")
+        self.log.debug(f"Done combining '{output.path}'")
         if task:
-            self.log.info(f"Getting timestamps for '{output.path}'")
+            self.log.debug(f"Getting timestamps for '{output.path}'")
             durations = [self.ffmpeg.get_video_duration(path) for path in input_paths]
             task.timestamps = itertools.accumulate(durations[:-1], initial=0)
