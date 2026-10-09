@@ -290,7 +290,7 @@ class LogoScoreboardConfig(BasicScoreboardConfig):
 
     @classmethod
     def get_properties(cls):
-        return super().get_properties() + ("logo",)
+        return super().get_properties() + ("logo_path",)
 
     @property
     def logo_path(self):
@@ -318,7 +318,7 @@ class SplitScoreboardConfig(LogoScoreboardConfig):
 
     @classmethod
     def get_properties(cls):
-        return super().get_properties() + ("checkbox")
+        return super().get_properties() + ("checkbox",)
 
 
 @dataclasses.dataclass(kw_only=True)

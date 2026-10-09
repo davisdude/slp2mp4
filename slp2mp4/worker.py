@@ -93,7 +93,7 @@ class Worker:
         sb_class = SCOREBOARD_MAPPING[self.conf.scoreboard.type_enum]
         conf_data = {
             prop: getattr(self.conf.scoreboard.scoreboard, prop)
-            for prop in sb_class.get_properties()
+            for prop in self.conf.scoreboard.scoreboard.get_properties()
         }
         video_in_dims = self.ffmpeg.get_video_dimensions(video_in.path)
         resolution = self.conf.dolphin.resolution_enum.display_name
