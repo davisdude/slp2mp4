@@ -220,6 +220,7 @@ class Orchestrator:
                     task.cleanup()
 
     def run(self):
+        start_time = time.time()
         self.log.info("Starting")
 
         # 1 do_work per num_proc, + 1 for collect_tasks
@@ -237,6 +238,7 @@ class Orchestrator:
 
         # Timestamps must be written after concat is done
         leaves = self.scheduler.get_leaves()
+        num_videos = len(leaves)
         for task in leaves:
             self.write_timestamps(task)
 
@@ -244,4 +246,6 @@ class Orchestrator:
             self.collector.cleanup()
             self.pipeline.cleanup()
 
-        self.log.info("Done!")
+        end_time = time.time()
+        duration = int(end_time - start_time)
+        self.log.info(f"Made {num_videos} videos in {timedelta(seconds=duration)}")
