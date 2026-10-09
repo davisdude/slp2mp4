@@ -1,5 +1,6 @@
 # Wrapper for running dolphin
 
+import os
 import re
 import subprocess
 import tempfile
@@ -105,6 +106,10 @@ class DolphinRunner:
 
     def _run(self, args: tuple[str, ...], kill_event: Event):
         with ThreadPoolExecutor(max_workers=1) as executor:
+            if os.name == "nt":
+                kwargs = {"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP}
+            else:
+                kwargs = {"start_new_session": True}
             proc = subprocess.Popen(
                 args=args,
                 stdin=subprocess.DEVNULL,
@@ -113,6 +118,7 @@ class DolphinRunner:
                 text=True,
                 encoding="utf-8",
                 env=util.get_env(),
+                **kwargs,
             )
             queue = Queue()
             future = executor.submit(_read, proc, queue)
