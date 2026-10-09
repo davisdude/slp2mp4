@@ -120,12 +120,9 @@ class Orchestrator:
     def get_move_tasks(self, tasks: list[Task]):
         new_paths = self.get_move_paths(tasks)
         for task, output_path in zip(tasks, new_paths):
-            output_artifact = Mp4Artifact(output_path)
-            yield [
-                MoveFileTask(
-                    f"move {output_path}", [task.video], [output_artifact], output_path
-                )
-            ]
+            out_artifact = Mp4Artifact(output_path)
+            task_name = f"move {output_path}"
+            yield [MoveFileTask(task_name, [task.video], [out_artifact], output_path)]
 
     def get_final_name(self, request: ConcatRequest):
         if not self.conf.runtime.use_context_json:
