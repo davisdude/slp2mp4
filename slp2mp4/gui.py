@@ -313,10 +313,10 @@ class Application(tk.Tk):
 
     def make_input_selector(self):
         frame = ttk.LabelFrame(self, text="Inputs")
-        frame.pack(fill="both", expand=True, padx=10, pady=10)
+        frame.pack(fill="x", padx=10, pady=10)
 
         self.listbox = tk.Listbox(frame, selectmode=tk.EXTENDED, height=5)
-        self.listbox.pack(fill="both", expand=True)
+        self.listbox.pack(fill="x")
 
         buttons = ttk.Frame(frame)
         buttons.pack(fill="x")
@@ -332,12 +332,12 @@ class Application(tk.Tk):
 
     def make_runtime_options(self):
         frame = ttk.LabelFrame(self, text="Runtime")
-        frame.pack(fill="both", expand=True, padx=10, pady=10)
+        frame.pack(fill="x", padx=10, pady=10)
         add_config_option_to_gui(self.variables, frame, self.runtime_options, cols=2)
 
     def make_actions(self):
         frame = ttk.LabelFrame(self, text="Actions")
-        frame.pack(fill="both", expand=True, padx=10, pady=10)
+        frame.pack(fill="x", padx=10, pady=10)
         ttk.Button(frame, text="Run", command=self.run).pack(side="left")
         ttk.Button(frame, text="Stop", command=self.stop).pack(side="left")
         ttk.Button(frame, text="Kill", command=self.kill).pack(side="left")
