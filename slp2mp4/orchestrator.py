@@ -113,7 +113,7 @@ class Orchestrator:
             if counts[path] > 1:
                 sha = _hash_task(task)
                 path = path.parent / f"{path.name}-{sha}"
-            output_path = path.parent / f"{path.name}.mp4"
+            output_path = path.parent.expanduser() / f"{path.name}.mp4"
             new_paths.append(output_path)
         return new_paths
 
@@ -206,7 +206,7 @@ class Orchestrator:
                 continue
             try:
                 if not self.dry_run:
-                    task_num = self.scheduler.num_tasks_completed + 1
+                    task_num = self.scheduler.num_tasks_yielded
                     submitted = self.scheduler.num_tasks_submitted
                     self.log.info(f"[{task_num}/{submitted}]: Starting {task.name}")
                     self.worker.submit(task)
