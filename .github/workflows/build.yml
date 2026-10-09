@@ -72,7 +72,14 @@ jobs:
       - name: Update defaults.toml to use bundled FFmpeg
         run: |
           (Get-Content slp2mp4/defaults.toml) `
-            -replace 'ffmpeg = "ffmpeg"', 'ffmpeg = "_internal/slp2mp4/lib/ffmpeg/ffmpeg.exe"`r`nffprobe = "_internal/slp2mp4/lib/ffmpeg/ffprobe.exe"' |
+            -replace 'ffmpeg = "ffmpeg"', 'ffmpeg = "_internal/slp2mp4/lib/ffmpeg/ffmpeg.exe"' |
+            Set-Content slp2mp4/defaults.toml
+        shell: pwsh
+
+      - name: Update defaults.toml to use bundled ffprobe
+        run: |
+          (Get-Content slp2mp4/defaults.toml) `
+            -replace 'ffprobe = ""', 'ffprobe = "_internal/slp2mp4/lib/ffmpeg/ffprobe.exe"' |
             Set-Content slp2mp4/defaults.toml
         shell: pwsh
 
