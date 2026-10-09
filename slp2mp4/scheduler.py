@@ -31,10 +31,22 @@ class Scheduler:
         default_factory=dict, init=False
     )
     log: Logger = dataclasses.field(init=False)
+    _num_tasks_submitted: int = dataclasses.field(init=False, default=0)
+    _num_tasks_completed: int = dataclasses.field(init=False, default=0)
 
     def __post_init__(self):
         self.full_resources = copy.deepcopy(self.available_resources)
         self.log = log.get_logger()
+
+    @property
+    def num_tasks_submitted(self):
+        with self.lock:
+            return self._num_tasks_submitted
+
+    @property
+    def num_tasks_completed(self):
+        with self.lock:
+            return self._num_tasks_completed
 
     def submit(self, tasks: list[Task]):
         with self.lock:
@@ -51,6 +63,7 @@ class Scheduler:
                             f"Task '{task.name}' will never satisfy '{resource}' requirement ({requested} > {available})."
                         )
 
+                self._num_tasks_submitted += 1
                 for output in task.outputs:
                     self.producers[output] = task
                 self.waiting_on[task] = set()
@@ -116,6 +129,7 @@ class Scheduler:
                     self.ready_tasks.appendleft(dependent)
             self.running_tasks.remove(task)
             self.completed_tasks.add(task)
+            self._num_tasks_completed += 1
 
     def mark_failed(self, task: Task):
         self.log.info(f"Marking task '{task.name}' as failed")

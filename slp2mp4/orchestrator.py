@@ -201,6 +201,9 @@ class Orchestrator:
                 continue
             try:
                 if not self.dry_run:
+                    task_num = self.scheduler.num_tasks_completed + 1
+                    submitted = self.scheduler.num_tasks_submitted
+                    self.log.info(f"[{task_num}/{submitted}]: Starting {task.name}")
                     self.worker.submit(task)
                 self.scheduler.finish(task)
             except Exception:  # noqa: BLE001
