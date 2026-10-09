@@ -139,7 +139,7 @@ class ConfigBase:
                 getattr(self, field.name).override(data.get(field.name, {}))
             else:
                 value = data.get(field.name)
-                if value is not None:
+                if (value is not None) and (value is not dataclasses.MISSING):
                     setattr(self, field.name, value)
 
 
