@@ -97,9 +97,8 @@ class Pipeline:
         for slp, video in zip(slps, videos):
             out = self._make_tmp_mp4({slp.context})
             name = slp.path.with_suffix(".mp4").name
-            yield RenderScoreboardTask(
-                f"scoreboard {name}", [slp, video], [out], Path(name)
-            )
+            task_name = f"scoreboard {name}"
+            yield RenderScoreboardTask(task_name, [slp, video], [out], Path(name))
 
     def get_concat_task(self, videos: list[Mp4Artifact], path: Path):
         if len(videos) > 0:
