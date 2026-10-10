@@ -252,3 +252,8 @@ SCOREBOARD_MAPPING = {
     ScoreboardType.MINIMAL: MinimalScoreboard,
     ScoreboardType.CUSTOM: CustomScoreboard,
 }
+
+# TODO: Make checkbox code shared
+# TODO: Make checkbox code match port color (singles) / team color (doubles) (need slp for doubles)
+# TODO: Character icons - https://github.com/AeonSSB/Melee-CSProject ?
+#       Need to read slp for costume id
