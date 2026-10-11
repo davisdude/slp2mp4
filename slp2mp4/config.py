@@ -331,7 +331,10 @@ class LogoScoreboardConfig(BasicScoreboardConfig):
         return Path(self.logo)
 
     def validate(self):
-        assert (self.logo_path is None) or util.check_file(self.logo_path)
+        if (self.logo_path is not None) and not util.check_file(self.logo_path):
+            self.log.error(f"Invalid logo path '{self.logo_path}'")
+            return False
+        return True
 
 
 @dataclasses.dataclass
@@ -376,11 +379,13 @@ class CustomScoreboardConfig(ConfigBase):
         return Path(self.css)
 
     def validate(self):
-        assert self.html_path is not None
-        assert util.check_file(self.html_path)
-        assert self.css_path is not None
-        assert util.check_file(self.css_path)
-
+        if not util.check_file(self.html_path):
+            self.log.error(f"Could not find HTML file '{self.html_path}'")
+            return False
+        if not util.check_file(self.css_path):
+            self.log.error(f"Could not find CSS file '{self.css_path}'")
+            return False
+        return True
 
 @dataclasses.dataclass
 class ScoreboardUserData(ConfigBase):
@@ -430,8 +435,11 @@ class ScoreboardConfig(ConfigBase):
             return self.custom
 
     def validate(self):
-        self.theme.validate()
-        self.scoreboard.validate()
+        if not self.theme.validate():
+            return False
+        if not self.scoreboard.validate():
+            return False
+        return True
 
 
 @dataclasses.dataclass
