@@ -360,7 +360,9 @@ class ScoreboardUserData(ConfigBase):
 
 @dataclasses.dataclass
 class ScoreboardConfig(ConfigBase):
-    type: str
+    type: str = dataclasses.field(
+        metadata={"choices": util.get_enum_display_values(ScoreboardType)}
+    )
     timezone: str = dataclasses.field(
         metadata={
             "help_all": True,
