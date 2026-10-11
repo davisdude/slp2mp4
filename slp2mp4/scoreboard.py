@@ -151,6 +151,7 @@ class SharedScoreboard(ScoreboardBase):
         if not self.logo_path:
             self.logo_path = DEFAULT_LOGO_PATH
         if abs(self.input_aspect_ratio - MELEE_ASPECT_RATIO) > 1e-3:
+            # TODO: This check fails for 2160p videos because the aspect ratio is different
             raise RuntimeError("Shared scoreboard must not be widescreen")
 
     @property
@@ -182,6 +183,7 @@ class SplitScoreboard(ScoreboardBase):
         if not self.logo_path:
             self.logo_path = DEFAULT_LOGO_PATH
         if abs(self.input_aspect_ratio - MELEE_ASPECT_RATIO) > 1e-3:
+            # TODO: This check fails for 2160p videos because the aspect ratio is different
             raise RuntimeError("Split scoreboard must not be widescreen")
 
     @property
