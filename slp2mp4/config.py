@@ -212,14 +212,10 @@ class PathsConfig(ConfigBase):
             self.log.error(f"Could not find ffprobe given path '{self.ffprobe}'")
             return False
         if not util.check_file(self.ffprobe_path):
-            self.log.error(
-                f"ffprobe path '{self.slippi_playback_path}' does not exist"
-            )
+            self.log.error(f"ffprobe path '{self.slippi_playback_path}' does not exist")
             return False
         if (self.chrome_path is not None) and not util.check_file(self.chrome_path):
-            self.log.error(
-                f"chrome path '{self.slippi_playback_path}' does not exist"
-            )
+            self.log.error(f"chrome path '{self.slippi_playback_path}' does not exist")
             return False
         return True
 
@@ -387,6 +383,7 @@ class CustomScoreboardConfig(ConfigBase):
             return False
         return True
 
+
 @dataclasses.dataclass
 class ScoreboardUserData(ConfigBase):
     font_spec: str
@@ -437,9 +434,7 @@ class ScoreboardConfig(ConfigBase):
     def validate(self):
         if not self.theme.validate():
             return False
-        if not self.scoreboard.validate():
-            return False
-        return True
+        return self.scoreboard.validate()
 
 
 @dataclasses.dataclass
