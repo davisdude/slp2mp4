@@ -411,7 +411,8 @@ class Application(tk.Tk):
         self.stop_event.clear()
         self.kill_event.clear()
         conf = config.get_config()
-        conf.validate()
+        if not conf.validate():
+            return
         workdir = self.runtime_options.temporary_directory_path
 
         collector = Collector(

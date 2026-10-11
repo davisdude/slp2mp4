@@ -104,17 +104,18 @@ def main():
     args = parser.parse_args()
     runtime_args = RuntimeOptions.dict_from_namespace(args)
     config_args = Config.dict_from_namespace(args)
+    logger = log.update_logger(args.debug)
 
     conf = config.get_config()
     conf.override(config_args)
-    conf.validate()
+    if not conf.validate():
+        return
 
     runtime = RuntimeOptions()
     runtime.override(runtime_args)
 
     stop_event = Event()
     kill_event = Event()
-    logger = log.update_logger(args.debug)
     signal.signal(signal.SIGINT, make_sigint_handler(logger, stop_event, kill_event))
 
     if args.monitor:
