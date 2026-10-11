@@ -180,7 +180,7 @@ class PathsConfig(ConfigBase):
             return False
         if not util.check_file(self.ffprobe_path):
             self.log.error(
-                f"ffprobe path path '{self.slippi_playback_path}' does not exist"
+                f"ffprobe path '{self.slippi_playback_path}' does not exist"
             )
             return False
         return True
