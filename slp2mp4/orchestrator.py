@@ -18,7 +18,7 @@ import pathvalidate
 from slp2mp4 import log, util
 from slp2mp4.artifact import Artifact, Mp4Artifact
 from slp2mp4.collector import Collector, ConcatRequest, RenderRequest
-from slp2mp4.config import CombineMode, Config
+from slp2mp4.config import CombineMode, Config, ScoreboardType
 from slp2mp4.pipeline import Pipeline
 from slp2mp4.scheduler import Scheduler
 from slp2mp4.task import MoveFileTask, Task
@@ -171,10 +171,11 @@ class Orchestrator:
 
                 sb = self.conf.scoreboard
                 it = self.pipeline.get_scoreboard_tasks(sb, request.slps, videos)
-                for i, task in enumerate(it):
-                    input_by_task[task] = input_path
-                    yield [task]
-                    videos[i] = task.video
+                if self.conf.scoreboard.type_enum != ScoreboardType.NONE:
+                    for i, task in enumerate(it):
+                        input_by_task[task] = input_path
+                        yield [task]
+                        videos[i] = task.video
 
                 for task in self.pipeline.get_concat_task(videos, name):
                     input_by_task[task] = input_path

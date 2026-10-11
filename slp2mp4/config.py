@@ -406,6 +406,7 @@ class ScoreboardConfig(ConfigBase):
         }
     )
     theme: ScoreboardUserData
+    none: BasicScoreboardConfig
     shared: SharedScoreboardConfig
     split: SplitScoreboardConfig
     minimal: MinimalScoreboardConfig
@@ -422,7 +423,9 @@ class ScoreboardConfig(ConfigBase):
 
     @property
     def scoreboard(self):
-        if self.type_enum == ScoreboardType.SHARED:
+        if self.type_enum == ScoreboardType.NONE:
+            return self.none
+        elif self.type_enum == ScoreboardType.SHARED:
             return self.shared
         elif self.type_enum == ScoreboardType.SPLIT:
             return self.split
