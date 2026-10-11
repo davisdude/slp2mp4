@@ -93,6 +93,9 @@ class ConfigBase:
                     data[field.name] = value
         return data
 
+    def __post_init__(self):
+        self.log = log.get_logger()
+
     def to_dict(self):
         data = {}
         for field in dataclasses.fields(self):
@@ -106,7 +109,10 @@ class ConfigBase:
     def validate(self):
         for field in dataclasses.fields(self):
             if dataclasses.is_dataclass(field.type):
-                getattr(self, field.name).validate()
+                result = getattr(self, field.name).validate()
+                if not result:
+                    return result
+        return True
 
     def override(self, data: dict):
         for field in dataclasses.fields(self):
@@ -155,12 +161,29 @@ class PathsConfig(ConfigBase):
         raise RuntimeError("Could not find ffprobe.")
 
     def validate(self):
-        assert self.ffmpeg_path is not None
-        assert util.check_file(self.ffmpeg_path)
-        assert util.check_file(self.slippi_playback_path)
-        assert util.check_file(self.ssbm_iso_path)
-        assert self.ffprobe_path is not None
-        assert util.check_file(self.ffprobe_path)
+        if self.ffmpeg_path is None:
+            self.log.error(f"Could not find ffmpeg given path '{self.ffmpeg}'")
+            return False
+        if not util.check_file(self.ffmpeg_path):
+            self.log.error(f"ffmpeg path '{self.ffmpeg_path}' does not exist")
+            return False
+        if not util.check_file(self.slippi_playback_path):
+            self.log.error(
+                f"Slippi playback path '{self.slippi_playback_path}' does not exist"
+            )
+            return False
+        if not util.check_file(self.ssbm_iso_path):
+            self.log.error(f"SSBM ISO path '{self.ssbm_iso_path}' does not exist")
+            return False
+        if self.ffprobe_path is None:
+            self.log.error(f"Could not find ffprobe given path '{self.ffprobe}'")
+            return False
+        if not util.check_file(self.ffprobe_path):
+            self.log.error(
+                f"ffprobe path path '{self.slippi_playback_path}' does not exist"
+            )
+            return False
+        return True
 
 
 @dataclasses.dataclass
@@ -202,7 +225,9 @@ class FfmpegConfig(ConfigBase):
 
     def validate(self):
         if not (0 <= self.volume <= 100):
-            raise RuntimeError(f"Invalid ffmpeg volume value '{self.volume}'")
+            self.log.error(f"Invalid ffmpeg volume value '{self.volume}'")
+            return False
+        return True
 
 
 @dataclasses.dataclass
@@ -240,7 +265,10 @@ class RuntimeConfig(ConfigBase):
         return psutil.cpu_count(logical=False) or 1
 
     def validate(self):
-        assert self.parallel_procs > 0
+        if self.parallel_procs < 0:
+            self.log.error(f"Invalid parallel value '{self.parallel_procs}'")
+            return False
+        return True
 
 
 @dataclasses.dataclass

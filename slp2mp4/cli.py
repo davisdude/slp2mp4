@@ -77,7 +77,8 @@ def main():
 
     conf = config.get_config()
     conf.override(config_args)
-    conf.validate()
+    if not conf.validate():
+        return
 
     runtime = RuntimeOptions()
     runtime.override(runtime_args)
