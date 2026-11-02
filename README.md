@@ -93,11 +93,11 @@ options:
                         {source}: Input file name
                         {players}: 'player' vs 'player'; will be 'player + player vs player + player' for doubles
                         {players_chars}: Like "players", but includes character info
-                        {tournament_name}: Tournament name (from context.json)
+                        {tournament_name}: Tournament name
                         {event_name}: Name of event
                         {phase_name}: Name of phase
                         {round_name}: Name of round
-                        {round_name_short}: Name of round, but shortened; e.g. "Winners Round 1" becomes "LR1"
+                        {round_name_short}: Name of round, but shortened; e.g. "Winners Round 1" becomes "WR1"
 ```
 
 ### Graphical User Interface
