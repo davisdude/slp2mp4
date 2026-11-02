@@ -49,8 +49,8 @@ usage: slp2mp4 [-h] [-v] [-n] [-m] [--debug] [-t TEMPORARY_DIRECTORY] [-o OUTPUT
                [--dolphin-backend {D3D12,DX11,DX9,OGL,Software Renderer,Vulkan}] [--dolphin-resolution {480p,720p,1080p,1440p,2160p}] [--dolphin-msaa DOLPHIN_MSAA]
                [--dolphin-ssaa | --no-dolphin-ssaa] [--dolphin-bitrate DOLPHIN_BITRATE] [--ffmpeg-audio-args FFMPEG_AUDIO_ARGS] [--ffmpeg-volume FFMPEG_VOLUME]
                [--runtime-parallel RUNTIME_PARALLEL] [--runtime-preserve-directory-structure | --no-runtime-preserve-directory-structure]
-               [--runtime-youtubify-names | --no-runtime-youtubify-names] [--runtime-use-context-json | --no-runtime-use-context-json]
-               [--runtime-exclude-streamed-sets | --no-runtime-exclude-streamed-sets]
+               [--runtime-youtubify-names | --no-runtime-youtubify-names] [--runtime-exclude-streamed-sets | --no-runtime-exclude-streamed-sets]
+               [--runtime-video-name-template RUNTIME_VIDEO_NAME_TEMPLATE]
                inputs [inputs ...]
 
 positional arguments:
@@ -85,10 +85,19 @@ options:
                         Recreate input directory structure instead of being 'flat'
   --runtime-youtubify-names, --no-runtime-youtubify-names
                         Enable name replacements
-  --runtime-use-context-json, --no-runtime-use-context-json
-                        Use context.json files (if found) when naming / sorting videos
   --runtime-exclude-streamed-sets, --no-runtime-exclude-streamed-sets
                         Exclude sets marked with stream metadata (requires context.json)
+  --runtime-video-name-template RUNTIME_VIDEO_NAME_TEMPLATE
+                        Template for video output name; all but "source" require context.json files.
+
+                        {source}: Input file name
+                        {players}: 'player' vs 'player'; will be 'player + player vs player + player' for doubles
+                        {players_chars}: Like "players", but includes character info
+                        {tournament_name}: Tournament name (from context.json)
+                        {event_name}: Name of event
+                        {phase_name}: Name of phase
+                        {round_name}: Name of round
+                        {round_name_short}: Name of round, but shortened; e.g. "Winners Round 1" becomes "LR1"
 ```
 
 ### Graphical User Interface
@@ -170,6 +179,16 @@ The default settings can be found [here][default-settings].
     - Note that `By Phase` does not work properly without `context.json` files
 
 - `exclude_streamed_sets`: Use `context.json` to exclude files marked for stream
+- `video_name_template`: Template for output videos; all but `{source}` require `context.json`:
+
+    - `{source}`: Input file name
+    - `{players}`: 'player' vs 'player'; will be 'player + player vs player + player' for doubles
+    - `{players_chars}`: Like `{players}`, but includes character info
+    - `{tournament_name}`: Tournament name (from context.json)
+    - `{event_name}`: Name of event
+    - `{phase_name}`: Name of phase
+    - `{round_name}`: Name of round
+    - `{round_name_short}`: Name of round, but shortened; e.g. "Winners Round 1" becomes "LR1"
 
 ### Example Configuration
 
