@@ -295,6 +295,10 @@ parallel = 0
   rendering scoreboards). You can install a codec pack that supports mp4v /
   MPEG-4 or use another media player to view the files.
 
+* In order for scoreboards to have the correct date, in [Replay
+  Manager][replay-manager], the "overwrite start time" setting should be
+  enabled.
+
 ## Tests
 
 * `pytest` is required for running all tests

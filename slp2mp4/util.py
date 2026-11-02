@@ -91,4 +91,7 @@ def check_file(path: Path):
 
 
 def unix_ms_to_datetime(time_ms: int, timezone: tzinfo):
-    return datetime.fromtimestamp(time_ms / 1000, tz=timezone)
+    try:
+        return datetime.fromtimestamp(time_ms / 1000, tz=timezone)
+    except OverflowError:
+        return None

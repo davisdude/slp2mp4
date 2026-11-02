@@ -44,9 +44,15 @@ class ScoreboardBase:
 
     @property
     def tournament_date(self):
-        return util.unix_ms_to_datetime(
-            self.slp.context.start_ms, self.config.timezone_enum.tzinfo
-        )
+        start_ms = self.slp.context.start_ms
+        tz = self.config.timezone_enum.tzinfo
+        return util.unix_ms_to_datetime(start_ms, tz)
+
+    @property
+    def tournament_date_str(self):
+        if (date := self.tournament_date) is None:
+            return "Invalid Date"
+        return date.strftime("%b %d, %Y").replace(" 0", " ")
 
     @property
     def html(self):

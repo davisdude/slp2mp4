@@ -14,7 +14,7 @@
                 <div class="row2"><hr></div>
                 <div class="info info-small row3">
                     {% if loop.first %}
-                    <div>{{ sb.tournament_date.strftime("%b %d, %Y").replace(" 0", " ") }}</div>
+                    <div>{{ sb.tournament_date_str }}</div>
                     {% else %}
                     <div>{{ sb.slp.context.tournament_location }}</div>
                     {% endif %}
