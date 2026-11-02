@@ -153,8 +153,9 @@ class Collector:
             if path in self.encountered:
                 return
             if zipfile.is_zipfile(path):
-                self.encountered.add(path)
-                yield from self._handle_zip(input_path, path, state)
+                success = yield from self._handle_zip(input_path, path, state)
+                if success:
+                    self.encountered.add(path)
             elif path.suffix.lower() == ".slp":
                 # TODO: Check if it's actually a slippi file
                 self.encountered.add(path)
@@ -163,12 +164,19 @@ class Collector:
             yield from self._handle_dir(input_path, path, state)
 
     def _handle_zip(self, input_path: Path, path: Path, state: RecurseState):
-        tmpdir = Path(tempfile.mkdtemp(dir=self.workdir))
-        self.created_dirs.append(tmpdir)
-        with zipfile.ZipFile(path, "r") as archive:
-            archive.extractall(path=tmpdir)
-        new_state = RecurseState(state.relative.parent / path.stem, state.in_dir, True)
-        yield from self._recurse(input_path, tmpdir, new_state)
+        try:
+            tmpdir = Path(tempfile.mkdtemp(dir=self.workdir))
+            self.created_dirs.append(tmpdir)
+            with zipfile.ZipFile(path, "r") as archive:
+                archive.extractall(path=tmpdir)
+            new_state = RecurseState(
+                state.relative.parent / path.stem, state.in_dir, True
+            )
+            yield from self._recurse(input_path, tmpdir, new_state)
+            return True
+        except zipfile.BadZipFile:
+            self.log.error(f"Invalid zip file '{input_path}'")
+            return False
 
     def _handle_slp(self, input_path: Path, path: Path, state: RecurseState):
         slp = self._get_slp(path)
