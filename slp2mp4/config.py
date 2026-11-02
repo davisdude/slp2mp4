@@ -281,15 +281,27 @@ class RuntimeConfig(ConfigBase):
     name_replacements: dict[str, str] = dataclasses.field(
         metadata={"help": "Mapping of characters to replace in video titles"}
     )
-    use_context_json: bool = dataclasses.field(
-        metadata={
-            "help": "Use context.json files (if found) when naming / sorting videos"
-        }
-    )
     exclude_streamed_sets: bool = dataclasses.field(
         metadata={
             "help": "Exclude sets marked with stream metadata (requires context.json)"
         }
+    )
+    video_name_template: str = dataclasses.field(
+        # TODO: This looks ugly in the GUI and takes up a lot of space
+        # Move to its own section?
+        metadata={
+            "help": """Template for video output name; all but "source" require context.json files.
+
+{source}: Input file name
+{players}: 'player' vs 'player'; will be 'player + player vs player + player' for doubles
+{players_chars}: Like "players", but includes character info
+{tournament_name}: Tournament name (from context.json)
+{event_name}: Name of event
+{phase_name}: Name of phase
+{round_name}: Name of round
+{round_name_short}: Name of round, but shortened; e.g. "Winners Round 1" becomes "LR1"
+""",
+        },
     )
 
     @cached_property

@@ -1,7 +1,7 @@
 import dataclasses
 import signal
 import typing
-from argparse import SUPPRESS, ArgumentParser, BooleanOptionalAction
+from argparse import SUPPRESS, ArgumentParser, BooleanOptionalAction, RawTextHelpFormatter
 from multiprocessing import Event
 from pathlib import Path
 
@@ -84,7 +84,7 @@ def add_config_option_to_parser(
 def make_parser(help_most=False, help_all=False):
     if help_all:
         help_most = True
-    parser = ArgumentParser(prog="slp2mp4")
+    parser = ArgumentParser(prog="slp2mp4", formatter_class=RawTextHelpFormatter)
     parser.add_argument("inputs", type=Path, nargs="+")
     parser.add_argument("--help-most", help="show most help", action="help")
     parser.add_argument("--help-all", help="show all help", action="help")
