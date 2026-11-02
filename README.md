@@ -45,13 +45,18 @@ Both methods require having `git` and `pip` installed
 ### Command Line Interface
 
 ```text
-usage: slp2mp4 [-h] [-v] [-n] [-m] [--debug] [-t TEMPORARY_DIRECTORY] [-o OUTPUT_DIRECTORY] [--combine-mode {None,All,By Input,By Phase}] [--paths-ffmpeg PATHS_FFMPEG]
-               [--paths-slippi-playback PATHS_SLIPPI_PLAYBACK] [--paths-ssbm-iso PATHS_SSBM_ISO] [--paths-ffprobe PATHS_FFPROBE] [--paths-chrome PATHS_CHROME]
-               [--dolphin-backend {D3D12,DX11,DX9,OGL,Software Renderer,Vulkan}] [--dolphin-resolution {480p,720p,1080p,1440p,2160p}] [--dolphin-msaa DOLPHIN_MSAA]
-               [--dolphin-ssaa | --no-dolphin-ssaa] [--dolphin-bitrate DOLPHIN_BITRATE] [--ffmpeg-audio-args FFMPEG_AUDIO_ARGS] [--ffmpeg-volume FFMPEG_VOLUME]
-               [--runtime-parallel RUNTIME_PARALLEL] [--runtime-preserve-directory-structure | --no-runtime-preserve-directory-structure]
-               [--runtime-youtubify-names | --no-runtime-youtubify-names] [--runtime-use-context-json | --no-runtime-use-context-json]
-               [--runtime-exclude-streamed-sets | --no-runtime-exclude-streamed-sets] [--scoreboard-type {None,Shared,Split,Minimal,Custom}]
+usage: slp2mp4 [-h] [--help-most] [--help-all] [-v] [-n] [-m] [--debug] [-t TEMPORARY_DIRECTORY] [-o OUTPUT_DIRECTORY] [--combine-mode {None,All,By Input,By Phase}]
+               [--paths-ffmpeg PATHS_FFMPEG] [--paths-slippi-playback PATHS_SLIPPI_PLAYBACK] [--paths-ssbm-iso PATHS_SSBM_ISO] [--paths-ffprobe PATHS_FFPROBE]
+               [--paths-chrome PATHS_CHROME] [--dolphin-backend {D3D12,DX11,DX9,OGL,Software Renderer,Vulkan}] [--dolphin-resolution {480p,720p,1080p,1440p,2160p}]
+               [--dolphin-msaa DOLPHIN_MSAA] [--dolphin-ssaa | --no-dolphin-ssaa] [--dolphin-bitrate DOLPHIN_BITRATE] [--ffmpeg-audio-args FFMPEG_AUDIO_ARGS]
+               [--ffmpeg-volume FFMPEG_VOLUME] [--runtime-parallel RUNTIME_PARALLEL] [--runtime-preserve-directory-structure | --no-runtime-preserve-directory-structure]
+               [--runtime-youtubify-names | --no-runtime-youtubify-names] [--runtime-exclude-streamed-sets | --no-runtime-exclude-streamed-sets]
+               [--runtime-video-name-template RUNTIME_VIDEO_NAME_TEMPLATE] [--scoreboard-type {None,Shared,Split,Minimal,Custom}] [--scoreboard-timezone timezone; see --help-all]
+               [--scoreboard-theme-font-spec SCOREBOARD_THEME_FONT_SPEC] [--scoreboard-theme-primary-color SCOREBOARD_THEME_PRIMARY_COLOR]
+               [--scoreboard-theme-secondary-color SCOREBOARD_THEME_SECONDARY_COLOR] [--scoreboard-theme-background-color SCOREBOARD_THEME_BACKGROUND_COLOR]
+               [--scoreboard-shared-logo SCOREBOARD_SHARED_LOGO] [--scoreboard-shared-left | --no-scoreboard-shared-left] [--scoreboard-shared-checkbox | --no-scoreboard-shared-checkbox]
+               [--scoreboard-split-logo SCOREBOARD_SPLIT_LOGO] [--scoreboard-split-checkbox | --no-scoreboard-split-checkbox] [--scoreboard-custom-alignment SCOREBOARD_CUSTOM_ALIGNMENT]
+               [--scoreboard-custom-ratio SCOREBOARD_CUSTOM_RATIO] [--scoreboard-custom-html SCOREBOARD_CUSTOM_HTML] [--scoreboard-custom-css SCOREBOARD_CUSTOM_CSS]
                inputs [inputs ...]
 
 positional arguments:
@@ -59,6 +64,8 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
+  --help-most           show most help
+  --help-all            show all help
   -v, --version         show program's version number and exit
   -n, --dry-run         Don't actually render videos; useful for testing
   -m, --monitor         Continuously watch input directories
@@ -87,11 +94,35 @@ options:
                         Recreate input directory structure instead of being 'flat'
   --runtime-youtubify-names, --no-runtime-youtubify-names
                         Enable name replacements
-  --runtime-use-context-json, --no-runtime-use-context-json
-                        Use context.json files (if found) when naming / sorting videos
   --runtime-exclude-streamed-sets, --no-runtime-exclude-streamed-sets
                         Exclude sets marked with stream metadata (requires context.json)
+  --runtime-video-name-template RUNTIME_VIDEO_NAME_TEMPLATE
+                        Template for video output name; all but "source" require context.json files.
+
+                        {source}: Input file name
+                        {players}: 'player' vs 'player'; will be 'player + player vs player + player' for doubles
+                        {players_chars}: Like "players", but includes character info
+                        {tournament_name}: Tournament name (from context.json)
+                        {event_name}: Name of event
+                        {phase_name}: Name of phase
+                        {round_name}: Name of round
+                        {round_name_short}: Name of round, but shortened; e.g. "Winners Round 1" becomes "LR1"
   --scoreboard-type {None,Shared,Split,Minimal,Custom}
+  --scoreboard-timezone timezone; see --help-all
+  --scoreboard-theme-font-spec SCOREBOARD_THEME_FONT_SPEC
+  --scoreboard-theme-primary-color SCOREBOARD_THEME_PRIMARY_COLOR
+  --scoreboard-theme-secondary-color SCOREBOARD_THEME_SECONDARY_COLOR
+  --scoreboard-theme-background-color SCOREBOARD_THEME_BACKGROUND_COLOR
+  --scoreboard-shared-logo SCOREBOARD_SHARED_LOGO
+  --scoreboard-shared-left, --no-scoreboard-shared-left
+  --scoreboard-shared-checkbox, --no-scoreboard-shared-checkbox
+  --scoreboard-split-logo SCOREBOARD_SPLIT_LOGO
+  --scoreboard-split-checkbox, --no-scoreboard-split-checkbox
+  --scoreboard-custom-alignment SCOREBOARD_CUSTOM_ALIGNMENT
+  --scoreboard-custom-ratio SCOREBOARD_CUSTOM_RATIO
+                        Output aspect ratio; 0 = pass-through
+  --scoreboard-custom-html SCOREBOARD_CUSTOM_HTML
+  --scoreboard-custom-css SCOREBOARD_CUSTOM_CSS
 ```
 
 ### Graphical User Interface
@@ -173,6 +204,16 @@ The default settings can be found [here][default-settings].
     - Note that `By Phase` does not work properly without `context.json` files
 
 - `exclude_streamed_sets`: Use `context.json` to exclude files marked for stream
+- `video_name_template`: Template for output videos; all but `{source}` require `context.json`:
+
+    - `{source}`: Input file name
+    - `{players}`: 'player' vs 'player'; will be 'player + player vs player + player' for doubles
+    - `{players_chars}`: Like `{players}`, but includes character info
+    - `{tournament_name}`: Tournament name (from context.json)
+    - `{event_name}`: Name of event
+    - `{phase_name}`: Name of phase
+    - `{round_name}`: Name of round
+    - `{round_name_short}`: Name of round, but shortened; e.g. "Winners Round 1" becomes "LR1"
 
 #### Scoreboard Settings
 
