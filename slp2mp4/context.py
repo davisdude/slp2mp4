@@ -6,35 +6,47 @@ from pathlib import Path
 
 import frozendict
 
-
 # https://github.com/jmlee337/replay-manager-for-slippi/blob/46fcbcd9aa5ae51702cdab45f75e343a27e56f9c/src/common/constants.ts#L7
-class Character(Enum):
-    FALCON = "Falcon"
-    DK = "DK"
-    FOX = "Fox"
-    GW = "GW"
-    KIRBY = "Kirby"
-    BOWSER = "Bowser"
-    LINK = "Link"
-    LUIGI = "Luigi"
-    MARIO = "Mario"
-    MARTH = "Marth"
-    MEWTWO = "Mewtwo"
-    NESS = "Ness"
-    PEACH = "Peach"
-    PIKACHU = "Pikachu"
-    ICS = "ICs"
-    PUFF = "Puff"
-    SAMUS = "Samus"
-    YOSHI = "Yoshi"
-    ZELDA = "Zelda"
-    SHEIK = "Sheik"
-    FALCO = "Falco"
-    YL = "YL"
-    DOC = "Doc"
-    ROY = "Roy"
-    PICHU = "Pichu"
-    GANON = "Ganon"
+_EXTERNAL_CHARACTER_IDS = {
+    "Falcon": 0,
+    "DK": 1,
+    "Fox": 2,
+    "GW": 3,
+    "Kirby": 4,
+    "Bowser": 5,
+    "Link": 6,
+    "Luigi": 7,
+    "Mario": 8,
+    "Marth": 9,
+    "Mewtwo": 10,
+    "Ness": 11,
+    "Peach": 12,
+    "Pikachu": 13,
+    "ICs": 14,
+    "Puff": 15,
+    "Samus": 16,
+    "Yoshi": 17,
+    "Zelda": 18,
+    "Sheik": 19,
+    "Falco": 20,
+    "YL": 21,
+    "Doc": 22,
+    "Roy": 23,
+    "Pichu": 24,
+    "Ganon": 25,
+}
+
+
+class CharacterEnum:
+    @classmethod
+    def from_string(cls, data: str):
+        val = _EXTERNAL_CHARACTER_IDS.get(data)
+        if val is None:
+            return None
+        return cls(val)
+
+
+Character = Enum("Character", _EXTERNAL_CHARACTER_IDS, type=CharacterEnum)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -97,7 +109,9 @@ class EntrantData:
     def from_dict(cls, data: dict):
         return cls(
             name=data["name"],
-            characters=tuple(Character(char) for char in data["characters"]),
+            characters=tuple(
+                Character.from_string(char) for char in data["characters"]
+            ),
         )
 
 
