@@ -38,12 +38,32 @@ class Character(Enum):
 
 
 @dataclasses.dataclass(frozen=True)
+class CharacterData:
+    id: int
+    costume: int
+
+    @classmethod
+    def from_dict(cls, data: dict):
+        return cls(id=data["id"], costume=data["costume"])
+
+
+@dataclasses.dataclass(frozen=True)
 class SlotData:
     display_names: tuple[str]
     ports: tuple[int]
     prefixes: tuple[str]
     pronouns: tuple[str]
     score: int
+    characters: tuple[CharacterData] | None = dataclasses.field(default=None)
+    team_id: int | None = dataclasses.field(default=None)
+    losers: bool | None = dataclasses.field(default=None)
+
+    def __post_init__(self):
+        if isinstance(self.characters, list):
+            characters = tuple(
+                CharacterData.from_dict(char) for char in self.characters
+            )
+            object.__setattr__(self, "characters", characters)
 
     @classmethod
     def from_dict(cls, data: dict):
@@ -53,6 +73,9 @@ class SlotData:
             prefixes=tuple(data["prefixes"]),
             pronouns=tuple(data["pronouns"]),
             score=data["score"],
+            characters=data.get("characters"),
+            team_id=data.get("team_id"),
+            losers=data.get("losers"),
         )
 
 
