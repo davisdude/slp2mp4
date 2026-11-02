@@ -6,6 +6,8 @@ from pathlib import Path
 
 import frozendict
 
+from slp2mp4 import util
+
 # https://github.com/jmlee337/replay-manager-for-slippi/blob/46fcbcd9aa5ae51702cdab45f75e343a27e56f9c/src/common/constants.ts#L7
 _EXTERNAL_CHARACTER_IDS = {
     "Falcon": 0,
@@ -268,6 +270,24 @@ class ContextData:
     @property
     def round_name(self):
         return self.platform.round_name
+
+    @property
+    def round_name_short(self):
+        return util.translate(
+            self.round_name,
+            {
+                "Winners": "W",
+                "Losers": "L",
+                "Grand": "G",
+                "Semi": "S",
+                "Quarter": "Q",
+                "Round": "R",
+                "Final": "F",
+                "Reset": "R",
+                " ": "",
+                "-": "",
+            },
+        )
 
     @property
     def ordinal(self):
