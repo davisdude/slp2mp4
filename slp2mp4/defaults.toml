@@ -30,8 +30,8 @@ volume = 25
 parallel = 0
 youtubify_names = true
 preserve_directory_structure = false
-use_context_json = true
 exclude_streamed_sets = false
+video_name_template = "{players} - {tournament_name} - {event_name} - {phase_name} {round_name_short}.mp4"
 
 [runtime.name_replacements]
 "-" = "–"

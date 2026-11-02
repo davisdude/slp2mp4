@@ -169,7 +169,6 @@ The default settings can be found [here][default-settings].
 
     - Note that `By Phase` does not work properly without `context.json` files
 
-- `use_context_json`: Use `context.json` files (if found) for file names / ordering
 - `exclude_streamed_sets`: Use `context.json` to exclude files marked for stream
 
 ### Example Configuration

@@ -97,13 +97,13 @@ class Orchestrator:
         paths: dict[Task, Path] = {}
         for task in tasks:
             parent_parts = task.final_name.parent.parts
-            name = task.final_name.stem
-            if self.conf.runtime.youtubify_names:
-                name = util.translate(name, self.conf.runtime.name_replacements)
             output_directory = Path(self.output_directory)
             if self.conf.runtime.preserve_directory_structure:
                 for parent in parent_parts:
                     output_directory /= parent
+            name = task.final_name.stem
+            if self.conf.runtime.youtubify_names:
+                name = util.translate(name, self.conf.runtime.name_replacements)
             name = pathvalidate.sanitize_filename(name, max_len=244)  # 255 - .mp4 - sha
             paths[task] = output_directory / name
 
@@ -125,19 +125,43 @@ class Orchestrator:
             yield [MoveFileTask(task_name, [task.video], [out_artifact], output_path)]
 
     def get_final_name(self, request: ConcatRequest):
-        if not self.conf.runtime.use_context_json:
-            return request.final
         contexts = {slp.context for slp in request.slps}
         if (len(contexts) != 1) or (None in contexts):
             return request.final
         context = next(iter(contexts))
-        player1 = (" + ").join(context.final_score.slots[0].display_names)
-        player2 = (" + ").join(context.final_score.slots[1].display_names)
-        tournament_name = context.tournament_name
-        event_name = context.event_name
-        phase_name = context.phase_name
-        round_name = context.round_name
-        name = f"{player1} vs {player2} - {tournament_name} - {event_name} - {phase_name} {round_name}.mp4"
+        if (players := getattr(context, "players", None)) is not None:
+            player1 = (" + ").join(slot.name for slot in players.entrant_1)
+            player2 = (" + ").join(slot.name for slot in players.entrant_2)
+            player1_chars = (" + ").join(
+                slot.name
+                + " ("
+                + (", ").join(char.name for char in slot.characters)
+                + ")"
+                for slot in players.entrant_1
+            )
+            player2_chars = (" + ").join(
+                slot.name
+                + " ("
+                + (", ").join(char.name for char in slot.characters)
+                + ")"
+                for slot in players.entrant_2
+            )
+        else:
+            player1 = (" + ").join(context.final_score.slots[0].display_names)
+            player2 = (" + ").join(context.final_score.slots[1].display_names)
+            player1_chars = player1
+            player2_chars = player2
+        translations = {
+            "{source}": str(request.final),
+            "{players}": f"{player1} vs {player2}",
+            "{players_chars}": f"{player1_chars} vs {player2_chars}",
+            "{tournament_name}": context.tournament_name,
+            "{event_name}": context.event_name,
+            "{phase_name}": context.phase_name,
+            "{round_name}": context.round_name,
+            "{round_name_short}": context.round_name_short,
+        }
+        name = util.translate(self.conf.runtime.video_name_template, translations)
         return request.final.parent / name
 
     def should_skip_request(self, request: RenderRequest | ConcatRequest):

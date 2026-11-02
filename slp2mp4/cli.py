@@ -1,7 +1,7 @@
 import dataclasses
 import signal
 import typing
-from argparse import ArgumentParser, BooleanOptionalAction
+from argparse import ArgumentParser, BooleanOptionalAction, RawTextHelpFormatter
 from multiprocessing import Event
 from pathlib import Path
 
@@ -63,7 +63,7 @@ def add_config_option_to_parser(parser, config_type, prefix=None):
 
 
 def main():
-    parser = ArgumentParser(prog="slp2mp4")
+    parser = ArgumentParser(prog="slp2mp4", formatter_class=RawTextHelpFormatter)
     parser.add_argument("inputs", type=Path, nargs="+")
     parser.add_argument("-v", "--version", action="version", version=__version__)
 

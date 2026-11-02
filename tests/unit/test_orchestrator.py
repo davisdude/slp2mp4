@@ -183,9 +183,7 @@ def test_get_final_name_with_context_startgg_singles(tmp_path):
     request = ConcatRequest(Path("yes-context.mp4"), [slp])
 
     name = orchestrator.get_final_name(request)
-    assert name == Path(
-        "Alice vs Bob - My Tournament - Melee Singles - Pools Winners Round 1.mp4"
-    )
+    assert name == Path("Alice vs Bob - My Tournament - Melee Singles - Pools WR1.mp4")
 
 
 def test_get_final_name_with_context_startgg_doubles(tmp_path):
@@ -237,7 +235,7 @@ def test_get_final_name_with_context_startgg_doubles(tmp_path):
 
     name = orchestrator.get_final_name(request)
     assert name == Path(
-        "Alice + Bob vs Carol + Dan - My Tournament - Melee Doubles - Pools Winners Round 1.mp4"
+        "Alice + Bob vs Carol + Dan - My Tournament - Melee Doubles - Pools WR1.mp4"
     )
 
 
