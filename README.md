@@ -11,13 +11,68 @@ Convert Slippi replay files (`.slp`) to video files (`.mp4`) with ease.
 - Optionally generate scoreboards
 - Cross-platform support for Windows, Linux
     - Dolphin on Mac does not support framedumping
+- [Monitor](#monitor) mode to render sets immediately
+- Automatic [timestamp files](#timestamps) for videos
 
-## Requirements
+### Monitor
 
-- Python 3.11 or higher
-- [FFmpeg](https://ffmpeg.org/) and `ffprobe` installed and accessible
-- [Slippi Dolphin](https://slippi.gg/downloads) installed
-- Super Smash Bros. Melee ISO file
+Monitor mode lets you render sets "continuously" instead of the one-shot / all
+at once approach normally used. This allows you to start rendering videos
+before the tournament ends, for instance, letting you use the downtime between
+reporting to record games.
+
+> [!IMPORTANT]
+> When using monitor mode, you must stop the program for renders to complete.
+> If using the GUI, click the stop button. If using the CLI, use CTRL-C or send
+> `SIGINT` _once_; a second signal will kill the program.
+
+Monitoring pairs well with a remote computer doing the rendering, i.e. with
+[syncthing][syncthing]. When doing remote rendering, I would recommend making
+the syncing one-way, in other words, making the synced folder on the reporting
+computer send-only, and the synced folder on the rendering computer
+receive-only.
+
+For live broadcasts, see [auto-slp-player][auto-slp-player]. `slp2mp4` is only
+intended for offline rendering.
+
+### Dry-Run
+
+Performing a dry-run lets you see what the output might look like without
+having to actually render all the sets. When dry-run is enabled, the program's
+output will look like this:
+
+```
+Starting
+Player1 vs Player2 – Tournament – Melee Singles – Bracket R1.mp4 (move)
+    Player1 vs Player2 – Tournament – Melee Singles – Bracket R1.mp4 (move) (concat)
+        /tmp/tmpdew8g3f5/1 - Player1 (Falco), Player2 (Fox) - Fountain of Dreams.mp4 (render)
+            1 - Player1 (Falco), Player1 (Fox) - Fountain of Dreams.slp (1) + context.json
+        /tmp/tmpdew8g3f5/2 - Player1 (Falco), Player2 (Fox) - Pokémon Stadium.mp4 (render)
+            2 - Player1 (Falco), Player2 (Fox) - Pokémon Stadium.slp (2) + context.json
+
+...
+
+Made X videos in 0:00:02
+```
+
+The main thing to understanding this is that each indentation level specifies a
+single video that is being made; parenthesis describe the steps being taken. At
+some indentation level, you'll see a `.slp` file and possibly a `context.json`
+file. You can use this to ensure the correct files will be rendered, and that
+the output names match what you expect. This is particularly useful for
+checking that [video name template](#runtime-settings) and [combine
+mode](#runtime-settings) are working how you would expect.
+
+### Timestamps
+
+Each video produced will create a `.txt` file with the same name, which
+contains timestamps for each constituent file. Only the immediately preceding
+timestamps are used, i.e. if you are combining by phase, timestamps will be
+per-set; if you are not combining, timestamps will be per-game.
+
+Each line of the timestamps file is in the format `HH:MM:SS - {name}`, where
+`{name}` is what the video would have been named if it hadn't been combined,
+and `HH:MM:SS` is the time in the video where it occurs.
 
 ## Installation
 
@@ -39,6 +94,13 @@ pip install .[gui]
 ```
 
 Both methods require having `git` and `pip` installed
+
+## Requirements
+
+- Python 3.11 or higher
+- [FFmpeg](https://ffmpeg.org/) and `ffprobe` installed and accessible
+- [Slippi Dolphin](https://slippi.gg/downloads) installed
+- Super Smash Bros. Melee ISO file
 
 ## Usage
 
@@ -351,6 +413,7 @@ This project is licensed under the MIT License - see the [license](LICENSE.md)
 file for details.
 
 
+[auto-slp-player]: https://github.com/jmlee337/auto-slp-player
 [chrome-bug]: https://issues.chromium.org/issues/405165895
 [default-settings]: ./src/slp2mp4/defaults.toml
 [dolphin-video-backends-src]: https://github.com/dolphin-emu/dolphin/tree/master/Source/Core/VideoBackends
@@ -359,5 +422,6 @@ file for details.
 [pad-filter]: https://ffmpeg.org/ffmpeg-filters.html#pad-1
 [releases]: ../../releases
 [replay-manager]: https://github.com/jmlee337/replay-manager-for-slippi
+[syncthing]: https://syncthing.net/
 [templates]: slp2mp4/templates/
 [toml]: https://toml.io/en/

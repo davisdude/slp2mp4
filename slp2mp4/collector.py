@@ -5,6 +5,7 @@ import shutil
 import tempfile
 import time
 import zipfile
+import zlib
 from collections import deque
 from collections.abc import Generator
 from logging import Logger
@@ -16,6 +17,16 @@ from watchdog.observers import Observer
 
 from slp2mp4 import log, util
 from slp2mp4.artifact import ContextArtifact, SlippiArtifact
+
+# Not sure if all these are totally necessary, esp. since I wouldn't expect files to be encrypted
+ZIP_ERRORS = (
+    zipfile.BadZipFile,
+    zipfile.LargeZipFile,
+    zlib.error,
+    EOFError,
+    RuntimeError,
+    NotImplementedError,
+)
 
 
 def create_monitor_event_handler(collector, root: Path):
@@ -174,8 +185,8 @@ class Collector:
             )
             yield from self._recurse(input_path, tmpdir, new_state)
             return True
-        except zipfile.BadZipFile:
-            self.log.error(f"Invalid zip file '{input_path}'")
+        except ZIP_ERRORS as exc:
+            self.log.error(f"Invalid zip or corrupt file '{input_path}': {exc}")
             return False
 
     def _handle_slp(self, input_path: Path, path: Path, state: RecurseState):
